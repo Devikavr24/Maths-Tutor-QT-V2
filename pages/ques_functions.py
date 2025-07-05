@@ -11,7 +11,8 @@ from pages.shared_ui import (
     create_entry_ui,
     QuestionWidget
 )
-from question.loader import get_questions,QuestionProcessor
+
+from question.loader import QuestionProcessor
 import os, shutil
 import pandas as pd
 
@@ -20,10 +21,16 @@ from PyQt5.QtCore import Qt
 
 
 
-def load_pages(section_name, back_callback, difficulty_index, main_window=None):
-    page = create_colored_widget("#e0f7fa")
+def load_pages(section_name, back_callback, difficulty_index,
+               main_window=None):
 
+    page = create_colored_widget("#e0f7fa")
+ 
+    widgets = []
+ 
+    # 👉 Custom logic for "Operations"
     if section_name.lower() == "operations":
+        page = create_colored_widget("#e0f7fa")
         title = create_label("Choose an Operation", font_size=22, bold=True)
         title.setAlignment(Qt.AlignCenter)
 
@@ -51,8 +58,13 @@ def load_pages(section_name, back_callback, difficulty_index, main_window=None):
         page.setLayout(layout)
         return page
 
-    # ✅ For all other sections
-    return create_dynamic_question_ui(section_name, difficulty_index, back_callback, window=main_window)
+    # ✅ For other sections
+    return create_dynamic_question_ui(section_name, difficulty_index, back_callback,window=main_window)
+
+
+
+
+
 
 
 
@@ -62,6 +74,7 @@ uploaded_df = None
 
 def upload_excel(parent_widget):
     
+
     file_path, _ = QFileDialog.getOpenFileName(parent_widget, "Select Excel File", "", "Excel Files (*.xlsx)")
     if not file_path:
         return

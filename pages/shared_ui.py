@@ -222,9 +222,6 @@ class QuestionWidget(QWidget):
         self.layout.addWidget(self.result_label)
         self.layout.addStretch()
 
-        self.load_new_question()
-
-    def load_new_question(self):
         self.end_button = QPushButton("End Session")
         self.end_button.setStyleSheet("background-color: red; color: white; padding: 10px;")
         self.end_button.setFixedWidth(150)
@@ -238,6 +235,10 @@ class QuestionWidget(QWidget):
     
 
     def end_session(self):
+        #if hasattr(self, 'bg_player') and self.bg_player is not None:
+    
+        self.main_window.bg_player.stop()   # or .stop() if you want to fully stop it
+        print("[BG MUSIC] Stopped due to end session.")
         if self.main_window:
             from main import MainWindow  # Import your section menu window
             self.main_window.setCentralWidget(MainWindow(self.main_window))
@@ -249,7 +250,7 @@ class QuestionWidget(QWidget):
         if self.processor.total_attempts >= self.max_questions:
             self.show_final_score()
             return
-        question_text, self.answer = self.processor.get_random_question()
+        question_text, self.answer = self.processor.get_questions()
         self.start_time = time()
         self.label.setText(question_text)
         self.input_box.setText("")  # ✨ Clear only the input
@@ -273,7 +274,10 @@ class QuestionWidget(QWidget):
 
             if correct:
                 self.result_label.setText("✅ Correct!")
-                print("[DEBUG] main_window:", self.main_window)
+
+
+
+               
                 sound_index = random.randint(1, 3)
                 
                 if elapsed < 5:
@@ -302,6 +306,7 @@ class QuestionWidget(QWidget):
                     self.main_window.play_sound(f"wrong-anwser-{sound_index}.mp3")
                 else:
                     self.main_window.play_sound(f"wrong-anwser-repeted-{sound_index}.mp3")
+                    
                 
                 if self.processor.retry_count < 3:
                     self.result_label.setText(f"❌ Wrong. Try again ({self.processor.retry_count}/3)")
@@ -346,7 +351,7 @@ class SettingsDialog(QDialog):
 
         self.difficulty_slider = QSlider(Qt.Horizontal)
         self.difficulty_slider.setMinimum(0)
-        self.difficulty_slider.setselfMaximum(len(DIFFICULTY_LEVELS) - 1)
+        self.difficulty_slider.setMaximum(len(DIFFICULTY_LEVELS) - 1)
         self.difficulty_slider.setSingleStep(1)
         self.difficulty_slider.setPageStep(1)
         self.difficulty_slider.setTickInterval(1)
@@ -384,7 +389,7 @@ class SettingsDialog(QDialog):
     def handle_reset_language(self):
         from main import RootWindow, MainWindow # Dynamically import to avoid circular imports
 
-        dialog = RootWindow()
+        dialog = RootWindow(minimal=True)
         if dialog.exec_() == QDialog.Accepted:
             new_lang = dialog.language_combo.currentText()
             self.updated_language = new_lang
