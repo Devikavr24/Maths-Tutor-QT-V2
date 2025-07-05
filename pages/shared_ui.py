@@ -10,6 +10,7 @@ from question.loader import QuestionProcessor
 from time import time
 import random
 DIFFICULTY_LEVELS = ["Very Easy", "Easy", "Medium", "Hard", "Very Hard"]
+from language.language import tr
 
 
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton
@@ -141,7 +142,7 @@ def create_footer_buttons(names, callbacks=None, size=(90, 30)) -> QWidget:
 
 
 def create_back_button(callback) -> QPushButton:
-    back_btn = QPushButton("HOME")
+    back_btn = QPushButton(tr("HOME"))
     back_btn.setFixedSize(150, 40)
     back_btn.setProperty("class", "menu-button")
     back_btn.clicked.connect(callback)
@@ -153,7 +154,7 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box = QLineEdit()
     input_box.setFixedSize(width, height)
     input_box.setAlignment(Qt.AlignCenter)
-    input_box.setPlaceholderText("Enter your answer")
+    input_box.setPlaceholderText(tr("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
     input_box.setValidator(QIntValidator(0, 1000000))  # only positive integers
     input_box.setStyleSheet("""
@@ -329,7 +330,7 @@ def create_dynamic_question_ui(section_name, difficulty_index, back_callback,win
     layout.addWidget(question_widget)
 
     # Back Button at the bottom
-    back_btn = QPushButton("HOME")
+    back_btn = QPushButton(tr('HOME'))
     back_btn.setFixedSize(150, 40)
     back_btn.clicked.connect(back_callback)
     layout.addWidget(back_btn, alignment=Qt.AlignCenter)
