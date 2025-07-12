@@ -1,73 +1,71 @@
-/* === LANGUAGE DIALOG BASE === */
+/* Language Dialog Styles */
 QDialog {
-    background-color: #2f2f2f;
+    background-color: #2f2f2f;  /* dark grey background */
     border-radius: 15px;
     font-family: "Segoe UI", "Noto Sans", sans-serif;
     font-size: 15px;
-    color: #f0f0f0;
+    color: #f0f0f0;  /* light text */
 }
 
-/* === TITLE === */
-QLabel[class="title"] {
+.title {
     font-size: 22px;
     font-family: "Poppins";
     font-weight: bold;
-    color: #ffffff;
-    padding-bottom: 5px;
-    qproperty-alignment: AlignCenter;
+    color:#ffffff;
+    margin-bottom: 0px;
 }
 
-/* === SUBTITLE === */
-QLabel[class="subtitle"] {
+.subtitle {
     font-size: 16px;
-    font-family: "Poppins";
-    color: #e7e9ee;
-    padding: 6px 0 12px 0;
+    color:rgb(231, 233, 238);
+    margin-bottom: 15px;
+    margin-top:8px;
 }
 
-/* === COMBO BOX === */
-QComboBox[class="combo-box"] {
-    min-width: 200px;
-    padding: 10px 12px;
+.combo-box {
+    min-width: 150px;
+    padding: 12px 36px 12px 12px;
     border: 1px solid #555;
     border-radius: 8px;
-    background-color: #1f1f1f;
-    color: #f0f0f0;
+    background: #1f1f1f;
     font-size: 16px;
     font-family: "Poppins";
+    selection-background-color:color: #f0f0f0;
 }
 
-QComboBox[class="combo-box"]:hover {
-    border-color: #888;
+.combo-box:hover {
+    border-color: rgb(0, 0, 0);
 }
-
-QComboBox[class="combo-box"]::drop-down {
+.combo-box::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
-    width: 30px;
-    border-left: 1px solid #444;
+    width: 40px;
+    #border-left: 1px solid white;
+    margin-top: 4a5568px;
+    margin-bottom: 4px;
 }
 
-QComboBox[class="combo-box"]::down-arrow {
+.combo-box::down-arrow {
     width: 0;
     height: 0;
-    margin-right: 6px;
-    margin-top: 4px;
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 6px solid #cccccc;
-}
-
-/* === CHECKBOX === */
-QCheckBox {
-    font-size: 14px;
-    font-family: "Poppins";
-    color: #cccccc;
-    spacing: 8px;
+    margin-right: 10px;
     margin-top: 10px;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid black;  /* ▼ Inverted triangle */
 }
 
-QCheckBox::indicator {
+
+
+.checkbox {
+    font-size: 13px;
+    font-family: "Poppins";
+    spacing: 8px;
+    margin-top: 12px;
+    color: #cccccc;
+}
+
+.checkbox::indicator {
     width: 16px;
     height: 16px;
     border: 1px solid #666;
@@ -75,41 +73,56 @@ QCheckBox::indicator {
     border-radius: 4px;
 }
 
-QCheckBox::indicator:checked {
-    background-color: #4169E1;
-    border: 1px solid #2980b9;
+.checkbox::indicator:checked {
+    background-color: #888;
+    border: 1px solid #aaa;
 }
 
-/* === DIALOG BUTTONS === */
-QPushButton {
-    min-width: 100px;
-    font-family: "Poppins";
-    padding: 8px 16px;
+.primary-button {
+    background-color: #3c3c3c;
+    color: white;
+    border: none;
     border-radius: 8px;
+    padding: 10px 20px;
     font-weight: 600;
-}
-
-/* Primary - Continue */
-QPushButton:default {
-    background-color: #4169E1;
+    font-family: "Poppins";
+    min-width: 100px;
     color: #f0f0f0;
+}
+
+.primary-button:hover {
+    background-color: #555555;
+    color:  #555555;
+}
+
+.danger-button {
+    background-color:rgb(53, 56, 55);
+    color: white;
     border: none;
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-family: "Poppins";
+    min-width: 100px;
 }
 
-/* Danger - Cancel */
-QPushButton:!default {
-    background-color: #353837;
-    color: #f0f0f0;
-    border: none;
+.danger-button:hover {
+    background-color:rgb(175, 38, 136);
 }
 
-QPushButton:!default:hover {
-    background-color:rgb(212, 28, 28);
+.combo-box::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left: 1px solid #444;
 }
 
-/* === LINE === */
-QFrame[frameShape="4"] {  /* QFrame.HLine */
-    border: 1px solid #444;
-    margin-top: 12px;
-    margin-bottom: 12px;
+.combo-box::down-arrow {
+    width: 0;
+    height: 0;
+    margin-right: 6px;
+    margin-top: 4px;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 6px solid black; /* Inverted triangle */
 }

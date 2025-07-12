@@ -144,7 +144,6 @@ class MainWindow(QMainWindow):
         self.bg_player.setVolume(30)
         self.is_muted = False  # if not already present
         self.play_background_music()
-
         #self.player = self.setup_background_music()
 
         self.difficulty_index = 1 # Default to level 0 (e.g., "Very Easy")
@@ -159,18 +158,17 @@ class MainWindow(QMainWindow):
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
 
-        # Track current theme
-        self.current_theme = "light"
-        
+        self.current_theme = "light"  # Initial theme
+
+        # Menu page content
         self.menu_widget = QWidget()
         menu_layout = QVBoxLayout()
-        menu_layout.setAlignment(Qt.AlignCenter)
-        # Top bar for theme toggle
+        menu_layout.setAlignment(Qt.AlignTop)
+
+        # Top bar with theme toggle
         top_bar = QHBoxLayout()
         top_bar.setContentsMargins(0, 0, 0, 0)
-        
 
-        # Theme button (🌙 for light, ☀️ for dark)
         self.theme_button = QPushButton("🌙")
         self.theme_button.setToolTip("Toggle Light/Dark Theme")
         self.theme_button.clicked.connect(self.toggle_theme)
@@ -181,23 +179,15 @@ class MainWindow(QMainWindow):
         desc = f"{translations[self.language]['welcome']} {translations[self.language]['ready'].format(lang=self.language)}"
         self.theme_button.setAccessibleDescription(desc)
 
-
-
-
-
-
         top_bar.addWidget(self.theme_button, alignment=Qt.AlignLeft)
         top_bar.addStretch()
-
         menu_layout.addLayout(top_bar)
 
-        
-        title = QLabel(tr("welcome")) #welcome to maths tutor 
-
-
+        # Title and subtitle
+        title = QLabel(tr("welcome"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
- 
+
         subtitle = QLabel(tr("ready").format(lang=self.language))
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setProperty("class", "subtitle")
@@ -206,52 +196,56 @@ class MainWindow(QMainWindow):
         menu_layout.addWidget(subtitle)
         menu_layout.addSpacing(20)
 
+        # Section buttons
         menu_layout.addLayout(self.create_buttons())
-        menu_layout.addStretch()
-        # Bottom-left audio toggle
+
+       # GIF Section 
+        self.gif_label = QLabel()
+        self.gif_label.setAlignment(Qt.AlignCenter)
+        self.movie = QMovie("images/welcome-1.gif")
+        self.movie.setScaledSize(QSize(200, 200))
+        self.gif_label.setMovie(self.movie)
+        self.movie.start()
+
+        gif_container = QWidget()
+        gif_container.setFixedHeight(220)
+        gif_layout = QHBoxLayout()
+        gif_layout.setContentsMargins(0, 0, 0, 0)
+        gif_layout.addStretch()
+        gif_layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
+        gif_layout.addStretch()
+        gif_container.setLayout(gif_layout)
+
+        menu_layout.addWidget(gif_container)
+
+        # Bottom audio toggle
         bottom_layout = QHBoxLayout()
         bottom_layout.setContentsMargins(0, 0, 0, 0)
-
         self.audio_button = QPushButton("🔊")
         self.audio_button.setObjectName("audio-button")
         self.audio_button.setToolTip("Toggle Mute/Unmute")
         self.audio_button.clicked.connect(self.toggle_audio)
-
         bottom_layout.addWidget(self.audio_button, alignment=Qt.AlignLeft)
         bottom_layout.addStretch()
-
         menu_layout.addLayout(bottom_layout)
 
         self.menu_widget.setLayout(menu_layout)
 
+        # Stack and footers
         self.stack = QStackedWidget()
         self.stack.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.stack.addWidget(self.menu_widget)
-
         self.main_layout.addWidget(self.stack)
+
         self.main_footer = self.create_main_footer_buttons()
         self.section_footer = self.create_section_footer()
+        for footer in [self.main_footer, self.section_footer]:
+            footer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+            footer.setMinimumHeight(63)
+
         self.main_layout.addWidget(self.main_footer)
         self.main_layout.addWidget(self.section_footer)
         self.section_footer.hide()
-
-     
-
-        self.gif_label = QLabel()
-        self.gif_label.setAlignment(Qt.AlignCenter)
-        self.gif_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        self.movie = QMovie("images/welcome-1.gif")
-        self.movie.setScaledSize(QSize(200, 200))  # Adjust size as needed
-        self.gif_label.setMovie(self.movie)
-        self.movie.start()
-
-        gif_layout = QHBoxLayout()
-        gif_layout.addStretch()
-        gif_layout.addWidget(self.gif_label)
-        gif_layout.addStretch()
-
-        menu_layout.addLayout(gif_layout)
 
         apply_theme(self.central_widget, self.current_theme)
 
