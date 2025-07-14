@@ -6,19 +6,20 @@ QWidget {
 
 /* === TEXT STYLES === */
 QLabel[class="main-title"] {
-    font-size: 30px;
-    font-weight: bold;
-    padding: 20px;
+    font-size: 26px;            
+    font-weight: 600;           
+    padding: 8px 10px;         
 }
 
 QLabel[class="subtitle"] {
-    font-size: 20px;
-    padding: 10px 15px;
+    font-size: 18px;           
+    font-weight: 500;          
+    padding: 6px 10px;
 }
 
 QLabel[class="question-label"] {
-    font-size: 30px;
-    padding: 16px;
+    font-size: 22px;
+    padding: 10px;
 }
 
 /* === ANSWER INPUT BASE === */
@@ -42,8 +43,9 @@ QLabel[class="question-label"][theme="light"] {
 }
 
 QLineEdit[class="answer-input"][theme="light"] {
-    background-color: #ffffff;
-    border: 2px solid #ccc;
+    font-size: 20px;
+    padding: 6px 10px;             /* Top-bottom padding should be less */
+    min-width: 140px;
     color: #000;
 }
 
@@ -52,13 +54,14 @@ QLineEdit[class="answer-input"][theme="light"]:focus {
     background-color: #eef9ff;
 }
 
-/* LIGHT BUTTONS */
+/* LIGHT THEME BUTTONS */
 QPushButton[class="menu-button"][theme="light"],
 QPushButton[class="footer-button"][theme="light"],
 QPushButton#audio-button[theme="light"] {
     background-color: #3498db;
     color: white;
     font-size: 16px;
+    font-weight: normal;
     padding: 10px 20px;
     border-radius: 8px;
     border: 1px solid #2980b9;
@@ -67,7 +70,7 @@ QPushButton#audio-button[theme="light"] {
 QPushButton[class="menu-button"][theme="light"]:hover,
 QPushButton[class="footer-button"][theme="light"]:hover,
 QPushButton#audio-button[theme="light"]:hover {
-    background-color: #2980b9;
+    background-color: #2471a3; /* Slightly darker hover */
 }
 
 /* === DARK THEME === */
@@ -93,21 +96,99 @@ QLineEdit[class="answer-input"][theme="dark"]:focus {
     border-color: #82cfff;
 }
 
-/* DARK BUTTONS */
+/* DARK THEME BUTTONS */
 QPushButton[class="menu-button"][theme="dark"],
 QPushButton[class="footer-button"][theme="dark"],
 QPushButton#audio-button[theme="dark"] {
     background-color: #2d3748;
     color: #ffffff;
-    border: 1px solid #5dade2;
     font-size: 16px;
     padding: 10px 20px;
     border-radius: 8px;
+    border: 1px solid #5dade2;
 }
 
 QPushButton[class="menu-button"][theme="dark"]:hover,
 QPushButton[class="footer-button"][theme="dark"]:hover,
 QPushButton#audio-button[theme="dark"]:hover {
     background-color: #3c4c5a;
+    color: #ffffff;
+}
+
+/* === QUICK PLAY BUTTON === */
+QPushButton[class="quick-play-button"][theme="light"] {
+    background-color: #e67e22;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 14px 30px;
+    border-radius: 10px;
+    border: 2px solid #d35400;
+}
+
+QPushButton[class="quick-play-button"][theme="light"]:hover {
+    background-color: #d35400;
+}
+
+QPushButton[class="quick-play-button"][theme="dark"] {
+    background-color: #ff8c42;            /* Softer amber-orange */
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 14px 30px;
+    border-radius: 12px;
+    border: 2px solid #ffa366;            /* Lighter orange border */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+QPushButton[class="quick-play-button"][theme="dark"]:hover {
+    background-color: #ff9e57;            /* Slightly brighter on hover */
+    border: 2px solid #ffc07a;
+    color: #000000;                      
+}
+
+QPushButton[class="quick-play-button"][theme="dark"]:focus {
+    background-color: #ffb46a;            
+    border: 3px solid #ffd27f;            
+    color: #000000;
+    outline: none;
+}
+
+/* === TAB FOCUS (ACCESSIBILITY) === */
+QPushButton:focus {
+    outline: none;
+    border: 2px solid #ff9900;
+}
+
+QPushButton[theme="light"]:focus {
+    background-color: #c0d7ecff;
+    color: #000;
+    border: 2px solid #ff9900;
+}
+
+QPushButton[theme="dark"]:focus {
+    background-color: #3a3f44;
+    color: #ffffff;
+    border: 2px solid #ff9900;
+}
+
+/* Quick Play Button Focus */
+QPushButton[class="quick-play-button"]:focus {
+    border: 3px solid #ffd700;
+}
+
+/* Mute Button Focus */
+QPushButton#audio-button:focus {
+    border: 2px solid #ff9900;
+    outline: none;
+}
+
+QPushButton#audio-button[theme="light"]:focus {
+    background-color: #c0d7ecff;
+    color: #000;
+}
+
+QPushButton#audio-button[theme="dark"]:focus {
+    background-color: #3a3f44;
     color: #ffffff;
 }

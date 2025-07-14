@@ -27,6 +27,7 @@ from PyQt5.QtCore import QTimer
 
 def create_entry_ui(main_window) -> QWidget:
     entry_widget = QWidget()
+    entry_widget.setProperty("theme", main_window.current_theme) 
     layout = QVBoxLayout()
     layout.setAlignment(Qt.AlignCenter)
 
@@ -34,16 +35,12 @@ def create_entry_ui(main_window) -> QWidget:
     label.setFont(QFont("Arial", 24))
     label.setAlignment(Qt.AlignCenter)
 
-    button = QPushButton("Start")
-    button.setFont(QFont("Arial", 16))
-    button.setFixedSize(200, 50)
-    button.setStyleSheet("background-color: #28a745; color: white; border-radius: 8px;")
-
     def start_quiz():
         print("Start button clicked")  # ✅ DEBUG POINT
         from pages.ques_functions import start_uploaded_quiz
         start_uploaded_quiz(main_window)
-
+    
+    button = create_menu_button("Start", start_quiz)
     button.clicked.connect(start_quiz)
 
     layout.addWidget(label)
@@ -51,6 +48,7 @@ def create_entry_ui(main_window) -> QWidget:
     layout.addWidget(button, alignment=Qt.AlignCenter)
 
     entry_widget.setLayout(layout)
+    apply_theme(entry_widget, main_window.current_theme)
     return entry_widget
 
 
@@ -159,17 +157,7 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box.setPlaceholderText(tr("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
     input_box.setValidator(QIntValidator(0, 1000000))  # only positive integers
-    input_box.setStyleSheet("""
-        QLineEdit {
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            padding: 6px 10px;
-        }
-        QLineEdit:focus {
-            border: 2px solid #0078d7;
-            background-color: #f0f8ff;
-        }
-    """)
+    input_box.setProperty("class", "answer-input")
     return input_box
 
 def wrap_center(widget):
@@ -192,6 +180,7 @@ class QuestionWidget(QWidget):
         self.layout.setAlignment(Qt.AlignTop)
         self.setLayout(self.layout)
         self.main_window = window
+        self.setProperty("theme", window.current_theme)
         self.tts = TextToSpeech() # your TTS instance
         self.init_ui()
        
@@ -403,27 +392,24 @@ def create_dynamic_question_ui(section_name, difficulty_index, back_callback,mai
     question_widget = QuestionWidget(processor,main_window)
 
     layout.addWidget(question_widget)
+    apply_theme(container, main_window.current_theme)
     return container
 
+
 def apply_theme(widget, theme):
-        """
-        Recursively apply theme properties to widget and all children.
-        This ensures styling defined in .qss using [theme="..."] and class="..."] is respected.
-        """
-        if not widget:
-            return
+    if not widget:
+        return
 
-        widget.setProperty("theme", theme)
-        widget.setStyleSheet("")  # clear any inline styles
-        widget.style().unpolish(widget)
-        widget.style().polish(widget)
+    widget.setProperty("theme", theme)
+    widget.setStyleSheet("")
+    widget.style().unpolish(widget)
+    widget.style().polish(widget)
 
-        for child in widget.findChildren(QWidget):
-            child.setProperty("theme", theme)
-            child.setStyleSheet("")
-            child.style().unpolish(child)
-            child.style().polish(child)
-
+    for child in widget.findChildren((QWidget, QLabel, QLineEdit, QPushButton)):
+        child.setProperty("theme", theme)
+        child.setStyleSheet("")
+        child.style().unpolish(child)
+        child.style().polish(child)
 
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, initial_difficulty=1, main_window=None):
@@ -489,20 +475,7 @@ class SettingsDialog(QDialog):
         self.difficulty_label.setAccessibleDescription(
          f"Currently selected difficulty is {level}"
          )   
-
-    def update_difficulty_label(self, value):
-            level_name = DIFFICULTY_LEVELS[value]
-            self.difficulty_label.setText(level_name)
-            self.difficulty_slider.setAccessibleDescription(
-                f"Difficulty level selected: {level_name}. Use left or right arrow keys to change it. Levels are: Simple, Easy, Medium, Hard, and Challenging."
-            )
-
-    def update_difficulty_label(self, index):
-        level = DIFFICULTY_LEVELS[index]
-        self.difficulty_label.setText(level)
-        self.difficulty_label.setAccessibleDescription(f"Currently selected difficulty is {level}")
-
-
+        
     def handle_reset_language(self):
         from main import RootWindow, MainWindow  # Dynamically import to avoid circular imports
         
