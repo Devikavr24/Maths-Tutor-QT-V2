@@ -11,8 +11,7 @@ from pages.shared_ui import (
     create_menu_button,
     create_vertical_layout,
     create_dynamic_question_ui,
-    create_dynamic_question_ui,
-    create_entry_ui,
+    create_entry_ui, apply_theme,
     QuestionWidget
 )
 
@@ -97,6 +96,7 @@ def upload_excel(parent_widget):
     QMessageBox.information(parent_widget, "Success", "Questions uploaded successfully!")
     main_window=parent_widget
     entry_ui = create_entry_ui(main_window)
+    apply_theme(entry_ui, main_window.current_theme)  
     main_window.setCentralWidget(entry_ui)
     
 
@@ -108,7 +108,6 @@ def load_entry_page(main_window):
         main_window.setCentralWidget(entry_ui)
 
   # global storage
-
 
 def start_uploaded_quiz(main_window):
     global uploaded_df
@@ -122,5 +121,6 @@ def start_uploaded_quiz(main_window):
     print(processor.df)
 
     question_widget = QuestionWidget(processor, window=main_window)
+    apply_theme(question_widget, main_window.current_theme)
     main_window.setCentralWidget(question_widget)
-
+   
