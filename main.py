@@ -6,14 +6,14 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import Qt,QUrl, QSize
 from question.loader import QuestionProcessor
-from pages.shared_ui import create_footer_buttons, apply_theme, SettingsDialog
+from pages.shared_ui import create_footer_buttons, apply_theme, SettingsDialog, create_main_footer_buttons
 from pages.ques_functions import load_pages, upload_excel   # ← your new function
 
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
 from language.language import get_saved_language,save_selected_language_to_file,tr
 
-from PyQt5.QtGui import QMovie, QKeySequence
+from PyQt5.QtGui import QMovie, QKeySequence, QPixmap, QFont, QIcon
 
 
 
@@ -224,22 +224,37 @@ class MainWindow(QMainWindow):
         self.stack = QStackedWidget()
         self.stack.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+        # Create the mode selection page (startup)
         self.startup_widget = self.create_mode_selection_page()
         self.stack.addWidget(self.startup_widget)  # index 0
+
+    # Create the home menu page
+        
         self.stack.addWidget(self.menu_widget)     # index 1
+
+# Show the startup (mode selection) page first
         self.stack.setCurrentWidget(self.startup_widget)
 
+# Add the stacked widget to main layout
         self.main_layout.addWidget(self.stack)
 
-        self.main_footer = self.create_main_footer_buttons()
-        self.section_footer = self.create_section_footer()
-        for footer in [self.main_footer, self.section_footer]:
+# Create the footers
+        self.main_footer = create_main_footer_buttons(self)   # For startup & home
+        self.section_footer = self.create_section_footer()     # For sections only
+
+# Footer style & height
+        for footer in (self.main_footer, self.section_footer):
             footer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             footer.setMinimumHeight(63)
 
+    # Add both footers to layout
         self.main_layout.addWidget(self.main_footer)
         self.main_layout.addWidget(self.section_footer)
+
+        # Show main footer initially, hide section footer
+    
         self.section_footer.hide()
+
 
         apply_theme(self.central_widget, self.current_theme)
 
@@ -266,9 +281,9 @@ class MainWindow(QMainWindow):
         layout.addWidget(label)
 
         buttons = [
-            ("🎓 Learning Mode", self.start_learning_mode),
+             ("⚡ Quickplay", self.start_quickplay_mode),
             ("🎮 Game Mode", self.start_game_mode),
-            ("⚡ Quickplay", self.start_quickplay_mode)
+            ("🎓 Learning Mode", self.start_learning_mode)
         ]
 
         for text, callback in buttons:
@@ -278,6 +293,13 @@ class MainWindow(QMainWindow):
             btn.setProperty("theme", self.current_theme)
             btn.clicked.connect(callback)
             layout.addWidget(btn)
+            
+        if text.startswith("⚡ Quickplay"):
+            btn.setFocus()        # Highlight it
+            btn.setDefault(True)  # Enter/Return triggers it
+
+        
+        
 
         return widget
 
@@ -295,40 +317,42 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignCenter)
         widget.setLayout(layout)
 
-        label = QLabel("Select Game Difficulty")
-        label.setAlignment(Qt.AlignCenter)
-        label.setStyleSheet("font-size: 24px; font-weight: bold;")
-        layout.addWidget(label)
+    # Title
+        title_label = QLabel("Select Game Difficulty")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setProperty("class", "main-title")  # Styled in QSS
+        layout.addWidget(title_label)
 
-        # Difficulty Buttons
+    # Subtitle
+        subtitle_label = QLabel("Choose your challenge level")
+        subtitle_label.setAlignment(Qt.AlignCenter)
+        subtitle_label.setProperty("class", "subtitle")  # Optional: define in QSS
+        layout.addWidget(subtitle_label)
+
+    # Difficulty Buttons (Blue Theme, Large, Rounded)
         difficulties = [
-            ("🟢 Easy", 1),
-            ("🟡 Medium", 2),
-            ("🔴 Hard", 3),
-            ("💀 Extra Hard", 4)
+            (" Easy", 1),
+            (" Medium", 2),
+            (" Hard", 3),
+            (" Extra Hard", 4)
         ]
-
         for text, index in difficulties:
             btn = QPushButton(text)
-            btn.setMinimumSize(200, 50)
-            btn.setStyleSheet("font-size: 18px; padding: 10px;")
+            btn.setMinimumSize(260, 70)  # Large size
+            btn.setProperty("class", "menu-button")  # Uses your blue theme QSS
+            btn.setProperty("theme", self.current_theme)
             btn.clicked.connect(lambda _, idx=index: self.load_game_questions(idx))
             layout.addWidget(btn)
 
-        # Back Button
-        back_btn = QPushButton("⬅ Back")
-        back_btn.clicked.connect(lambda: self.stack.setCurrentWidget(self.startup_widget))
-        layout.addWidget(back_btn)
+    # Mole Image (optional visual match to menu)
+        mole_label = QLabel()
+        mole_label.setPixmap(QPixmap("assets/mole.png").scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
+        mole_label.setAlignment(Qt.AlignCenter)
+        layout.addWidget(mole_label)
+
+   
 
         self.main_layout.addWidget(widget)
-
-
-
-
-
-
-
-
 
     def load_game_questions(self, difficulty_index):
         from pages.shared_ui import QuestionWidget
@@ -363,8 +387,19 @@ class MainWindow(QMainWindow):
         self.clear_main_layout()
         question_widget = QuestionWidget(processor, window=self)
         self.main_layout.addWidget(question_widget)
+        
+        footer = create_footer_buttons(
+        ["Back to Menu"],
+        callbacks={"Back to Menu": self.create_mode_selection_page}
+        )
 
+        
+        audio_btn = self.create_audio_button()
+        footer.layout().insertWidget(0, audio_btn)
 
+        self.main_layout.addWidget(footer)
+        
+        
 
 
 
@@ -463,34 +498,13 @@ class MainWindow(QMainWindow):
         # 🔁 Calculate next available row dynamically
         next_row = (len(sections) + 2) // 3
 
-        # ✅ Add QUICK PLAY button on new row
-        quick_play_btn = QPushButton(tr("QUICK PLAY"))
-        quick_play_btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        quick_play_btn.setMinimumHeight(50)
-        quick_play_btn.setProperty("class", "quick-play-button")
-        quick_play_btn.setAccessibleName("Quick Play")
-        quick_play_btn.clicked.connect(lambda: print("[INFO] QUICK PLAY clicked."))
-
-        button_grid.addWidget(quick_play_btn, next_row, 0, 1, 3, alignment=Qt.AlignCenter)
+        
 
         return button_grid
     
-
-    def create_main_footer_buttons(self):
-        buttons = ["Upload", "Settings"]
-        translated = {tr(b): b for b in buttons}  
     
-        footer = create_footer_buttons(
-            list(translated.keys()),
-            callbacks={
-                tr("Upload"): self.handle_upload,
-                tr("Settings"): self.handle_settings
-            }
-        )
-        audio_btn = self.create_audio_button()
-        # ✅ Insert mute button at left (only in main footer)
-        footer.layout().insertWidget(0, audio_btn, alignment=Qt.AlignLeft)
-        return footer
+
+
     
 
     def create_section_footer(self):
@@ -500,7 +514,7 @@ class MainWindow(QMainWindow):
         # Create a mapping from translated labels to callbacks
         callbacks = {
             tr("Back to Operations"): lambda: self.load_section("Operations"),
-            tr("Back to Home"): self.back_to_main_menu,
+            tr("Back to Home"): self.back_to_home,
             tr("Settings"): self.handle_settings
         }
 
@@ -515,6 +529,9 @@ class MainWindow(QMainWindow):
                 btn.setObjectName("back_to_home")
 
         return footer
+
+    
+
 
 
     def handle_settings(self):
@@ -558,7 +575,7 @@ class MainWindow(QMainWindow):
 
         if name not in self.section_pages:
             # Always call load_pages to load/reload based on current difficulty
-            page = load_pages(name, self.back_to_main_menu, difficulty_index=self.current_difficulty, main_window=self)
+            page = load_pages(name,self.back_to_main_menu,  difficulty_index=self.current_difficulty, main_window=self)
 
             if hasattr(self, "current_theme"):
                 page.style().unpolish(page)
@@ -574,12 +591,17 @@ class MainWindow(QMainWindow):
         self.update_back_to_operations_visibility(name)
     
     def back_to_main_menu(self):
-        self.play_sound("home_button_sound.wav")  
-        self.stack.setCurrentWidget(self.menu_widget)
-        self.menu_widget.show()
+        """Switch to the mode selection (startup) page."""
+        self.play_sound("home_button_sound.wav")
+        self.stack.setCurrentWidget(self.startup_widget)  # ✅ Show mode selection page
         self.section_footer.hide()
         self.main_footer.show()
-        self.focus_story_button()
+    def back_to_home(self):
+        """Switch to the home menu page."""
+        self.stack.setCurrentWidget(self.menu_widget)     # ✅ Show home menu page
+        self.section_footer.hide()                        # ✅ Hide section footer
+        self.main_footer.show()                           # ✅ Show main footer
+
 
     def clear_main_layout(self):
         for i in reversed(range(self.main_layout.count())):

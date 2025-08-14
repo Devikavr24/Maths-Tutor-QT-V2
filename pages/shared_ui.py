@@ -150,6 +150,23 @@ def create_footer_buttons(names, callbacks=None, size=(90, 30)) -> QWidget:
     footer.setLayout(layout)
     return footer
 
+def create_main_footer_buttons(self):
+        buttons = ["Back to Menu", "Upload", "Settings"]
+        translated = {tr(b): b for b in buttons}  
+
+        footer = create_footer_buttons(
+            list(translated.keys()),
+            callbacks={
+                tr("Back to Menu"): self.back_to_main_menu,
+                tr("Upload"): self.handle_upload,
+                tr("Settings"): self.handle_settings
+            }
+        )
+
+        audio_btn = self.create_audio_button()
+        footer.layout().insertWidget(0, audio_btn, alignment=Qt.AlignLeft)
+        return footer
+
 def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box = QLineEdit()
     input_box.setFixedSize(width, height)
