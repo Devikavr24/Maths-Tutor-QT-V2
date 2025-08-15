@@ -343,7 +343,7 @@ class MainWindow(QMainWindow):
         def load_next_question():
             random_type = random.choice(self.game_types)
             print("[load_game_question] current random type:", random_type)
-            processor = QuestionProcessor(random_type, difficultyIndex=[self.game_difficulty])
+            processor = QuestionProcessor(random_type, difficultyIndex=self.game_difficulty)
             processor.process_file()
             question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question)
             self.clear_main_layout()

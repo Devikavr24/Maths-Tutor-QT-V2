@@ -352,6 +352,7 @@ class QuestionWidget(QWidget):
 
 
             else:
+               
                 self.processor.retry_count += 1
                 sound_index = random.randint(1, 2)
                 if self.processor.retry_count == 1:
