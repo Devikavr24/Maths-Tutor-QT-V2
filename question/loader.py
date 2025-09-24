@@ -37,6 +37,17 @@ class QuestionProcessor:
             self.df = pd.read_excel(file_path)
 
         self.df = pd.DataFrame(self.df)
+        
+
+        # If you are using "type" column as the section filter:
+        if "type" in self.df.columns:
+            print("[INFO] Available sections (from 'type'):", self.df["type"].unique().tolist())
+
+        # If you are using "section" column:
+        elif "section" in self.df.columns:
+            print("[INFO] Available sections (from 'section'):", self.df["section"].unique().tolist())
+        else:
+            print("[WARNING] No 'section' or 'type' column found in question file")
 
         if self.questionType == "custom":
             print("[Processor] Custom uploaded file detected — skipping filtering.")

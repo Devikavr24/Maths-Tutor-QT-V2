@@ -16,6 +16,7 @@ class QuestionProcessor:
         self.df = pd.read_excel(file_path)
         self.df = self.df[self.df["type"] == self.questionType]
         self.df = self.df.reset_index(drop=True)
+        
 
     def get_random_question(self):
         if self.df.empty:
