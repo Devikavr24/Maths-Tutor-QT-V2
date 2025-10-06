@@ -33,32 +33,48 @@ class QuestionProcessor:
         file_path = os.path.join(os.getcwd(), "question", "question.xlsx")
         print(f"Processing file: {file_path}")
 
-        if self.df is None:
-            self.df = pd.read_excel(file_path)
+        
+        self.df = pd.read_excel(file_path)
 
         self.df = pd.DataFrame(self.df)
+        
+
+        # # If you are using "type" column as the section filter:
+        # if "type" in self.df.columns:
+        #     print("[INFO] Available sections (from 'type'):", self.df["type"].unique().tolist())
+
+        # # If you are using "section" column:
+        # elif "section" in self.df.columns:
+        #     print("[INFO] Available sections (from 'section'):", self.df["section"].unique().tolist())
+        # else:
+        #     print("[WARNING] No 'section' or 'type' column found in question file")
 
         if self.questionType == "custom":
             print("[Processor] Custom uploaded file detected — skipping filtering.")
             return
 
         # Normalize
-        self.df["type"] = self.df["type"].astype(str)
+        #self.df["type"] = self.df["type"].astype(str)
         self.df["difficulty"] = pd.to_numeric(self.df["difficulty"], errors="coerce")
+        self.df["type"] = self.df["type"].astype(str).str.strip().str.lower()
 
         print(f"[Processor] Filtering with section: {self.questionType}")
         
-        # Define difficulty levels to include
+        # # Define difficulty levels to include
         if isinstance(self.difficultyIndex, list):
-            valid_difficulties = self.difficultyIndex
+             valid_difficulties = self.difficultyIndex
         else:
-            valid_difficulties = [self.difficultyIndex]
+             valid_difficulties = [self.difficultyIndex]
+        print("[DEBUG] Unique types in Excel:", self.df["type"].unique())
+        print("[DEBUG] Unique difficulties in Excel:", self.df["difficulty"].unique())
+        print("[DEBUG] Target type:", self.questionType)
+        print("[DEBUG] Target difficulties:", valid_difficulties)
 
         self.df = self.df[
-            (self.df["type"].str.lower() == self.questionType.lower()) &
-            (self.df["difficulty"].isin(valid_difficulties))
-        ]
+        (self.df["type"] == self.questionType.lower().strip()) &
+        (self.df["difficulty"].isin(valid_difficulties))]
 
+        self.df = self.df.sort_values(by="difficulty", ascending=True)
         print(self.df.head())  # Debug
 
     def quickplay(self):
@@ -66,25 +82,31 @@ class QuestionProcessor:
         return self.get_random_question()
     def process_for_quickplay(self):
         file_path = os.path.join(os.getcwd(), "question", "question.xlsx")
-        print(f"Processing file: {file_path}")
+        print(f"[QuickPlay] Reloading file fresh: {file_path}")
 
-        if self.df is None:
-            self.df = pd.read_excel(file_path)
+        df = pd.read_excel(file_path)
+        df = pd.DataFrame(df)
 
-        self.df = pd.DataFrame(self.df)
+        # Normalize
+        df["type"] = df["type"].astype(str).str.strip().str.lower()
+        df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce")
 
-        if self.questionType == "custom":
-            print("[Processor] Custom uploaded file detected — skipping filtering.")
-            return
+        print("[QuickPlay] Unique types in Excel:", df["type"].unique())
+        print("[QuickPlay] Unique difficulties in Excel:", df["difficulty"].unique())
 
-        print(f"[Processor] Filtering with difficulty = {self.difficultyIndex}")
-        
-        self.df = self.df[
-            
-            (self.df["difficulty"] == self.difficultyIndex)
-        ]
+        # Filter only by difficulty
+        df = df[df["difficulty"] == self.difficultyIndex]
 
-        self.df = self.df.sort_values(by="difficulty", ascending=True)
+        if df.empty:
+            print(f"[QuickPlay] No questions found at difficulty {self.difficultyIndex}")
+        else:
+            print(f"[QuickPlay] {len(df)} questions found at difficulty {self.difficultyIndex}")
+
+        # Randomize
+        df = df.sample(frac=1).reset_index(drop=True)
+
+        self.df = df
+
     def get_random_question(self):
         if self.df.empty:
             return "No questions found.", None
