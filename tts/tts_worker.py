@@ -28,12 +28,10 @@ class TTSWorker(QObject):
         if not self.timer.isActive():
             self.timer.start(100)
         
-        # End any previous loop cleanly before starting a new one.
         if self.engine._inLoop:
             try:
                 self.engine.endLoop()
             except RuntimeError:
-                # This can happen in rare cases. Re-initializing is the safest recovery.
                 self.reset()
                 self.init_engine()
 
@@ -41,13 +39,22 @@ class TTSWorker(QObject):
         self.engine.startLoop(False)
 
     def iterate_loop(self):
-        """Periodically drives the pyttsx3 event loop, protected by a mutex."""
+        """
+        Periodically drives the pyttsx3 event loop. This is wrapped in a
+        try/except block to gracefully handle race conditions in the underlying
+        pyttsx3 library, preventing crashes on both Windows and Linux.
+        """
         if self.iterating_lock.tryLock():
             try:
                 if self.engine and self.engine._inLoop:
-                    self.engine.iterate()
+                    try:
+                        self.engine.iterate()
+                    except (RuntimeError, TypeError):
+                        # Catch errors that occur when the loop is ending
+                        # or if the internal iterator becomes None (as seen on Ubuntu).
+                        if self.timer:
+                            self.timer.stop()
                 elif self.timer:
-                    # Stop the timer if the loop has ended to save resources.
                     self.timer.stop()
             finally:
                 self.iterating_lock.unlock()
@@ -58,7 +65,10 @@ class TTSWorker(QObject):
             if self.engine.isBusy():
                 self.engine.stop()
             if self.engine._inLoop:
-                self.engine.endLoop()
+                try:
+                    self.engine.endLoop()
+                except RuntimeError:
+                    pass
 
     def reset(self):
         """Destroys the current engine and timer to allow for a fresh start."""
