@@ -223,7 +223,7 @@ def confirm_exit(window, require_confirmation=True):
 
 
 class QuestionWidget(QWidget):
-    def __init__(self, processor,window=None,next_question_callback=None):
+    def __init__(self, processor, window=None, next_question_callback=None, tts=None):
         super().__init__()
         self.processor = processor
         self.answer = None
@@ -234,7 +234,10 @@ class QuestionWidget(QWidget):
         self.setLayout(self.layout)
         self.main_window = window
         self.setProperty("theme", window.current_theme)
-        self.tts = TextToSpeech() # your TTS instance
+        if tts:
+            self.tts = tts
+        else:
+            self.tts = TextToSpeech()
         self.init_ui()
        
     def init_ui(self):
@@ -332,6 +335,9 @@ class QuestionWidget(QWidget):
 
 
     
+    def set_input_focus(self):
+        self.input_box.setFocus()
+
     def load_new_question(self):
         if hasattr(self, "gif_feedback_label"):
             self.hide_feedback_gif()
@@ -344,6 +350,7 @@ class QuestionWidget(QWidget):
         self.input_box.setText("")
         self.result_label.setText("")
         self.show_feedback_gif("question")
+        QTimer.singleShot(100, self.set_input_focus)
 
         # 🔹 Special case: Bellring → play bells instead of reading numbers
         if self.processor.questionType.lower() == "bellring":
@@ -369,6 +376,12 @@ class QuestionWidget(QWidget):
         self.total_rings = count
         self.bell_timer.start(700)  # 🔔 ring every 700 ms
 
+    def stop_all_activity(self):
+        """Stops all running timers and activities in the widget."""
+        if hasattr(self, "bell_timer") and self.bell_timer.isActive():
+            self.bell_timer.stop()
+            print("[BELL] Bell timer stopped.")
+
     def do_ring(self):
         if self.current_ring < self.total_rings:
             QSound.play("sounds/click-button.wav")  # ensure correct relative path
@@ -388,6 +401,8 @@ class QuestionWidget(QWidget):
             self.processor.submit_answer(user_answer, self.answer, elapsed)
 
             if correct:
+                if hasattr(self, 'tts'):
+                    self.tts.stop()
                 #self.result_label.setMinimumHeight(200)
                 self.result_label.setText('<span style="font-size:16pt;">Correct!</span>')
 
@@ -457,7 +472,7 @@ class QuestionWidget(QWidget):
 
 
 
-def create_dynamic_question_ui(section_name, difficulty_index, back_callback,main_window=None, back_to_operations_callback=None):
+def create_dynamic_question_ui(section_name, difficulty_index, back_callback,main_window=None, back_to_operations_callback=None, tts=None):
     container = QWidget()
     layout = QVBoxLayout()
     layout.setAlignment(Qt.AlignTop)
@@ -466,7 +481,7 @@ def create_dynamic_question_ui(section_name, difficulty_index, back_callback,mai
     processor = QuestionProcessor(section_name, difficulty_index)
     processor.process_file()
     
-    question_widget = QuestionWidget(processor,main_window)
+    question_widget = QuestionWidget(processor,main_window, tts=tts)
 
     layout.addWidget(question_widget)
     apply_theme(container, main_window.current_theme)
@@ -497,8 +512,6 @@ class SettingsDialog(QDialog):
 
         self.main_window = main_window
         self.updated_language = main_window.language if main_window else "English"
-
-        self.tts = TextToSpeech()  # TTS instance
 
         self.difficulty_slider = QSlider(Qt.Horizontal)
         self.difficulty_slider.setMinimum(0)

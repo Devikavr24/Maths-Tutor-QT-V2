@@ -27,7 +27,7 @@ from language.language import tr
 
 
 def load_pages(section_name, back_callback, difficulty_index,
-               main_window=None):
+               main_window=None, tts=None):
 
     page = create_colored_widget("#e0f7fa")
  
@@ -65,7 +65,7 @@ def load_pages(section_name, back_callback, difficulty_index,
         return page
 
     # ✅ For other sections
-    return create_dynamic_question_ui(section_name, difficulty_index, back_callback,main_window=main_window)
+    return create_dynamic_question_ui(section_name, difficulty_index, back_callback,main_window=main_window, tts=tts)
 
 uploaded_df = None
 
@@ -121,7 +121,7 @@ def start_uploaded_quiz(main_window):
     processor.df = uploaded_df  # manually inject uploaded data
     print(processor.df)
 
-    question_widget = QuestionWidget(processor, window=main_window)
+    question_widget = QuestionWidget(processor, window=main_window, tts=main_window.tts)
     apply_theme(question_widget, main_window.current_theme)
     main_window.setCentralWidget(question_widget)
    
