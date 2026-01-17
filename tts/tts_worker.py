@@ -1,86 +1,70 @@
-import pyttsx3
-from PyQt5.QtCore import QObject, pyqtSignal, QThread, QTimer, QMutex
+import platform
+import subprocess
+from PyQt5.QtCore import QObject, pyqtSignal, QThread
+
+if platform.system() == "Windows":
+    import pyttsx3
 
 class TTSWorker(QObject):
     finished = pyqtSignal()
     
     def __init__(self):
         super().__init__()
-        self.engine = None
-        self.timer = None
-        self.iterating_lock = QMutex()
+        if platform.system() == "Windows":
+            self.engine = None
+        else:
+            self.process = None
 
-    def init_engine(self):
-        """Initializes the engine and a timer to drive its event loop."""
+    def speak(self, text):
+        """Speaks text using the appropriate TTS engine for the OS."""
+        if platform.system() == "Windows":
+            self._speak_windows(text)
+        else:
+            self._speak_linux(text)
+
+    def _speak_windows(self, text):
         if not self.engine:
             self.engine = pyttsx3.init()
             self.engine.setProperty('rate', 150)
-            self.timer = QTimer()
-            self.timer.timeout.connect(self.iterate_loop)
-            self.timer.start(100)
-
-    def speak(self, text):
-        """Speaks text using a non-blocking loop."""
-        self.init_engine()
         
-        # Ensure the timer is running, as it might have been stopped
-        # by a previously completed announcement.
-        if not self.timer.isActive():
-            self.timer.start(100)
-        
-        if self.engine._inLoop:
-            try:
-                self.engine.endLoop()
-            except RuntimeError:
-                self.reset()
-                self.init_engine()
+        try:
+            self.engine.say(text)
+            self.engine.runAndWait()
+        except Exception as e:
+            print(f"TTS Error (Windows): {e}")
 
-        self.engine.say(text)
-        self.engine.startLoop(False)
+    def _speak_linux(self, text):
+        """Speaks text using the espeak-ng command-line tool."""
+        if self.process and self.process.poll() is None:
+            self.process.terminate()
+            self.process.wait()
 
-    def iterate_loop(self):
-        """
-        Periodically drives the pyttsx3 event loop. This is wrapped in a
-        try/except block to gracefully handle race conditions in the underlying
-        pyttsx3 library, preventing crashes on both Windows and Linux.
-        """
-        if self.iterating_lock.tryLock():
-            try:
-                if self.engine and self.engine._inLoop:
-                    try:
-                        self.engine.iterate()
-                    except (RuntimeError, TypeError):
-                        # Catch errors that occur when the loop is ending
-                        # or if the internal iterator becomes None (as seen on Ubuntu).
-                        if self.timer:
-                            self.timer.stop()
-                elif self.timer:
-                    self.timer.stop()
-            finally:
-                self.iterating_lock.unlock()
+        try:
+            self.process = subprocess.Popen(['espeak-ng', text])
+        except FileNotFoundError:
+            print("espeak-ng not found. Please install it.")
+        except Exception as e:
+            print(f"An unexpected TTS Error occurred (Linux): {e}")
 
     def stop(self):
-        """Stops the current utterance and ends the event loop."""
-        if self.engine:
-            if self.engine.isBusy():
+        """Stops the current utterance."""
+        if platform.system() == "Windows":
+            if self.engine:
                 self.engine.stop()
-            if self.engine._inLoop:
+        else:
+            if self.process and self.process.poll() is None:
+                self.process.terminate()
                 try:
-                    self.engine.endLoop()
-                except RuntimeError:
-                    pass
+                    self.process.wait(timeout=0.1)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+            self.process = None
 
     def reset(self):
-        """Destroys the current engine and timer to allow for a fresh start."""
-        if self.timer:
-            self.timer.stop()
-        self.engine = None
-        self.timer = None
+        self.stop()
 
     def cleanup(self):
-        """Safely stops the timer from the worker thread before quitting."""
-        if self.timer:
-            self.timer.stop()
+        self.stop()
 
 
 class TextToSpeech(QObject):
