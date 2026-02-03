@@ -8,6 +8,7 @@ from PyQt5.QtCore import Qt,QUrl, QSize
 from question.loader import QuestionProcessor
 from pages.shared_ui import create_footer_buttons, apply_theme, SettingsDialog, create_main_footer_buttons,QuestionWidget,setup_exit_handling 
 from pages.ques_functions import load_pages, upload_excel   # ← your new function
+from tts.tts_worker import TextToSpeech
 
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
@@ -131,6 +132,7 @@ class MainWindow(QMainWindow):
         self.init_ui()
         setup_exit_handling(self, require_confirmation=True)
 
+        self.tts = TextToSpeech()
         self.load_style("main_window.qss")
         self.current_theme = "light"  # Initial theme
 
@@ -380,7 +382,7 @@ class MainWindow(QMainWindow):
             print("[load_game_question] current random type:", random_type)
             processor = QuestionProcessor(random_type, difficultyIndex=self.game_difficulty)
             processor.process_file()
-            question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question)
+            question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
             self.clear_main_layout()
             self.main_layout.addWidget(question_widget)
 
@@ -388,26 +390,29 @@ class MainWindow(QMainWindow):
 
 
     def start_quickplay_mode(self):
-
-        processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-        processor.process_file()
-
         # Container for Quickplay
-        self.quickplay_container = QWidget()
-        quickplay_layout = QVBoxLayout()
-        self.quickplay_container.setLayout(quickplay_layout)
+        if not hasattr(self, "quickplay_container"):
+            self.quickplay_container = QWidget()
+            quickplay_layout = QVBoxLayout()
+            self.quickplay_container.setLayout(quickplay_layout)
+            self.stack.addWidget(self.quickplay_container)
 
-        # QuestionWidget
-        question_widget = QuestionWidget(processor, window=self)
-        question_widget.setProperty("theme", self.current_theme)
-        quickplay_layout.addWidget(question_widget)
+        def load_next_question():
+            processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
+            processor.process_file()
+            
+            question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
+            
+            # Clear previous widgets in the container
+            for i in reversed(range(self.quickplay_container.layout().count())): 
+                widgetToRemove = self.quickplay_container.layout().itemAt(i).widget()
+                widgetToRemove.setParent(None)
 
-        # Add to stack
-        self.stack.addWidget(self.quickplay_container)
-        self.stack.setCurrentWidget(self.quickplay_container)
+            self.quickplay_container.layout().addWidget(question_widget)
+            self.stack.setCurrentWidget(self.quickplay_container)
+            apply_theme(self.quickplay_container, self.current_theme)
 
-        # Apply theme
-        apply_theme(self.quickplay_container, self.current_theme)
+        load_next_question()
 
 
 
@@ -555,7 +560,8 @@ class MainWindow(QMainWindow):
                             section_name,
                             back_callback=self.back_to_main_menu,
                             difficulty_index=self.current_difficulty,
-                            main_window=self
+                            main_window=self,
+                            tts=self.tts
                         )
                         self.section_pages[section_name] = new_page
                         self.stack.addWidget(new_page)
@@ -563,23 +569,28 @@ class MainWindow(QMainWindow):
                         break
 
     def load_section(self, name):
+        if hasattr(self, 'tts'):
+            self.tts.stop()
         print(f"[INFO] Loading section: {name}")
 
-        if not hasattr(self, 'section_pages'):
-            self.section_pages = {}
+        # Always create a new page to ensure fresh state
+        page = load_pages(name, self.back_to_main_menu,  difficulty_index=self.current_difficulty, main_window=self, tts=self.tts)
 
-        if name not in self.section_pages:
-            # Always call load_pages to load/reload based on current difficulty
-            page = load_pages(name,self.back_to_main_menu,  difficulty_index=self.current_difficulty, main_window=self)
+        if hasattr(self, "current_theme"):
+            page.style().unpolish(page)
+            page.style().polish(page)
+            apply_theme(page, self.current_theme)
 
-            if hasattr(self, "current_theme"):
-                page.style().unpolish(page)
-                page.style().polish(page)
-                apply_theme(page, self.current_theme)  # ✅ Apply current theme
-            self.section_pages[name] = page
-            self.stack.addWidget(page)
+        # If a page for this section already exists, remove it
+        if name in self.section_pages:
+            old_page = self.section_pages[name]
+            self.stack.removeWidget(old_page)
+            old_page.deleteLater()
 
-        self.stack.setCurrentWidget(self.section_pages[name])
+        self.section_pages[name] = page
+        self.stack.addWidget(page)
+
+        self.stack.setCurrentWidget(page)
         self.menu_widget.hide()
         self.main_footer.hide()
         self.section_footer.show()
@@ -587,6 +598,16 @@ class MainWindow(QMainWindow):
     
     def back_to_main_menu(self):
         """Switch to the mode selection (startup) page."""
+        # Stop any activity in the current widget (like the bell timer)
+        current_page = self.stack.currentWidget()
+        if current_page:
+            question_widget = current_page.findChild(QuestionWidget)
+            if question_widget:
+                question_widget.stop_all_activity()
+
+        if hasattr(self, 'tts'):
+            self.tts.stop()
+            self.tts.reset()
         self.play_sound("home_button_sound.wav")
         self.stack.setCurrentWidget(self.startup_widget)  # ✅ Show mode selection page
         self.section_footer.hide()
@@ -595,6 +616,16 @@ class MainWindow(QMainWindow):
         
     def back_to_home(self):
         """Switch to the home menu page."""
+        # Stop any activity in the current widget (like the bell timer)
+        current_page = self.stack.currentWidget()
+        if current_page:
+            question_widget = current_page.findChild(QuestionWidget)
+            if question_widget:
+                question_widget.stop_all_activity()
+
+        if hasattr(self, 'tts'):
+            self.tts.stop()
+            self.tts.reset()
         self.stack.setCurrentWidget(self.menu_widget)     # ✅ Show home menu page
         self.section_footer.hide()                        # ✅ Hide section footer
         self.main_footer.show()                           # ✅ Show main footer
@@ -631,6 +662,15 @@ class MainWindow(QMainWindow):
             QMessageBox.No
         )
         if reply == QMessageBox.Yes:
+            # Stop any activity in the current widget
+            current_page = self.stack.currentWidget()
+            if current_page:
+                question_widget = current_page.findChild(QuestionWidget)
+                if question_widget:
+                    question_widget.stop_all_activity()
+            
+            if hasattr(self, 'tts'):
+                self.tts.cleanup()
             event.accept()
         else:
             event.ignore()
