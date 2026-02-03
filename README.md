@@ -1,7 +1,7 @@
 To set up and run the Maths-Tutor-QT-V2 project on a Windows system, please follow the steps below:
 
 Clone the repository
-git clone https://github.com/Devikavr24/Maths-Tutor-QT-V2.git  
+git clone https://github.com/Deviakvr24/Maths-Tutor-QT-V2.git  
 
 
 Make sure you have Python installed, then run the following commands:
