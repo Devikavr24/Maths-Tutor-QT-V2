@@ -173,7 +173,6 @@ Guidelines:
 * Test TTS before submitting changes
 
 ---
----
 
 ## 🗑️ Uninstall / Remove Maths Tutor
 
@@ -190,7 +189,7 @@ If you cloned the repository and ran it locally, the application is **not instal
 #### Option 2: Using Command Prompt (cmd.exe)
 ```bat
 rmdir /s /q Maths-Tutor-QT-V2
-
+```
 ## 📄 License
 
 This project is licensed under the **GNU General Public License v3.0**.
