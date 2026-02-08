@@ -54,20 +54,20 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 
 ### Prerequisites
 
-* Windows 10 or later
-* Python **3.8+** installed and added to PATH
+- Windows 10 or later  
+- Python **3.8+** installed and added to PATH  
 
 ---
 
 ### Clone the Repository
 
-git clone [https://github.com/Deviakvr24/Maths-Tutor-QT-V2.git](https://github.com/Deviakvr24/Maths-Tutor-QT-V2.git)
+```bash
+git clone https://github.com/Deviakvr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
 
----
 
 ### Install Dependencies
-
+```bash
 pip install PyQt5
 pip install pandas
 pip install pyttsx3
@@ -76,7 +76,7 @@ pip install openpyxl
 ---
 
 ### Run the Application
-
+```bash
 python main.py
 
 ---
@@ -93,20 +93,6 @@ python main.py
    * Learning Mode
 3. Choose difficulty or section
 4. Answer questions using the keyboard
-
----
-
-### Keyboard Controls
-
-| Key      | Action                   |
-| -------- | ------------------------ |
-| Enter    | Submit answer / Continue |
-| Space    | Replay current question  |
-| Shift    | Verbose speech mode      |
-| ;        | Decrease speech rate     |
-| '        | Increase speech rate     |
-| Alt + S  | Open Settings            |
-| Ctrl + Q | Quit application         |
 
 ---
 
