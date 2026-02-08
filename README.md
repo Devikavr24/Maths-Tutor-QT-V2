@@ -62,7 +62,7 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/Deviakvr24/Maths-Tutor-QT-V2.git
+git clone https://github.com/Devikavr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
 ```
 
@@ -179,5 +179,5 @@ This project is licensed under the **GNU General Public License v3.0**.
 
 ## 🔗 Links
 
-* Repository: [https://github.com/Deviakvr24/Maths-Tutor-QT-V2](https://github.com/Deviakvr24/Maths-Tutor-QT-V2)
-* Issues: [https://github.com/Deviakvr24/Maths-Tutor-QT-V2/issues](https://github.com/Deviakvr24/Maths-Tutor-QT-V2/issues)
+* Repository: [https://github.com/Devikavr24/Maths-Tutor-QT-V2](https://github.com/Devikavr24/Maths-Tutor-QT-V2)
+* Issues: [https://github.com/Devikavr24/Maths-Tutor-QT-V2/issues](https://github.com/Devikavr24/Maths-Tutor-QT-V2/issues)
