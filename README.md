@@ -6,6 +6,7 @@
 
 **Maths-Tutor-QT-V2** is a desktop-based mathematics learning application built using **PyQt5**.
 It provides interactive math practice with **text-to-speech**, **keyboard-first navigation**, and **multiple learning modes**, with a strong focus on accessibility.
+![Maths-Tutor Icon](images/icon.png)
 
 ---
 
@@ -106,7 +107,7 @@ python main.py
 ---
 
 ## 📁 Project Structure
-```bash
+```text
 Maths-Tutor-QT-V2/
 ├── main.py
 ├── pages/
@@ -170,6 +171,23 @@ Guidelines:
 * Test TTS before submitting changes
 
 ---
+---
+
+## 🗑️ Uninstall / Remove Maths Tutor
+
+If you no longer need **Maths Tutor**, you can remove it using the steps below.
+
+### Windows
+
+If you cloned the repository and ran it locally, the application is **not installed system-wide**.
+
+#### Option 1: Using File Explorer (Recommended)
+- Navigate to the folder where you cloned the project
+- Delete the `Maths-Tutor-QT-V2` folder
+
+#### Option 2: Using Command Prompt (cmd.exe)
+```bat
+rmdir /s /q Maths-Tutor-QT-V2
 
 ## 📄 License
 
