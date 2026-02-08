@@ -64,7 +64,7 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 ```bash
 git clone https://github.com/Deviakvr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
-
+```
 
 ### Install Dependencies
 ```bash
@@ -72,13 +72,13 @@ pip install PyQt5
 pip install pandas
 pip install pyttsx3
 pip install openpyxl
-
+```
 ---
 
 ### Run the Application
 ```bash
 python main.py
-
+```
 ---
 
 ## 🎮 How to Use
@@ -106,7 +106,7 @@ python main.py
 ---
 
 ## 📁 Project Structure
-
+```bash
 Maths-Tutor-QT-V2/
 ├── main.py
 ├── pages/
@@ -126,7 +126,7 @@ Maths-Tutor-QT-V2/
 ├── images/
 ├── assets/
 └── README.md
-
+```
 ---
 
 ## 🧪 Custom Questions (Excel)
