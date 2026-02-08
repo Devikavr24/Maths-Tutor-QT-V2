@@ -6,6 +6,8 @@
 
 **Maths-Tutor-QT-V2** is a desktop-based mathematics learning application built using **PyQt5**.
 It provides interactive math practice with **text-to-speech**, **keyboard-first navigation**, and **multiple learning modes**, with a strong focus on accessibility.
+
+
 ![Maths-Tutor Icon](images/icon.png)
 
 ---
