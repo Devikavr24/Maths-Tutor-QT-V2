@@ -1,8 +1,11 @@
 import os, shutil
 import pandas as pd
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QInputDialog, QHBoxLayout, QWidget ,QVBoxLayout ,QGridLayout
-from question.loader import  QuestionProcessor
+from PyQt5.QtWidgets import (
+    QFileDialog, QMessageBox, QInputDialog, QHBoxLayout, QWidget,
+    QVBoxLayout, QGridLayout, QPushButton, QLabel, QSizePolicy
+)
+from question.loader import QuestionProcessor
 # pages/ques_functions.py
 
 from pages.shared_ui import (
@@ -14,13 +17,6 @@ from pages.shared_ui import (
     create_entry_ui, apply_theme,
     QuestionWidget
 )
-
-from question.loader import QuestionProcessor
-import os, shutil
-import pandas as pd
-
-from PyQt5.QtWidgets import QFileDialog, QMessageBox, QInputDialog,QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,QPushButton, QLabel, QSizePolicy
-from PyQt5.QtCore import Qt
 
 from language.language import tr
 
@@ -35,10 +31,11 @@ def load_pages(section_name, back_callback, difficulty_index,
  
     # 👉 Custom logic for "Operations"
     if section_name.lower() == "operations":
-        title = create_label("Choose an Operation", bold=True)
         title = create_label(tr("Choose an Operation"), bold=True)
         title.setProperty("class", "subtitle")
         title.setAlignment(Qt.AlignCenter)
+        # ✅ ACCESSIBILITY: Screen reader announces operations heading
+        title.setAccessibleName(tr("Choose an Operation"))
 
         grid = QGridLayout()
         grid.setSpacing(20)
@@ -49,6 +46,9 @@ def load_pages(section_name, back_callback, difficulty_index,
             translated=tr(sub)
             btn = create_menu_button(translated, lambda _, s=sub: main_window.load_section(s))
             btn.setFixedSize(180, 60)
+            # ✅ ACCESSIBILITY: Screen reader announces each operation button
+            btn.setAccessibleName(translated)
+            btn.setAccessibleDescription(f"Practice {translated} problems")
             grid.addWidget(btn, i // 2, i % 2)  # 2 columns
 
         wrapper = QWidget()

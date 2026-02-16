@@ -52,6 +52,7 @@ class RootWindow(QDialog):
         # ✅ ACCESSIBILITY: Link label to combo box (Screen reader says "Select language: English")
         language_label.setBuddy(self.language_combo)
         self.language_combo.setAccessibleName("Language Selection")
+        self.language_combo.setAccessibleDescription("Choose from English, Hindi, Malayalam, Tamil, Arabic, or Sanskrit")
         
         layout.addWidget(language_label)
         layout.addWidget(self.language_combo)
@@ -61,6 +62,8 @@ class RootWindow(QDialog):
             self.remember_check.setChecked(False)
             self.remember_check.setProperty("class", "checkbox")
             self.remember_check.setStyleSheet("color: #ffffff;")
+            self.remember_check.setAccessibleName("Remember my selection")
+            self.remember_check.setAccessibleDescription("If checked, the app will skip this dialog next time")
             layout.addWidget(self.remember_check)
         
         layout.addStretch()
@@ -70,12 +73,16 @@ class RootWindow(QDialog):
         self.ok_button = QPushButton("Continue")
         self.ok_button.setDefault(True)
         self.ok_button.setAutoDefault(True)
-        self.ok_button.setFocus()
+        self.language_combo.setFocus()
+        self.ok_button.setAccessibleName("Continue")
+        self.ok_button.setAccessibleDescription("Confirm language selection and continue to the app")
 
         self.cancel_button = QPushButton("Cancel")
         self.cancel_button.setAutoDefault(False)
         self.cancel_button.setShortcut(Qt.Key_Escape)
-        self.cancel_button.setProperty("class", "danger-button") 
+        self.cancel_button.setProperty("class", "danger-button")
+        self.cancel_button.setAccessibleName("Cancel")
+        self.cancel_button.setAccessibleDescription("Close the dialog without selecting a language")
 
 
         btns = QHBoxLayout()
@@ -88,6 +95,13 @@ class RootWindow(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         self.ok_button.clicked.connect(self.handle_continue)
 
+        # ✅ ACCESSIBILITY: Explicit tab order
+        QWidget.setTabOrder(self.language_combo, self.ok_button)
+        if not self.minimal:
+            QWidget.setTabOrder(self.language_combo, self.remember_check)
+            QWidget.setTabOrder(self.remember_check, self.ok_button)
+        QWidget.setTabOrder(self.ok_button, self.cancel_button)
+
 
 
     
@@ -98,7 +112,8 @@ class RootWindow(QDialog):
         from language.language import set_language
         set_language(selected)
         print(selected)
-        self.remember = self.remember_check.isChecked() if not self.minimal else False
+        # BUG FIX: Guard against missing remember_check in minimal mode
+        self.remember = (hasattr(self, 'remember_check') and self.remember_check.isChecked()) if not self.minimal else False
 
         
         if self.remember:
@@ -141,9 +156,6 @@ class MainWindow(QMainWindow):
         
         setup_exit_handling(self, require_confirmation=True)
         self.init_ui()
-        # 2. Add Ctrl+Q shortcut to Quit the App (Optional)
-        self.quit_shortcut = QShortcut(QKeySequence("Ctrl+Q"), self)
-        self.quit_shortcut.activated.connect(QApplication.quit)
 
         self.tts = TextToSpeech()
         self.load_style("main_window.qss")
@@ -198,12 +210,12 @@ class MainWindow(QMainWindow):
         self.theme_button = QPushButton("🌙")
         self.theme_button.setToolTip("Toggle Light/Dark Theme")
         self.theme_button.clicked.connect(self.toggle_theme)
-        self.theme_button.setAccessibleName("Theme Toggle Button")
+        # ✅ ACCESSIBILITY: Short, clean name for screen readers (no welcome text)
+        self.theme_button.setAccessibleName("Toggle theme. Currently light mode")
+        self.theme_button.setAccessibleDescription("")
         self.theme_button.setProperty("class", "menu-button")
-
-        from language.language import translations
-        desc = f"{translations[self.language]['welcome']} {translations[self.language]['ready'].format(lang=self.language)}"
-        self.theme_button.setAccessibleDescription(desc)
+        # ✅ FOCUS FIX: TabFocus only — prevents theme button from grabbing initial focus
+        self.theme_button.setFocusPolicy(Qt.TabFocus)
 
         # ✅ Add theme button to global top bar
         self.top_bar = QWidget()
@@ -243,6 +255,9 @@ class MainWindow(QMainWindow):
         # GIF Section 
         self.gif_label = QLabel()
         self.gif_label.setAlignment(Qt.AlignCenter)
+        # ✅ ACCESSIBILITY: Mark decorative animation as hidden from screen readers
+        self.gif_label.setAccessibleName("")
+        self.gif_label.setAccessibleDescription("")
         self.movie = QMovie("images/welcome-1.gif")
         self.movie.setScaledSize(QSize(150, 150))
         self.gif_label.setMovie(self.movie)
@@ -262,6 +277,7 @@ class MainWindow(QMainWindow):
         # Stack and footers
         self.stack = QStackedWidget()
         self.stack.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.stack.setAccessibleName("Content area")
 
         # Create the mode selection page (startup)
         self.startup_widget = self.create_mode_selection_page()
@@ -293,6 +309,11 @@ class MainWindow(QMainWindow):
         # Show main footer initially, hide section footer
     
         self.section_footer.hide()
+
+        # ✅ Hide "Back to Menu" on startup page — there's nowhere to go back to
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn:
+            back_btn.hide()
 
 
         apply_theme(self.central_widget, self.current_theme)
@@ -358,6 +379,10 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.menu_widget)
         self.main_footer.show()
         self.section_footer.hide()
+        # Show "Back to Menu" button (hidden on startup page)
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn:
+            back_btn.show()
         self.play_sound("click-button.wav")
 
     def start_game_mode(self):
@@ -365,6 +390,10 @@ class MainWindow(QMainWindow):
             self.stack.setCurrentWidget(self.game_mode_container)
             self.main_footer.show()      # Show the global footer
             self.section_footer.hide()   # Hide section footer
+            # Show "Back to Menu" button (hidden on startup page)
+            back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+            if back_btn:
+                back_btn.show()
             return
 
         # Create container
@@ -393,12 +422,18 @@ class MainWindow(QMainWindow):
             btn.setProperty("class", "menu-button")
             btn.setProperty("theme", self.current_theme)
             btn.clicked.connect(lambda _, idx=index: self.load_game_questions(idx))
+            # ✅ ACCESSIBILITY: Announce difficulty level to screen readers
+            btn.setAccessibleName(f"{text} difficulty")
+            btn.setAccessibleDescription(f"Start game at {text} difficulty level")
             layout.addWidget(btn)
 
         # Optional Mole Image
         mole_label = QLabel()
         mole_label.setPixmap(QPixmap("assets/mole.png").scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
         mole_label.setAlignment(Qt.AlignCenter)
+        # ✅ ACCESSIBILITY: Mark decorative image as hidden from screen readers
+        mole_label.setAccessibleName("")
+        mole_label.setAccessibleDescription("")
         layout.addWidget(mole_label)
 
         # Add to stack
@@ -408,6 +443,10 @@ class MainWindow(QMainWindow):
         # Show the **global footer**
         self.main_footer.show()
         self.section_footer.hide()   # Hide section footer for Game Mode
+        # Show "Back to Menu" button (hidden on startup page)
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn:
+            back_btn.show()
 
         # Apply theme
         apply_theme(self.game_mode_container, self.current_theme)
@@ -419,46 +458,169 @@ class MainWindow(QMainWindow):
         import random
 
         self.clear_main_layout()
+        self.top_bar.hide()  # Hide theme toggle while playing
 
         self.game_types = ["Multiplication", "Percentage", "Division", "Currency", "Story", "Time", "Distance", "Bellring","Addition", "Subtraction", "Remainder"]
         self.game_difficulty = difficulty_index
 
-        def load_next_question():
-            random_type = random.choice(self.game_types)
-            print("[load_game_question] current random type:", random_type)
-            processor = QuestionProcessor(random_type, difficultyIndex=self.game_difficulty)
-            processor.process_file()
-            question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
-            self.clear_main_layout()
-            self.main_layout.addWidget(question_widget)
+        # Create initial processor
+        random_type = random.choice(self.game_types)
+        print("[load_game_question] current random type:", random_type)
+        processor = QuestionProcessor(random_type, difficultyIndex=self.game_difficulty)
+        processor.process_file()
 
-        load_next_question()
+        def load_next_question():
+            # Reuse the same widget — just swap the processor and reload
+            new_type = random.choice(self.game_types)
+            print("[load_game_question] current random type:", new_type)
+            new_processor = QuestionProcessor(new_type, difficultyIndex=self.game_difficulty)
+            new_processor.process_file()
+            question_widget.processor = new_processor
+            question_widget.load_new_question()
+
+        # Create widget once and add to layout
+        question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
+        self.main_layout.addWidget(question_widget)
 
 
     def start_quickplay_mode(self):
+        """Show a one-time guide screen before entering Quick Play."""
+        # If guide was already shown this session, go straight to play
+        if getattr(self, '_quickplay_guide_shown', False):
+            self._proceed_to_quickplay()
+            return
+
+        self._quickplay_guide_shown = True
+
+        # --- Build the guide page ---
+        guide_widget = QWidget()
+        guide_layout = QVBoxLayout()
+        guide_layout.setAlignment(Qt.AlignCenter)
+        guide_layout.setSpacing(20)
+        guide_widget.setLayout(guide_layout)
+
+        # Title
+        title = QLabel("Quick Play Guide")
+        title.setAlignment(Qt.AlignCenter)
+        title.setProperty("class", "main-title")
+        title.setAccessibleName("Quick Play Guide")
+        guide_layout.addWidget(title)
+
+        # Instruction 1
+        line1 = QLabel("1. You can directly start entering answers when the question is shown.")
+        line1.setAlignment(Qt.AlignCenter)
+        line1.setWordWrap(True)
+        line1.setFont(QFont("Arial", 14))
+        line1.setAccessibleName("You can directly start entering answers when the question is shown")
+        guide_layout.addWidget(line1)
+
+        # Instruction 2
+        line2 = QLabel("2. You can try answering the question as long as you want.")
+        line2.setAlignment(Qt.AlignCenter)
+        line2.setWordWrap(True)
+        line2.setFont(QFont("Arial", 14))
+        line2.setAccessibleName("You can try answering the question as long as you want")
+        guide_layout.addWidget(line2)
+
+        guide_layout.addSpacing(30)
+
+        # Buttons
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+
+        go_back_btn = QPushButton("Go Back")
+        go_back_btn.setMinimumSize(160, 50)
+        go_back_btn.setProperty("class", "menu-button")
+        go_back_btn.setAccessibleName("Go Back")
+        go_back_btn.setAccessibleDescription("Return to mode selection")
+        go_back_btn.clicked.connect(self.back_to_main_menu)
+
+        continue_btn = QPushButton("Continue")
+        continue_btn.setMinimumSize(160, 50)
+        continue_btn.setProperty("class", "menu-button")
+        continue_btn.setAccessibleName("Continue to Quick Play")
+        continue_btn.setAccessibleDescription("Start playing")
+        continue_btn.clicked.connect(self._proceed_to_quickplay)
+
+        btn_layout.addWidget(go_back_btn)
+        btn_layout.addSpacing(20)
+        btn_layout.addWidget(continue_btn)
+        btn_layout.addStretch()
+        guide_layout.addLayout(btn_layout)
+
+        # Add to stack and show
+        self.stack.addWidget(guide_widget)
+        self.stack.setCurrentWidget(guide_widget)
+        self.main_footer.hide()
+        self.section_footer.hide()
+        apply_theme(guide_widget, self.current_theme)
+
+        # ✅ ACCESSIBILITY: Screen reader announces guide via the focused button's accessible name
+        # (No TTS — let the screen reader handle it naturally)
+        continue_btn.setAccessibleName(
+            "Quick Play Guide. "
+            "You can directly start entering answers when the question is shown. "
+            "You can try answering the question as long as you want. "
+            "Press space button to continue."
+        )
+
+        # Focus the Continue button so screen reader reads its accessibleName
+        continue_btn.setFocus()
+
+    def _proceed_to_quickplay(self):
+        """Actually start Quick Play mode (called after guide or directly)."""
+        if hasattr(self, 'tts'):
+            self.tts.stop()
+
+        self.top_bar.hide()  # Hide theme toggle while playing
+
+        # ✅ Restore footer visibility (guide page hides both)
+        self.main_footer.show()
+        self.section_footer.hide()
+
+        # Hide Upload button in quickplay — not relevant here
+        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
+        if upload_btn:
+            upload_btn.hide()
+
+        # ✅ Restore "Back to Menu" button (hidden on startup page)
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn:
+            back_btn.show()
+
         # Container for Quickplay
         if not hasattr(self, "quickplay_container"):
             self.quickplay_container = QWidget()
+            # ✅ ACCESSIBILITY: Prevent NVDA from announcing this container as "grouping"
+            self.quickplay_container.setAccessibleName("")
+            self.quickplay_container.setAccessibleDescription("")
             quickplay_layout = QVBoxLayout()
             self.quickplay_container.setLayout(quickplay_layout)
             self.stack.addWidget(self.quickplay_container)
 
-        def load_next_question():
+        # Reuse the same widget if it already exists
+        if hasattr(self, '_quickplay_question_widget') and self._quickplay_question_widget:
             processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
             processor.process_file()
-            
-            question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
-            
-            # Clear previous widgets in the container
-            for i in reversed(range(self.quickplay_container.layout().count())): 
-                widgetToRemove = self.quickplay_container.layout().itemAt(i).widget()
-                widgetToRemove.setParent(None)
-
-            self.quickplay_container.layout().addWidget(question_widget)
+            self._quickplay_question_widget.processor = processor
+            self._quickplay_question_widget.load_new_question()
             self.stack.setCurrentWidget(self.quickplay_container)
-            apply_theme(self.quickplay_container, self.current_theme)
+            return
 
-        load_next_question()
+        # First time — create the widget
+        processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
+        processor.process_file()
+
+        def load_next_question():
+            new_processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
+            new_processor.process_file()
+            self._quickplay_question_widget.processor = new_processor
+            self._quickplay_question_widget.load_new_question()
+
+        self._quickplay_question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
+        self.quickplay_container.layout().addWidget(self._quickplay_question_widget)
+        self.stack.setCurrentWidget(self.quickplay_container)
+        apply_theme(self.quickplay_container, self.current_theme)
 
 
 
@@ -490,7 +652,10 @@ class MainWindow(QMainWindow):
             self.bg_player.setVolume(10)
             
             self.bg_player.play()
-            self.bg_player.mediaStatusChanged.connect(self.loop_background_music)
+            # BUG FIX: Only connect the loop signal once to avoid duplicate connections
+            if not getattr(self, '_bg_loop_connected', False):
+                self.bg_player.mediaStatusChanged.connect(self.loop_background_music)
+                self._bg_loop_connected = True
             print("[BG MUSIC] Playing background music.")
         else:
             print("[BG MUSIC ERROR] File not found:", filepath)
@@ -508,6 +673,9 @@ class MainWindow(QMainWindow):
         self.audio_button.setProperty("class", "footer-button")
         # ✅ Make sure it can receive focus by Tab
         self.audio_button.setFocusPolicy(Qt.StrongFocus)
+        # ✅ ACCESSIBILITY: Give meaningful name for screen readers
+        self.audio_button.setAccessibleName("Audio Unmuted")
+        self.audio_button.setAccessibleDescription("Toggle mute and unmute for sounds and music")
         return self.audio_button
 
     def set_mute(self, state: bool):
@@ -523,6 +691,8 @@ class MainWindow(QMainWindow):
         new_state = not self.is_muted
         self.set_mute(new_state)
         self.audio_button.setText("🔇" if new_state else "🔊")
+        # ✅ ACCESSIBILITY: Update accessible name to reflect current state
+        self.audio_button.setAccessibleName("Audio Muted" if new_state else "Audio Unmuted")
         print("[AUDIO]", "Muted" if new_state else "Unmuted")
         
 
@@ -626,6 +796,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tts'):
             self.tts.stop()
         print(f"[INFO] Loading section: {name}")
+        self.top_bar.hide()  # Hide theme toggle while playing
 
         # Always create a new page to ensure fresh state
         page = load_pages(name, self.back_to_main_menu,  difficulty_index=self.current_difficulty, main_window=self, tts=self.tts)
@@ -652,6 +823,7 @@ class MainWindow(QMainWindow):
     
     def back_to_main_menu(self):
         """Switch to the mode selection (startup) page."""
+        self.top_bar.show()  # Restore theme toggle on menu
         # Stop any activity in the current widget (like the bell timer)
         current_page = self.stack.currentWidget()
         if current_page:
@@ -666,10 +838,19 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.startup_widget)  # ✅ Show mode selection page
         self.section_footer.hide()
         self.main_footer.show()
+        # Restore Upload button (hidden in quickplay)
+        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
+        if upload_btn:
+            upload_btn.show()
+        # ✅ Hide "Back to Menu" on startup page
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn:
+            back_btn.hide()
         self.focus_quickplay_button()
         
     def back_to_home(self):
         """Switch to the home menu page."""
+        self.top_bar.show()  # Restore theme toggle on menu
         # Stop any activity in the current widget (like the bell timer)
         current_page = self.stack.currentWidget()
         if current_page:
@@ -683,6 +864,10 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.menu_widget)     # ✅ Show home menu page
         self.section_footer.hide()                        # ✅ Hide section footer
         self.main_footer.show()                           # ✅ Show main footer
+        # Restore Upload button (hidden in quickplay)
+        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
+        if upload_btn:
+            upload_btn.show()
 
 
     def clear_main_layout(self):
@@ -704,8 +889,9 @@ class MainWindow(QMainWindow):
         self.current_theme = "dark" if self.current_theme == "light" else "light"
         print("Theme switched to:", self.current_theme)
         self.theme_button.setText("☀️" if self.current_theme == "dark" else "🌙")
+        # ✅ ACCESSIBILITY: Short, non-repetitive announcement of current state
+        self.theme_button.setAccessibleName(f"Toggle theme. Currently {self.current_theme} mode")
         apply_theme(self.central_widget, self.current_theme)
-        #self.tts.speak(f"{self.current_theme.capitalize()} theme activated")
 
 
     def update_back_to_operations_visibility(self, section_name):
