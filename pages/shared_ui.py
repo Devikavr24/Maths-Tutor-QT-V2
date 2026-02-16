@@ -643,19 +643,26 @@ class SettingsDialog(QDialog):
         # ✅ ACCESSIBILITY: Update accessible name on level display
         self.difficulty_label.setAccessibleName(f"Current difficulty: {level}")
 
-    # For screen reader — update slider name so it announces the level, not the number
+        # For screen reader — update slider name so it announces the level, not the number
         self.difficulty_slider.setAccessibleName(f"Difficulty: {level}")
         self.difficulty_slider.setAccessibleDescription(
             f"Difficulty level selected: {level}. Use left or right arrow keys to change it. "
             "Levels are: Simple, Easy, Medium, Hard, and Challenging."
             )
 
-    # Optional: Also update the label's description (if used by screen readers)
+        # Optional: Also update the label's description (if used by screen readers)
         self.difficulty_label.setAccessibleDescription(
          f"Currently selected difficulty is {level}"
-         )   
-        
-    # In pages/shared_ui.py
+         )
+
+        # ✅ ACCESSIBILITY FIX: Manually announce the level via TTS
+        # This ensures the user hears "Easy", "Medium" etc. instead of just "1", "2".
+        # We use a delay (500ms) so it speaks AFTER the screen reader announces the number.
+        # This prevents them from talking over each other.
+        if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
+             # Stop previous speech to prevent queue build-up
+             self.main_window.tts.stop()
+             QTimer.singleShot(500, lambda: self.main_window.tts.speak(level))
     # In pages/shared_ui.py -> SettingsDialog class
     def handle_reset_language(self):
         print("--- [DEBUG] handle_reset_language START ---")

@@ -1,4 +1,34 @@
-import sys, os
+import sys, os, subprocess
+
+# ── Accessibility: Enable the Qt5 ↔ AT-SPI bridge for Linux screen readers ──
+# Must be set BEFORE QApplication is created.
+# Force-set (not setdefault) to ensure the bridge activates regardless of desktop settings.
+os.environ["QT_LINUX_ACCESSIBILITY_ALWAYS_ON"] = "1"
+os.environ["QT_ACCESSIBILITY"] = "1"
+
+if sys.platform.startswith("linux"):
+    # Use 'xcb' platform by default on Linux (required for AT-SPI accessibility bridge).
+    # This avoids needing to run with QT_QPA_PLATFORM=xcb explicitly.
+    os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
+
+    # Enable GNOME toolkit-accessibility so the AT-SPI bus accepts connections.
+    try:
+        subprocess.run(
+            ["gsettings", "set", "org.gnome.desktop.interface",
+             "toolkit-accessibility", "true"],
+            check=False, timeout=3, capture_output=True,
+        )
+    except FileNotFoundError:
+        pass  # gsettings not available (non-GNOME or minimal install)
+
+    # ── Fix for pip-installed PyQt5 when pyqt5-qt5 is removed ──
+    # Since we removed the bundled Qt5 libs (to fix accessibility),
+    # PyQt5 needs to be told where the system's Qt5 plugins are.
+    _sys_plugins_dir = "/usr/lib/x86_64-linux-gnu/qt5/plugins"
+    if os.path.isdir(_sys_plugins_dir):
+        os.environ.setdefault("QT_PLUGIN_PATH", _sys_plugins_dir)
+        os.environ.setdefault("QT_QPA_PLATFORM_PLUGIN_PATH", os.path.join(_sys_plugins_dir, "platforms"))
+
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QLabel, QDialog, QVBoxLayout,
     QPushButton, QComboBox, QHBoxLayout, QCheckBox, QFrame,
@@ -845,10 +875,14 @@ if __name__ == "__main__":
         print(lang)
         window = MainWindow(language=lang)
         window.show()
+        window.activateWindow()
+        window.raise_()
         sys.exit(app.exec_())
     else:
         dialog = RootWindow()
         if dialog.exec_() == QDialog.Accepted:
             window = MainWindow(language=dialog.language_combo.currentText())
             window.show()
+            window.activateWindow()
+            window.raise_()
             sys.exit(app.exec_())
