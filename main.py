@@ -489,7 +489,6 @@ class MainWindow(QMainWindow):
         import random
 
         self.clear_main_layout()
-        self.top_bar.hide()  # Hide theme toggle while playing
 
         self.game_types = ["Multiplication", "Percentage", "Division", "Currency", "Story", "Time", "Distance", "Bellring","Addition", "Subtraction", "Remainder"]
         self.game_difficulty = difficulty_index
@@ -523,7 +522,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tts'):
             self.tts.stop()
 
-        self.top_bar.hide()  # Hide theme toggle while playing
+
 
         # ✅ Restore footer visibility (guide page hides both)
         self.main_footer.show()
@@ -750,7 +749,7 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tts'):
             self.tts.stop()
         print(f"[INFO] Loading section: {name}")
-        self.top_bar.hide()  # Hide theme toggle while playing
+
 
         # Always create a new page to ensure fresh state
         page = load_pages(name, self.back_to_main_menu,  difficulty_index=self.current_difficulty, main_window=self, tts=self.tts)
