@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import (
     QPushButton, QComboBox, QHBoxLayout, QCheckBox, QFrame,
     QWidget, QGridLayout,QStackedWidget, QSizePolicy, QShortcut, QMessageBox
 )
-from PyQt5.QtCore import Qt,QUrl, QSize
+from PyQt5.QtCore import Qt,QUrl, QSize, QTimer
 from question.loader import QuestionProcessor
 from pages.shared_ui import create_footer_buttons, apply_theme, SettingsDialog, create_main_footer_buttons,QuestionWidget,setup_exit_handling 
 from pages.ques_functions import load_pages, upload_excel   # ← your new function
@@ -73,7 +73,7 @@ class RootWindow(QDialog):
         self.ok_button = QPushButton("Continue")
         self.ok_button.setDefault(True)
         self.ok_button.setAutoDefault(True)
-        self.language_combo.setFocus()
+        QTimer.singleShot(100, lambda: self.language_combo.setFocus())
         self.ok_button.setAccessibleName("Continue")
         self.ok_button.setAccessibleDescription("Confirm language selection and continue to the app")
 
@@ -101,6 +101,7 @@ class RootWindow(QDialog):
             QWidget.setTabOrder(self.language_combo, self.remember_check)
             QWidget.setTabOrder(self.remember_check, self.ok_button)
         QWidget.setTabOrder(self.ok_button, self.cancel_button)
+
 
 
 
@@ -484,88 +485,8 @@ class MainWindow(QMainWindow):
 
 
     def start_quickplay_mode(self):
-        """Show a one-time guide screen before entering Quick Play."""
-        # If guide was already shown this session, go straight to play
-        if getattr(self, '_quickplay_guide_shown', False):
-            self._proceed_to_quickplay()
-            return
-
-        self._quickplay_guide_shown = True
-
-        # --- Build the guide page ---
-        guide_widget = QWidget()
-        guide_layout = QVBoxLayout()
-        guide_layout.setAlignment(Qt.AlignCenter)
-        guide_layout.setSpacing(20)
-        guide_widget.setLayout(guide_layout)
-
-        # Title
-        title = QLabel("Quick Play Guide")
-        title.setAlignment(Qt.AlignCenter)
-        title.setProperty("class", "main-title")
-        title.setAccessibleName("Quick Play Guide")
-        guide_layout.addWidget(title)
-
-        # Instruction 1
-        line1 = QLabel("1. You can directly start entering answers when the question is shown.")
-        line1.setAlignment(Qt.AlignCenter)
-        line1.setWordWrap(True)
-        line1.setFont(QFont("Arial", 14))
-        line1.setAccessibleName("You can directly start entering answers when the question is shown")
-        guide_layout.addWidget(line1)
-
-        # Instruction 2
-        line2 = QLabel("2. You can try answering the question as long as you want.")
-        line2.setAlignment(Qt.AlignCenter)
-        line2.setWordWrap(True)
-        line2.setFont(QFont("Arial", 14))
-        line2.setAccessibleName("You can try answering the question as long as you want")
-        guide_layout.addWidget(line2)
-
-        guide_layout.addSpacing(30)
-
-        # Buttons
-        btn_layout = QHBoxLayout()
-        btn_layout.addStretch()
-
-        go_back_btn = QPushButton("Go Back")
-        go_back_btn.setMinimumSize(160, 50)
-        go_back_btn.setProperty("class", "menu-button")
-        go_back_btn.setAccessibleName("Go Back")
-        go_back_btn.setAccessibleDescription("Return to mode selection")
-        go_back_btn.clicked.connect(self.back_to_main_menu)
-
-        continue_btn = QPushButton("Continue")
-        continue_btn.setMinimumSize(160, 50)
-        continue_btn.setProperty("class", "menu-button")
-        continue_btn.setAccessibleName("Continue to Quick Play")
-        continue_btn.setAccessibleDescription("Start playing")
-        continue_btn.clicked.connect(self._proceed_to_quickplay)
-
-        btn_layout.addWidget(go_back_btn)
-        btn_layout.addSpacing(20)
-        btn_layout.addWidget(continue_btn)
-        btn_layout.addStretch()
-        guide_layout.addLayout(btn_layout)
-
-        # Add to stack and show
-        self.stack.addWidget(guide_widget)
-        self.stack.setCurrentWidget(guide_widget)
-        self.main_footer.hide()
-        self.section_footer.hide()
-        apply_theme(guide_widget, self.current_theme)
-
-        # ✅ ACCESSIBILITY: Screen reader announces guide via the focused button's accessible name
-        # (No TTS — let the screen reader handle it naturally)
-        continue_btn.setAccessibleName(
-            "Quick Play Guide. "
-            "You can directly start entering answers when the question is shown. "
-            "You can try answering the question as long as you want. "
-            "Press space button to continue."
-        )
-
-        # Focus the Continue button so screen reader reads its accessibleName
-        continue_btn.setFocus()
+        """Start Quick Play mode directly."""
+        self._proceed_to_quickplay()
 
     def _proceed_to_quickplay(self):
         """Actually start Quick Play mode (called after guide or directly)."""
@@ -768,11 +689,14 @@ class MainWindow(QMainWindow):
         )
 
         if dialog.exec_() == QDialog.Accepted:
-            # Update global difficulty and language
+            # Update global difficulty
             self.current_difficulty = dialog.get_difficulty_index()
-            self.language = dialog.get_selected_language()
 
-            self.setWindowTitle(f"Maths Tutor - {self.language}")
+            # Only update language and window title if the language actually changed
+            new_language = dialog.get_selected_language()
+            if new_language != self.language:
+                self.language = new_language
+                self.setWindowTitle(f"Maths Tutor - {self.language}")
 
             # Reload current section if not on main menu
             current_widget = self.stack.currentWidget()

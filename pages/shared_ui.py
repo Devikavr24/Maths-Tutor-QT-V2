@@ -365,12 +365,13 @@ class QuestionWidget(QWidget):
         if app_tts_active:
             # OPTION A: TTS IS ON
             if hasattr(self, 'tts'):
+                tts_text = question_text + ". Type your answer"
                 if self._question_count == 0:
                     # Brief delay for first question to let UI settle
-                    QTimer.singleShot(500, lambda: self.tts.speak(question_text))
+                    QTimer.singleShot(500, lambda: self.tts.speak(tts_text))
                 else:
                     # Subsequent questions: immediate TTS
-                    self.tts.speak(question_text)
+                    self.tts.speak(tts_text)
 
         # Defer focus to input field — needs a short delay so the widget
         # is visible in the layout before focus can be set on it
@@ -553,7 +554,7 @@ class SettingsDialog(QDialog):
         self.difficulty_slider.setTracking(True)
         self.difficulty_slider.setFocusPolicy(Qt.StrongFocus)
         self.difficulty_slider.setFocus()
-        self.difficulty_slider.setAccessibleName("Difficulty slider")
+        self.difficulty_slider.setAccessibleName(f"Difficulty: {DIFFICULTY_LEVELS[initial_difficulty]}")
         self.difficulty_slider.setAccessibleDescription(f"Use left or right arrow keys to select difficulty level. The levels are Simple, Easy, Medium, Hard and challenging.")
         self.difficulty_slider.setValue(initial_difficulty)
         self.difficulty_label = create_label(DIFFICULTY_LEVELS[initial_difficulty], font_size=12)
@@ -642,7 +643,8 @@ class SettingsDialog(QDialog):
         # ✅ ACCESSIBILITY: Update accessible name on level display
         self.difficulty_label.setAccessibleName(f"Current difficulty: {level}")
 
-    # For screen reader
+    # For screen reader — update slider name so it announces the level, not the number
+        self.difficulty_slider.setAccessibleName(f"Difficulty: {level}")
         self.difficulty_slider.setAccessibleDescription(
             f"Difficulty level selected: {level}. Use left or right arrow keys to change it. "
             "Levels are: Simple, Easy, Medium, Hard, and Challenging."
