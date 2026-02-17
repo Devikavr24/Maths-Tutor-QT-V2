@@ -640,9 +640,16 @@ class MainWindow(QMainWindow):
     def toggle_audio(self):
         new_state = not self.is_muted
         self.set_mute(new_state)
-        self.audio_button.setText("🔇" if new_state else "🔊")
-        # ✅ ACCESSIBILITY: Update accessible name to reflect current state
-        self.audio_button.setAccessibleName("Audio Muted" if new_state else "Audio Unmuted")
+        
+        # ✅ FIX: Update ALL audio buttons (in both main footer and section footer)
+        # to ensure they stay in sync regardless of which page is visible.
+        icon_text = "🔇" if new_state else "🔊"
+        accessible_name = "Audio Muted" if new_state else "Audio Unmuted"
+
+        for btn in self.findChildren(QPushButton, "audio-button"):
+            btn.setText(icon_text)
+            btn.setAccessibleName(accessible_name)
+
         print("[AUDIO]", "Muted" if new_state else "Unmuted")
         
 
@@ -694,6 +701,10 @@ class MainWindow(QMainWindow):
 
         # Create the footer with translated labels and callbacks
         footer = create_footer_buttons(translated, callbacks=callbacks)
+
+        # ✅ FIX: Add Audio/Mute button to the section footer
+        audio_btn = self.create_audio_button()
+        footer.layout().insertWidget(0, audio_btn, alignment=Qt.AlignLeft)
 
         # ✅ Assign objectName for visibility toggling (very important!)
         for btn in footer.findChildren(QPushButton):
@@ -803,6 +814,15 @@ class MainWindow(QMainWindow):
         
     def back_to_home(self):
         """Switch to the home menu page."""
+        # ✅ CONTEXT-AWARE FIX: 
+        # If we are currently in an "Uploaded Quiz" (which is a raw QuestionWidget instance directly on stack),
+        # we should go back to Mode Selection (Main Menu), NOT Learning Menu.
+        if isinstance(self.stack.currentWidget(), QuestionWidget):
+            self.back_to_main_menu()
+            return
+
+        # ✅ STANDARD LOGIC:
+        # For standard learning modes (Story, Time, etc.), go back to Learning Menu.
         self.top_bar.show()  # Restore theme toggle on menu
         # Stop any activity in the current widget (like the bell timer)
         current_page = self.stack.currentWidget()
