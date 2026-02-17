@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import ( QWidget, QLabel, QHBoxLayout, QPushButton,
                               ,QSpacerItem,QLineEdit,QMessageBox,QApplication,QShortcut )
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QFont, QPalette, QColor, QIntValidator,QKeySequence
+from PyQt5.QtGui import QFont, QPalette, QColor, QKeySequence
 from question.loader import QuestionProcessor
 from time import time
 import random 
@@ -37,6 +37,8 @@ def create_entry_ui(main_window) -> QWidget:
     label = QLabel("Click below to start the quiz")
     label.setFont(QFont("Arial", 24))
     label.setAlignment(Qt.AlignCenter)
+    # ✅ ACCESSIBILITY: Screen reader announces instruction
+    label.setAccessibleName("Click below to start the quiz")
 
     def start_quiz():
         print("Start button clicked")  # ✅ DEBUG POINT
@@ -44,7 +46,10 @@ def create_entry_ui(main_window) -> QWidget:
         start_uploaded_quiz(main_window)
     
     button = create_menu_button("Start", start_quiz)
-    button.clicked.connect(start_quiz)
+    # BUG FIX: Removed duplicate button.clicked.connect(start_quiz) — already connected in create_menu_button
+    # ✅ ACCESSIBILITY: Clear accessible name for start button
+    button.setAccessibleName("Start Quiz")
+    button.setAccessibleDescription("Begin the uploaded quiz")
 
     layout.addWidget(label)
     layout.addSpacing(20)
@@ -121,6 +126,8 @@ def create_menu_button(text, callback):
     button = QPushButton(text)
     button.setFixedSize(200, 40)
     button.setProperty("class", "menu-button")
+    # ✅ ACCESSIBILITY: Screen reader announces button text
+    button.setAccessibleName(text)
     button.clicked.connect(callback)
     return button
 
@@ -146,6 +153,8 @@ def create_footer_buttons(names, callbacks=None, size=(90, 30)) -> QWidget:
         btn.adjustSize() 
         btn.setFont(QFont("Arial", 14))  # or bigger
         btn.setProperty("class", "footer-button")
+        # ✅ ACCESSIBILITY: Screen reader announces button name
+        btn.setAccessibleName(name)
         if callbacks and name in callbacks:
             btn.clicked.connect(callbacks[name])
         layout.addWidget(btn)
@@ -176,12 +185,7 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box.setAlignment(Qt.AlignCenter)
     input_box.setPlaceholderText(tr("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
-    input_box.setValidator(QIntValidator(0, 1000000)) 
     input_box.setProperty("class", "answer-input")
-    
-    # ✅ ACCESSIBILITY: Default name
-    input_box.setAccessibleName(tr("Answer input"))
-    input_box.setAccessibleDescription(tr("Type your answer as a number and press Enter."))
     return input_box
 
 def wrap_center(widget):
@@ -227,25 +231,23 @@ def setup_exit_handling(window, require_confirmation=False):
         
     window.quit_shortcut = QShortcut(QKeySequence("Ctrl+Q"), window)
     window.quit_shortcut.setContext(Qt.ApplicationShortcut)
+    window.quit_shortcut.setWhatsThis("Press Ctrl+Q to quit the application")
     window.quit_shortcut.activated.connect(lambda: check_and_close(event=None))
 
     # 3. Handle X Button (Close Window)
     window.closeEvent = check_and_close
 
 
-# In pages/shared_ui.py
 
-# In pages/shared_ui.py
-
-# In pages/shared_ui.py
-
-# In pages/shared_ui.py
 
 # In pages/shared_ui.py
 
 class QuestionWidget(QWidget):
     def __init__(self, processor, window=None, next_question_callback=None, tts=None):
         super().__init__()
+        # ✅ ACCESSIBILITY: Prevent NVDA from announcing this container as "grouping"
+        self.setAccessibleName("")
+        self.setAccessibleDescription("")
         self.processor = processor
         self.answer = None
         self.start_time = time()
@@ -259,22 +261,14 @@ class QuestionWidget(QWidget):
             self.tts = tts
         else:
             self.tts = TextToSpeech()
+        self._question_count = 0  # Track question number for TTS timing
         self.init_ui()
        
     def init_ui(self):
-        self.question_area = QWidget()
-        question_layout = QVBoxLayout()
-        question_layout.setAlignment(Qt.AlignCenter)
-        self.question_area.setLayout(question_layout)
-
         self.label = QLabel()
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setProperty("class", "question-label")
         self.label.setWordWrap(True)
-       
-        question_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        question_layout.addWidget(self.label)
-        question_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
 
         # ✅ Styled input box
         # We modify the creation slightly to avoid conflicting placeholders
@@ -288,9 +282,14 @@ class QuestionWidget(QWidget):
         self.result_label = QLabel("")
         self.result_label.setAlignment(Qt.AlignCenter)
         self.result_label.setFont(QFont("Arial", 46))
+        # ✅ ACCESSIBILITY: Screen reader will read dynamic feedback
+        # self.result_label.setAccessibleName("")
+        # self.result_label.setAccessibleDescription("Shows whether your answer was correct or wrong")
 
-        # Assemble layout
-        self.layout.addWidget(self.question_area)
+        # Assemble layout (no wrapper QWidget — prevents NVDA "grouping" announcement)
+        self.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        self.layout.addWidget(self.label)
+        self.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
         self.layout.addSpacing(20)
         self.layout.addWidget(self.input_box, alignment=Qt.AlignCenter)
         self.layout.addSpacing(10)
@@ -303,6 +302,9 @@ class QuestionWidget(QWidget):
         self.gif_feedback_label.setScaledContents(True)
         self.gif_feedback_label.setMinimumSize(300, 300)
         self.gif_feedback_label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # ✅ ACCESSIBILITY: Mark decorative feedback animation as hidden from screen readers
+        self.gif_feedback_label.setAccessibleName("")
+        self.gif_feedback_label.setAccessibleDescription("")
 
         self.layout.addWidget(self.gif_feedback_label, alignment=Qt.AlignCenter)
 
@@ -348,13 +350,11 @@ class QuestionWidget(QWidget):
         # Update Visuals
         self.label.setText(question_text)
         
-        # Clearing text usually triggers a "Blank" or "Empty" announcement, which is fine.
-        # We just want to avoid the full label being read again.
-        self.input_box.setText("")
+        self.input_box.clear()
         self.result_label.setText("")
         self.show_feedback_gif("question")
         
-        # --- PREVENT REPETITION & DELAY TTS START ---
+        # --- TTS START ---
         app_tts_active = False
         if self.main_window and not self.main_window.is_muted:
             app_tts_active = True
@@ -364,30 +364,20 @@ class QuestionWidget(QWidget):
 
         if app_tts_active:
             # OPTION A: TTS IS ON
-            # Screen Reader should just see "Answer".
-            desired_name = tr("Answer")
-            
-            # FIX: STRICT CHECK. Do not touch property if it is already correct.
-            if self.input_box.accessibleName() != desired_name:
-                self.input_box.setAccessibleName(desired_name)
-                self.input_box.setAccessibleDescription("") 
-
-            # ✅ DELAY: 2.5 seconds
             if hasattr(self, 'tts'):
-                QTimer.singleShot(2500, lambda: self.tts.speak(question_text))
-        else:
-            # OPTION B: TTS IS OFF
-            # We must update the name to include the question.
-            new_acc_name = f"{tr('Question')}: {question_text}. {tr('Answer')}"
-            
-            # This will always be different, so we update it.
-            self.input_box.setAccessibleName(new_acc_name)
-            self.input_box.setAccessibleDescription("")
+                tts_text = question_text + ". Type your answer"
+                if self._question_count == 0:
+                    # Brief delay for first question to let UI settle
+                    QTimer.singleShot(500, lambda: self.tts.speak(tts_text))
+                else:
+                    # Subsequent questions: immediate TTS
+                    self.tts.speak(tts_text)
 
-        # FIX: Do not blindly call set_input_focus() with a timer.
-        # Only call it if we suspect we aren't focused.
-        if not self.input_box.hasFocus():
-            QTimer.singleShot(100, self.set_input_focus)
+        # Defer focus to input field — needs a short delay so the widget
+        # is visible in the layout before focus can be set on it
+        QTimer.singleShot(100, lambda: self.input_box.setFocus(Qt.OtherFocusReason))
+
+        self._question_count += 1
         # --- END ---
 
         # Handle Bellring Logic
@@ -448,6 +438,9 @@ class QuestionWidget(QWidget):
                 else: feedback_text = "🙂 Okay"
                 
                 self.result_label.setText(f'<span style="font-size:16pt;">{feedback_text}</span>')
+                # ✅ ACCESSIBILITY: Update accessible name with clean feedback for screen readers
+                clean_feedback = feedback_text.replace("🌟", "").replace("👏", "").replace("👍", "").replace("👌", "").replace("🙂", "").strip()
+                self.result_label.setAccessibleName(f"Correct! {clean_feedback}")
                 
                 if app_audio_active:
                     if self.main_window:
@@ -460,6 +453,11 @@ class QuestionWidget(QWidget):
 
                         self.main_window.play_sound(sound_file)
                         self.show_feedback_gif(sound_file)
+                    
+                    # ✅ TTS FEEDBACK: Announce feedback after a short delay
+                    # (300ms lets the sound effect start first, avoids overlap)
+                    if hasattr(self, 'tts'):
+                        QTimer.singleShot(300, lambda t=clean_feedback: self.tts.speak(t))
 
                 # Focus remains on Input Box. Screen reader says nothing extra.
                 # Audio plays "Excellent".
@@ -470,6 +468,8 @@ class QuestionWidget(QWidget):
             else:
                 self.processor.retry_count += 1
                 self.result_label.setText('<span style="font-size:16pt;">Try Again.</span>')
+                # ✅ ACCESSIBILITY: Update accessible name for screen readers
+                self.result_label.setAccessibleName("Incorrect. Try Again.")
 
                 if app_audio_active:
                     sound_index = random.randint(1, 2)
@@ -478,6 +478,10 @@ class QuestionWidget(QWidget):
                     
                     self.main_window.play_sound(sound_file)
                     self.show_feedback_gif(sound_file)
+                    
+                    # ✅ TTS FEEDBACK: Announce "Try Again" after a short delay
+                    if hasattr(self, 'tts'):
+                        QTimer.singleShot(300, lambda: self.tts.speak("Try Again"))
 
                 # Focus remains on Input Box.
                 # Just ensure input is active for typing
@@ -498,6 +502,9 @@ class QuestionWidget(QWidget):
 
 def create_dynamic_question_ui(section_name, difficulty_index, back_callback,main_window=None, back_to_operations_callback=None, tts=None):
     container = QWidget()
+    # ✅ ACCESSIBILITY: Prevent NVDA from announcing this container as "grouping"
+    container.setAccessibleName("")
+    container.setAccessibleDescription("")
     layout = QVBoxLayout()
     layout.setAlignment(Qt.AlignTop)
     container.setLayout(layout)
@@ -545,17 +552,20 @@ class SettingsDialog(QDialog):
         self.difficulty_slider.setTickInterval(1)
         self.difficulty_slider.setTickPosition(QSlider.TicksBelow)
         self.difficulty_slider.setTracking(True)
-        self.difficulty_slider.setFocusPolicy(Qt.StrongFocus)
-        self.difficulty_slider.setFocus()
-        self.difficulty_slider.setAccessibleName("Difficulty slider")
-        self.difficulty_slider.setAccessibleDescription(f"Use left or right arrow keys to select difficulty level. The levels are Simple, Easy, Medium, Hard and challenging.")
+        # Combine instruction into name to ensure it is read
+        self.difficulty_slider.setAccessibleName("Difficulty") 
+        
         self.difficulty_slider.setValue(initial_difficulty)
         self.difficulty_label = create_label(DIFFICULTY_LEVELS[initial_difficulty], font_size=12)
         self.difficulty_label.setProperty("class", "difficulty-label")
         self.difficulty_label.setProperty("theme", parent.current_theme)
-       
+        # ✅ ACCESSIBILITY: Silence this label so it doesn't override the slider's numeric value
+        self.difficulty_label.setAccessibleName(" ")
+
         self.difficulty_slider.valueChanged.connect(self.update_difficulty_label)
-        self.setProperty("class", "settings-dialog")
+        
+        # REDUCED DELAY: 250ms for focus (snappier but safe)
+        QTimer.singleShot(250, lambda: self.difficulty_slider.setFocus())
         self.setProperty("theme", parent.current_theme)  # pass current theme
         
 
@@ -565,10 +575,20 @@ class SettingsDialog(QDialog):
         self.language_reset_btn = QPushButton("Reset Language")
         self.language_reset_btn.setFixedHeight(30)
         self.language_reset_btn.clicked.connect(self.handle_reset_language)
+        # ✅ ACCESSIBILITY: Screen reader announces button purpose
+        self.language_reset_btn.setAccessibleName("Reset Language")
+        self.language_reset_btn.setAccessibleDescription("Clear saved language preference and choose a new language")
 
         button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         button_box.accepted.connect(self.accept_settings)
         button_box.rejected.connect(self.reject)
+        # ✅ ACCESSIBILITY: Set accessible names on OK/Cancel buttons
+        ok_btn = button_box.button(QDialogButtonBox.Ok)
+        cancel_btn = button_box.button(QDialogButtonBox.Cancel)
+        if ok_btn:
+            ok_btn.setAccessibleName("OK — Apply settings")
+        if cancel_btn:
+            cancel_btn.setAccessibleName("Cancel — Discard changes")
 
         self.setMinimumSize(400, 280)  # Better size for spacing
 
@@ -579,6 +599,9 @@ class SettingsDialog(QDialog):
         difficulty_label = QLabel("Select Difficulty:")
         difficulty_label.setProperty("class", "difficulty-label")
         difficulty_label.setProperty("theme", parent.current_theme)
+        # ✅ ACCESSIBILITY: Link label to slider for screen readers and put instruction here
+        difficulty_label.setAccessibleName("Select Difficulty. Use left or right arrow keys to select difficulty level.") 
+        difficulty_label.setBuddy(self.difficulty_slider)
         layout.addWidget(difficulty_label)
         layout.addWidget(self.difficulty_slider)
         layout.addWidget(self.difficulty_label)
@@ -593,6 +616,11 @@ class SettingsDialog(QDialog):
         for btn in [self.help_button, self.about_button]:
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             btn.setFixedHeight(30)
+        # ✅ ACCESSIBILITY: Screen reader announces button purpose
+        self.help_button.setAccessibleName("Help")
+        self.help_button.setAccessibleDescription("View help information about Maths Tutor")
+        self.about_button.setAccessibleName("About")
+        self.about_button.setAccessibleDescription("View information about the application")
         extra_buttons_layout.addWidget(self.help_button)
         extra_buttons_layout.addWidget(self.about_button)
         layout.addLayout(extra_buttons_layout)
@@ -602,23 +630,29 @@ class SettingsDialog(QDialog):
 
         self.setLayout(layout)
 
+        # ✅ ACCESSIBILITY: Explicit tab order through Settings dialog
+        QWidget.setTabOrder(self.difficulty_slider, self.language_reset_btn)
+        QWidget.setTabOrder(self.language_reset_btn, self.help_button)
+        QWidget.setTabOrder(self.help_button, self.about_button)
+        if ok_btn and cancel_btn:
+            QWidget.setTabOrder(self.about_button, ok_btn)
+            QWidget.setTabOrder(ok_btn, cancel_btn)
+
 
     def update_difficulty_label(self, index):
         level = DIFFICULTY_LEVELS[index]
         self.difficulty_label.setText(level)
+        # ✅ ACCESSIBILITY: Keep label silent (TTS handles the name, slider handles the number)
+        self.difficulty_label.setAccessibleName(" ")
 
-    # For screen reader
-        self.difficulty_slider.setAccessibleDescription(
-            f"Difficulty level selected: {level}. Use left or right arrow keys to change it. "
-            "Levels are: Simple, Easy, Medium, Hard, and Challenging."
-            )
 
-    # Optional: Also update the label's description (if used by screen readers)
-        self.difficulty_label.setAccessibleDescription(
-         f"Currently selected difficulty is {level}"
-         )   
-        
-    # In pages/shared_ui.py
+
+        # ✅ ACCESSIBILITY FIX: Manually announce the level via TTS
+        # Use a short delay (200ms) for responsiveness during interaction
+        if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
+             # Stop previous speech to prevent queue build-up
+             self.main_window.tts.stop()
+             QTimer.singleShot(200, lambda: self.main_window.tts.speak(level))
     # In pages/shared_ui.py -> SettingsDialog class
     def handle_reset_language(self):
         print("--- [DEBUG] handle_reset_language START ---")

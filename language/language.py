@@ -51,7 +51,12 @@ translations = {
         "continue": "Continue",
         "cancel": "Cancel",
         "Choose an Operation": "Choose an Operation",
-        "Enter your answer": "Enter your answer"
+        "Enter your answer": "Enter your answer",
+        "Back to Menu": "Back to Menu",
+        "Answer": "Answer",
+        "Question": "Question",
+        "Answer input": "Answer input",
+        "Type your answer as a number and press Enter.": "Type your answer as a number and press Enter."
     },
     "മലയാളം": {
         "welcome": "മാത്‌സ് ട്യൂട്ടറിലേക്ക് സ്വാഗതം!",
@@ -79,7 +84,12 @@ translations = {
         "continue": "തുടരുക",
         "cancel": "റദ്ദാക്കുക",
         "Choose an Operation": "ഒരു ഗണിത പ്രവർത്തനം തിരഞ്ഞെടുക്കൂ",
-        "Enter your answer": "നിങ്ങളുടെ ഉത്തരമിടുക"
+        "Enter your answer": "നിങ്ങളുടെ ഉത്തരമിടുക",
+        "Back to Menu": "മെനുവിലേക്ക് മടങ്ങുക",
+        "Answer": "ഉത്തരം",
+        "Question": "ചോദ്യം",
+        "Answer input": "ഉത്തര ഇൻപുട്ട്",
+        "Type your answer as a number and press Enter.": "നിങ്ങളുടെ ഉത്തരം ഒരു നമ്പരായി ടൈപ്പ് ചെയ്ത് Enter അമർത്തുക."
     },
     "हिंदी": {
         "welcome": "मैथ्स ट्यूटर में आपका स्वागत है!",
@@ -107,7 +117,12 @@ translations = {
         "continue": "जारी रखें",
         "cancel": "रद्द करें",
         "Choose an Operation": "एक गणितीय क्रिया चुनें",
-        "Enter your answer": "अपना उत्तर दर्ज करें"
+        "Enter your answer": "अपना उत्तर दर्ज करें",
+        "Back to Menu": "मेनू पर वापस जाएं",
+        "Answer": "उत्तर",
+        "Question": "प्रश्न",
+        "Answer input": "उत्तर इनपुट",
+        "Type your answer as a number and press Enter.": "अपना उत्तर एक संख्या के रूप में टाइप करें और Enter दबाएं।"
     },
     "தமிழ்": {
         "welcome": "மாத்த்ஸ் டூட்டருக்கு வரவேற்கிறோம்!",
@@ -135,7 +150,12 @@ translations = {
         "continue": "தொடரவும்",
         "cancel": "ரத்து செய்",
         "Choose an Operation": "ஒரு கணிதச் செயலைத் தேர்ந்தெடுக்கவும்",
-        "Enter your answer": "உங்கள் பதிலை உள்ளிடுங்கள்"
+        "Enter your answer": "உங்கள் பதிலை உள்ளிடுங்கள்",
+        "Back to Menu": "மெனுவுக்கு திரும்பு",
+        "Answer": "பதில்",
+        "Question": "கேள்வி",
+        "Answer input": "பதில் உள்ளீடு",
+        "Type your answer as a number and press Enter.": "உங்கள் பதிலை ஒரு எண்ணாக தட்டச்சு செய்து Enter அமுக்கவும்."
     },
     "عربي": {
         "welcome": "مرحبًا بك في معلم الرياضيات!",
@@ -163,7 +183,12 @@ translations = {
         "continue": "متابعة",
         "cancel": "إلغاء",
         "Choose an Operation": "اختر عملية رياضية",
-        "Enter your answer": "أدخل إجابتك"
+        "Enter your answer": "أدخل إجابتك",
+        "Back to Menu": "العودة إلى القائمة",
+        "Answer": "إجابة",
+        "Question": "سؤال",
+        "Answer input": "إدخال الإجابة",
+        "Type your answer as a number and press Enter.": "اكتب إجابتك كرقم واضغط Enter."
     },
     "संस्कृत": {
         "welcome": "गणितशिक्षके स्वागतम्!",
@@ -191,7 +216,12 @@ translations = {
         "continue": "अनुवर्तस्व",
         "cancel": "निरसयतु",
         "Choose an Operation": "एकां गणितक्रियाम् चयनयतु",
-        "Enter your answer": "स्वउत्तरं प्रविश्यताम्"
+        "Enter your answer": "स्वउत्तरं प्रविश्यताम्",
+        "Back to Menu": "मेनू प्रत्यागच्छ",
+        "Answer": "उत्तरम्",
+        "Question": "प्रश्नः",
+        "Answer input": "उत्तर निवेशः",
+        "Type your answer as a number and press Enter.": "स्वउत्तरं संख्यारूपेण टङ्कयतु Enter च अमर्त्यतु."
     }
 }
 
