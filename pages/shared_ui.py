@@ -552,19 +552,20 @@ class SettingsDialog(QDialog):
         self.difficulty_slider.setTickInterval(1)
         self.difficulty_slider.setTickPosition(QSlider.TicksBelow)
         self.difficulty_slider.setTracking(True)
-        self.difficulty_slider.setFocusPolicy(Qt.StrongFocus)
-        self.difficulty_slider.setFocus()
-        self.difficulty_slider.setAccessibleName(f"Difficulty: {DIFFICULTY_LEVELS[initial_difficulty]}")
-        self.difficulty_slider.setAccessibleDescription(f"Use left or right arrow keys to select difficulty level. The levels are Simple, Easy, Medium, Hard and challenging.")
+        # Combine instruction into name to ensure it is read
+        self.difficulty_slider.setAccessibleName("Difficulty") 
+        
         self.difficulty_slider.setValue(initial_difficulty)
         self.difficulty_label = create_label(DIFFICULTY_LEVELS[initial_difficulty], font_size=12)
         self.difficulty_label.setProperty("class", "difficulty-label")
         self.difficulty_label.setProperty("theme", parent.current_theme)
-        # ✅ ACCESSIBILITY: Give the current-difficulty display a name for screen readers
-        self.difficulty_label.setAccessibleName(f"Current difficulty: {DIFFICULTY_LEVELS[initial_difficulty]}")
-       
+        # ✅ ACCESSIBILITY: Silence this label so it doesn't override the slider's numeric value
+        self.difficulty_label.setAccessibleName(" ")
+
         self.difficulty_slider.valueChanged.connect(self.update_difficulty_label)
-        self.setProperty("class", "settings-dialog")
+        
+        # REDUCED DELAY: 250ms for focus (snappier but safe)
+        QTimer.singleShot(250, lambda: self.difficulty_slider.setFocus())
         self.setProperty("theme", parent.current_theme)  # pass current theme
         
 
@@ -598,7 +599,8 @@ class SettingsDialog(QDialog):
         difficulty_label = QLabel("Select Difficulty:")
         difficulty_label.setProperty("class", "difficulty-label")
         difficulty_label.setProperty("theme", parent.current_theme)
-        # ✅ ACCESSIBILITY: Link label to slider for screen readers
+        # ✅ ACCESSIBILITY: Link label to slider for screen readers and put instruction here
+        difficulty_label.setAccessibleName("Select Difficulty. Use left or right arrow keys to select difficulty level.") 
         difficulty_label.setBuddy(self.difficulty_slider)
         layout.addWidget(difficulty_label)
         layout.addWidget(self.difficulty_slider)
@@ -640,29 +642,17 @@ class SettingsDialog(QDialog):
     def update_difficulty_label(self, index):
         level = DIFFICULTY_LEVELS[index]
         self.difficulty_label.setText(level)
-        # ✅ ACCESSIBILITY: Update accessible name on level display
-        self.difficulty_label.setAccessibleName(f"Current difficulty: {level}")
+        # ✅ ACCESSIBILITY: Keep label silent (TTS handles the name, slider handles the number)
+        self.difficulty_label.setAccessibleName(" ")
 
-        # For screen reader — update slider name so it announces the level, not the number
-        self.difficulty_slider.setAccessibleName(f"Difficulty: {level}")
-        self.difficulty_slider.setAccessibleDescription(
-            f"Difficulty level selected: {level}. Use left or right arrow keys to change it. "
-            "Levels are: Simple, Easy, Medium, Hard, and Challenging."
-            )
 
-        # Optional: Also update the label's description (if used by screen readers)
-        self.difficulty_label.setAccessibleDescription(
-         f"Currently selected difficulty is {level}"
-         )
 
         # ✅ ACCESSIBILITY FIX: Manually announce the level via TTS
-        # This ensures the user hears "Easy", "Medium" etc. instead of just "1", "2".
-        # We use a delay (500ms) so it speaks AFTER the screen reader announces the number.
-        # This prevents them from talking over each other.
+        # Use a short delay (200ms) for responsiveness during interaction
         if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
              # Stop previous speech to prevent queue build-up
              self.main_window.tts.stop()
-             QTimer.singleShot(500, lambda: self.main_window.tts.speak(level))
+             QTimer.singleShot(200, lambda: self.main_window.tts.speak(level))
     # In pages/shared_ui.py -> SettingsDialog class
     def handle_reset_language(self):
         print("--- [DEBUG] handle_reset_language START ---")
