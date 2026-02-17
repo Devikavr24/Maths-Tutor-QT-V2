@@ -411,13 +411,17 @@ class QuestionWidget(QWidget):
 
 
     def check_answer(self):
-        try:
             user_input = self.input_box.text().strip()
-            user_answer = float(user_input)
             elapsed = time() - self.start_time
 
-            correct = float(user_answer) == float(self.answer)
-            self.processor.submit_answer(user_answer, self.answer, elapsed)
+            result = self.processor.submit_answer(user_input, self.answer, elapsed)
+
+            if not result["valid"]:
+                self.result_label.setText("Please enter a valid number.")
+                self.result_label.setAccessibleName("Invalid input. Please enter a valid number.")
+                return
+
+            correct = result["correct"]
 
             app_audio_active = False
             if self.main_window and not self.main_window.is_muted:
@@ -488,9 +492,7 @@ class QuestionWidget(QWidget):
                 if not self.input_box.hasFocus():
                     self.input_box.setFocus()
 
-        except Exception as e:
-            self.result_label.setText(f"Error: {str(e)}")
-            self.result_label.setAccessibleName(f"Error: {str(e)}")
+       
 
     def call_next_question(self):
         if hasattr(self, "next_question_callback") and self.next_question_callback:

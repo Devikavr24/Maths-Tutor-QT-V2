@@ -219,9 +219,20 @@ class QuestionProcessor:
  
    
     def submit_answer(self, user_answer, correct_answer, time_taken):
+         # Empty input check
+        if user_answer is None or str(user_answer).strip() == "":
+            return {"valid": False}
+
+        # Numeric validation
+        try:
+            user_val = float(user_answer)
+            correct_val = float(correct_answer)
+        except (ValueError, TypeError):
+            return {"valid": False}
+        
         self.total_attempts += 1
-        is_correct = float(user_answer) == float(correct_answer)
- 
+        is_correct = user_val == correct_val
+    
         if is_correct:
             
             self.correct_answers += 1
@@ -264,3 +275,8 @@ class QuestionProcessor:
         print(f"📊 Performance Rate: {self.current_performance_rate}")
         print(f"🎯 Current Difficulty: {self.current_difficulty}")
         print(f"📈 Attempts: {self.total_attempts} | Correct: {self.correct_answers}")
+        
+        return {
+        "valid": True,
+        "correct": is_correct
+    }
