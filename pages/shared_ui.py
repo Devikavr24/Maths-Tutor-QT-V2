@@ -365,7 +365,12 @@ class QuestionWidget(QWidget):
         if app_tts_active:
             # OPTION A: TTS IS ON
             if hasattr(self, 'tts'):
-                tts_text = question_text + ". Type your answer"
+                # ✅ DYNAMICALLY TRANSLATE INSTRUCTION
+                current_lang = getattr(self.main_window, 'language', 'English')
+                instruction = "अपना उत्तर टाइप करें" if current_lang == "हिंदी" else "Type your answer"
+                
+                tts_text = f"{question_text}. {instruction}"
+                
                 if self._question_count == 0:
                     # Brief delay for first question to let UI settle
                     QTimer.singleShot(500, lambda: self.tts.speak(tts_text))
@@ -389,36 +394,19 @@ class QuestionWidget(QWidget):
             except Exception as e:
                 print("[Bellring ERROR]", e)
 
-   
-    def play_bell_sounds(self, count):
-        if not hasattr(self, "bell_timer"):
-            self.bell_timer = QTimer(self)
-            self.bell_timer.timeout.connect(self.do_ring)
-        self.current_ring = 0
-        self.total_rings = count
-        self.bell_timer.start(700)
-
-    def stop_all_activity(self):
-        if hasattr(self, "bell_timer") and self.bell_timer.isActive():
-            self.bell_timer.stop()
-
-    def do_ring(self):
-        if self.current_ring < self.total_rings:
-            QSound.play("sounds/click-button.wav")
-            self.current_ring += 1
-        else:
-            self.bell_timer.stop()
-
-
     def check_answer(self):
             user_input = self.input_box.text().strip()
             elapsed = time() - self.start_time
 
             result = self.processor.submit_answer(user_input, self.answer, elapsed)
 
+            # ✅ Check current language for dynamic translations
+            current_lang = getattr(self.main_window, 'language', 'English')
+
             if not result["valid"]:
-                self.result_label.setText("Please enter a valid number.")
-                self.result_label.setAccessibleName("Invalid input. Please enter a valid number.")
+                invalid_msg = "कृपया एक मान्य संख्या दर्ज करें।" if current_lang == "हिंदी" else "Please enter a valid number."
+                self.result_label.setText(invalid_msg)
+                self.result_label.setAccessibleName(invalid_msg)
                 return
 
             correct = result["correct"]
@@ -430,50 +418,60 @@ class QuestionWidget(QWidget):
             if correct:
                 if hasattr(self, 'tts'): self.tts.stop()
 
-                # Visual Feedback
-                self.result_label.setText('<span style="font-size:16pt;">Correct!</span>')
+                # ✅ TRANSLATED: "Correct!"
+                correct_text = "सही!" if current_lang == "हिंदी" else "Correct!"
+                self.result_label.setText(f'<span style="font-size:16pt;">{correct_text}</span>')
                 
-                # Feedback Sound
+                # ✅ TRANSLATED: Feedback Sound & Text
                 sound_index = random.randint(1, 3)
-                if elapsed < 5: feedback_text = "🌟 Excellent"
-                elif elapsed < 10: feedback_text = "👏 Very Good"
-                elif elapsed < 15: feedback_text = "👍 Good"
-                elif elapsed < 20: feedback_text = "👌 Not Bad"
-                else: feedback_text = "🙂 Okay"
+                if current_lang == "हिंदी":
+                    if elapsed < 5: feedback_text = "🌟 बहुत बढ़िया"   # Excellent
+                    elif elapsed < 10: feedback_text = "👏 बहुत अच्छा" # Very Good
+                    elif elapsed < 15: feedback_text = "👍 अच्छा"       # Good
+                    elif elapsed < 20: feedback_text = "👌 बुरा नहीं"   # Not Bad
+                    else: feedback_text = "🙂 ठीक है"                   # Okay
+                else:
+                    if elapsed < 5: feedback_text = "🌟 Excellent"
+                    elif elapsed < 10: feedback_text = "👏 Very Good"
+                    elif elapsed < 15: feedback_text = "👍 Good"
+                    elif elapsed < 20: feedback_text = "👌 Not Bad"
+                    else: feedback_text = "🙂 Okay"
                 
                 self.result_label.setText(f'<span style="font-size:16pt;">{feedback_text}</span>')
+                
                 # ✅ ACCESSIBILITY: Update accessible name with clean feedback for screen readers
                 clean_feedback = feedback_text.replace("🌟", "").replace("👏", "").replace("👍", "").replace("👌", "").replace("🙂", "").strip()
-                self.result_label.setAccessibleName(f"Correct! {clean_feedback}")
+                self.result_label.setAccessibleName(f"{correct_text} {clean_feedback}")
                 
                 if app_audio_active:
                     if self.main_window:
-                        sound_file = f"excellent-{sound_index}.mp3" 
+                        # Keep the English audio files playing the sound effects
                         if elapsed < 5: sound_file = f"excellent-{sound_index}.mp3"
-                        elif elapsed < 10: sound_file =f"very-good-{sound_index}.mp3"
-                        elif elapsed < 15: sound_file =f"good-{sound_index}.mp3"
-                        elif elapsed < 20: sound_file =f"not-bad-{sound_index}.mp3"
-                        else: sound_file =f"okay-{sound_index}.mp3"
+                        elif elapsed < 10: sound_file = f"very-good-{sound_index}.mp3"
+                        elif elapsed < 15: sound_file = f"good-{sound_index}.mp3"
+                        elif elapsed < 20: sound_file = f"not-bad-{sound_index}.mp3"
+                        else: sound_file = f"okay-{sound_index}.mp3"
 
                         self.main_window.play_sound(sound_file)
                         self.show_feedback_gif(sound_file)
                     
-                    # ✅ TTS FEEDBACK: Announce feedback after a short delay
-                    # (300ms lets the sound effect start first, avoids overlap)
+                    # ✅ TTS FEEDBACK: Announce translated feedback after a short delay
                     if hasattr(self, 'tts'):
                         QTimer.singleShot(300, lambda t=clean_feedback: self.tts.speak(t))
-
-                # Focus remains on Input Box. Screen reader says nothing extra.
-                # Audio plays "Excellent".
 
                 self.processor.retry_count = 0
                 QTimer.singleShot(2000, self.call_next_question)
 
             else:
                 self.processor.retry_count += 1
-                self.result_label.setText('<span style="font-size:16pt;">Try Again.</span>')
-                # ✅ ACCESSIBILITY: Update accessible name for screen readers
-                self.result_label.setAccessibleName("Incorrect. Try Again.")
+                
+                # ✅ TRANSLATED: "Try Again" visual and speech
+                try_again_visual = "फिर से प्रयास करें।" if current_lang == "हिंदी" else "Try Again."
+                try_again_tts = "फिर से प्रयास करें" if current_lang == "हिंदी" else "Try Again"
+                incorrect_tts = "गलत।" if current_lang == "हिंदी" else "Incorrect."
+                
+                self.result_label.setText(f'<span style="font-size:16pt;">{try_again_visual}</span>')
+                self.result_label.setAccessibleName(f"{incorrect_tts} {try_again_tts}")
 
                 if app_audio_active:
                     sound_index = random.randint(1, 2)
@@ -483,15 +481,12 @@ class QuestionWidget(QWidget):
                     self.main_window.play_sound(sound_file)
                     self.show_feedback_gif(sound_file)
                     
-                    # ✅ TTS FEEDBACK: Announce "Try Again" after a short delay
                     if hasattr(self, 'tts'):
-                        QTimer.singleShot(300, lambda: self.tts.speak("Try Again"))
+                        QTimer.singleShot(300, lambda t=try_again_tts: self.tts.speak(t))
 
                 # Focus remains on Input Box.
-                # Just ensure input is active for typing
                 if not self.input_box.hasFocus():
                     self.input_box.setFocus()
-
        
 
     def call_next_question(self):
