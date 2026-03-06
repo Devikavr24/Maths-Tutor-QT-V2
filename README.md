@@ -53,14 +53,7 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 
 ---
 
-## 📦 Installation (Windows)
-
-### Prerequisites
-
-- Windows 10 or later  
-- Python **3.8+** installed and added to PATH  
-
----
+## 📦 Installation
 
 ### Clone the Repository
 
@@ -68,21 +61,50 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 git clone https://github.com/Devikavr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
 ```
+### Windows Setup
+#### Requirements
 
-### Install Dependencies
+* Windows 10 or later
+
+* Python 3.8+ installed and added to PATH
+
+#### Install Dependencies
+
+* Install all required Python packages:
+
 ```bash
-pip install PyQt5
-pip install pandas
-pip install pyttsx3
-pip install openpyxl
+pip install -r requirements.txt
 ```
----
+* Install eSpeak-NG (Offline TTS) from:
+
+https://github.com/espeak-ng/espeak-ng/releases
 
 ### Run the Application
 ```bash
 python main.py
 ```
 ---
+### 🐧 Linux Setup
+#### Requirements
+
+* Python 3.8+
+* pip
+* espeak-ng
+
+#### Install Dependencies
+```bash 
+pip3 install -r requirements.txt 
+```
+
+#### Install espeak-ng:
+```bash
+sudo apt install espeak-ng
+```
+
+### Run the Application
+```bash
+python3 main.py
+```
 
 ## 🎮 How to Use
 
