@@ -15,18 +15,17 @@ class TTSWorker(QObject):
     def __init__(self):
         super().__init__()
         self.system = platform.system()
+        self.process = None  # Used for espeak-ng on Linux AND as fallback on Windows
         if self.system == "Windows":
             self.engine = None
             self.timer = None
             self.iterating_lock = QMutex()
             self.sapi = None  # Dedicated engine for Windows Modern (OneCore) voices
-        else: # Linux
-            self.process = None
 
     def speak(self, text):
         current_lang = getattr(lang_config, 'selected_language', 'English')
         
-        # ✅ NEW FIX: Convert standard numbers to Hindi Devanagari numerals
+        # ✅ FIX: Convert standard numbers to Hindi Devanagari numerals for correct pronunciation
         if current_lang == "हिंदी":
             hindi_numerals = {
                 '0': '०', '1': '१', '2': '२', '3': '३', '4': '४', 
@@ -36,9 +35,9 @@ class TTSWorker(QObject):
                 text = text.replace(eng_num, hin_num)
 
         if self.system == "Windows":
-            self._speak_windows(text)
+            self._speak_windows(text, current_lang)
         else:
-            self._speak_linux(text)
+            self._speak_linux(text, current_lang)
 
     def stop(self):
         if self.system == "Windows":
@@ -68,17 +67,18 @@ class TTSWorker(QObject):
             self.timer.timeout.connect(self._iterate_windows_loop)
             self.timer.start(100)
 
-    def _speak_windows(self, text):
-        current_lang = getattr(lang_config, 'selected_language', 'English')
-        
-        # ✅ Access the "Hidden" Windows 10/11 OneCore Voices directly!
+    def _speak_windows(self, text, current_lang):
+        self._stop_windows() # Stop any previous speech
+
+        # 1. ATTEMPT NATIVE HINDI (OneCore) OR FALLBACK TO ESPEAK-NG
         if current_lang == "हिंदी":
+            hindi_voice_found = False
             try:
                 pythoncom.CoInitialize() # Required for COM in QThread
                 if not self.sapi:
                     self.sapi = win32com.client.Dispatch("SAPI.SpVoice")
                 
-                # Tell SAPI to look in the Modern OneCore registry path instead of the Classic path
+                # Tell SAPI to look in the Modern OneCore registry path
                 cat = win32com.client.Dispatch("SAPI.SpObjectTokenCategory")
                 cat.SetId(r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", False)
                 
@@ -87,16 +87,29 @@ class TTSWorker(QObject):
                     desc = token.GetDescription().lower()
                     if "hindi" in desc or "kalpana" in desc or "hemant" in desc:
                         hindi_voice = token
+                        hindi_voice_found = True
                         break
                 
-                if hindi_voice:
+                if hindi_voice_found and hindi_voice:
                     self.sapi.Voice = hindi_voice
                     self.sapi.Speak(text, 1) # 1 = Speak Asynchronously
-                    return  # Success! Skip the standard pyttsx3 code.
+                    return  # Success! Skip the rest.
             except Exception as e:
-                print("Native OneCore SAPI fallback failed:", e)
+                print("Native Windows Hindi check failed:", e)
 
-        # ✅ STANDARD ENGLISH / FALLBACK PYTTSX3 LOGIC
+            # 2. ESPEAK-NG FALLBACK (If Native Hindi fails or isn't installed)
+            if not hindi_voice_found:
+                print("Windows Hindi pack not found. Falling back to espeak-ng...")
+                try:
+                    # 0x08000000 = CREATE_NO_WINDOW (Hides the ugly terminal popup on Windows)
+                    flags = 0x08000000 
+                    self.process = subprocess.Popen(['espeak-ng', '-v', 'hi', text], creationflags=flags)
+                    return
+                except FileNotFoundError:
+                    print("🚨 [TTS ERROR] espeak-ng is not installed or added to system PATH.")
+                    return
+
+        # 3. STANDARD ENGLISH / DEFAULT PYTTSX3 LOGIC
         self._init_windows_engine()
         voices = self.engine.getProperty('voices')
         
@@ -132,13 +145,22 @@ class TTSWorker(QObject):
         # Stop OneCore SAPI if active
         if hasattr(self, 'sapi') and self.sapi:
             try:
-                self.sapi.Speak("", 3) # 3 = Async + PurgeBeforeSpeak (Immediately cuts off speech)
+                self.sapi.Speak("", 3) # 3 = Async + PurgeBeforeSpeak
             except:
                 pass
 
         # Stop pyttsx3 if active
         if self.engine and self.engine.isBusy():
             self.engine.stop()
+            
+        # Stop espeak-ng fallback if active
+        if self.process and self.process.poll() is None:
+            self.process.terminate()
+            try:
+                self.process.wait(timeout=0.1)
+            except subprocess.TimeoutExpired:
+                self.process.kill()
+            self.process = None
 
     def _cleanup_windows(self):
         if self.timer:
@@ -150,14 +172,13 @@ class TTSWorker(QObject):
                 pass
         self.engine = None
         self.sapi = None
+        self._stop_windows()
 
     # --- Linux Methods ---
-    def _speak_linux(self, text):
+    def _speak_linux(self, text, current_lang):
         self._stop_linux()
         try:
-            current_lang = getattr(lang_config, 'selected_language', 'English')
             voice_arg = 'hi' if current_lang == "हिंदी" else 'en'
-            
             self.process = subprocess.Popen(['espeak-ng', '-v', voice_arg, text])
         except FileNotFoundError:
             print("espeak-ng not found. Please install it.")
