@@ -13,20 +13,11 @@ import random
 from tts.tts_worker import TextToSpeech
 from PyQt5.QtMultimedia import QSound
 
-
+from language.language import set_language,clear_remember_language,tr
+from PyQt5.QtGui import QMovie
 
 DIFFICULTY_LEVELS = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
 
-from language.language import set_language,clear_remember_language,tr
-
-from language.language import tr
-from PyQt5.QtWidgets import QSizePolicy
-from PyQt5.QtGui import QMovie
-
-from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import QTimer
 
 def create_entry_ui(main_window) -> QWidget:
     entry_widget = QWidget()
@@ -58,11 +49,6 @@ def create_entry_ui(main_window) -> QWidget:
     entry_widget.setLayout(layout)
     apply_theme(entry_widget, main_window.current_theme)
     return entry_widget
-
-
-
-
-
 
 # settings_manager.py
 class SettingsManager:
@@ -197,11 +183,6 @@ def wrap_center(widget):
     container.setLayout(layout)
     return container
 
-# In pages/shared_ui.py
-
-# In pages/shared_ui.py
-# In pages/shared_ui.py
-
 def setup_exit_handling(window, require_confirmation=False):
     """
     Configures exit behavior.
@@ -212,9 +193,25 @@ def setup_exit_handling(window, require_confirmation=False):
     # 1. Define the Exit Logic
     def check_and_close(event=None):
         if require_confirmation:
-            reply = QMessageBox.question(window, "Exit Application", "Are you sure you want to exit?",
-                                         QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if reply == QMessageBox.Yes:
+            # ✅ EXPLICIT DYNAMIC TRANSLATION (Bypassing tr() to guarantee it works)
+            current_lang = getattr(window, 'language', 'English')
+            
+            title_text = "एप्लिकेशन से बाहर निकलें" if current_lang == "हिंदी" else "Exit Application"
+            msg_text = "क्या आप वाकई बाहर निकलना चाहते हैं?" if current_lang == "हिंदी" else "Are you sure you want to exit?"
+            yes_text = "हाँ" if current_lang == "हिंदी" else "Yes"
+            no_text = "नहीं" if current_lang == "हिंदी" else "No"
+
+            msg_box = QMessageBox(window)
+            msg_box.setWindowTitle(title_text)
+            msg_box.setText(msg_text)
+            
+            yes_btn = msg_box.addButton(yes_text, QMessageBox.YesRole)
+            no_btn = msg_box.addButton(no_text, QMessageBox.NoRole)
+            msg_box.setDefaultButton(no_btn)
+            
+            msg_box.exec_()
+            
+            if msg_box.clickedButton() == yes_btn:
                 if event: event.accept()
                 else: QApplication.quit()
             else:
@@ -237,10 +234,6 @@ def setup_exit_handling(window, require_confirmation=False):
     # 3. Handle X Button (Close Window)
     window.closeEvent = check_and_close
 
-
-
-
-# In pages/shared_ui.py
 
 class QuestionWidget(QWidget):
     def __init__(self, processor, window=None, next_question_callback=None, tts=None):
@@ -825,15 +818,19 @@ def apply_theme(widget, theme):
         child.style().polish(child)
         child.update()
 
-
 class SettingsDialog(QDialog):
     def __init__(self, parent=None, initial_difficulty=1, main_window=None):
         super().__init__(parent)
-        self.setWindowTitle("Settings")
-        self.setFixedSize(400, 220)
-
+        
         self.main_window = main_window
         self.updated_language = main_window.language if main_window else "English"
+        
+        # ✅ EXPLICIT DYNAMIC TRANSLATION (Bypassing tr() for titles and buttons)
+        current_lang = self.updated_language
+        title_text = "सेटिंग्स" if current_lang == "हिंदी" else "Settings"
+        
+        self.setWindowTitle(title_text)
+        self.setFixedSize(400, 220)
 
         self.difficulty_slider = QSlider(Qt.Horizontal)
         self.difficulty_slider.setMinimum(0)
@@ -843,75 +840,79 @@ class SettingsDialog(QDialog):
         self.difficulty_slider.setTickInterval(1)
         self.difficulty_slider.setTickPosition(QSlider.TicksBelow)
         self.difficulty_slider.setTracking(True)
-        # Combine instruction into name to ensure it is read
-        self.difficulty_slider.setAccessibleName("Difficulty") 
+        self.difficulty_slider.setAccessibleName(tr("Difficulty")) 
         
         self.difficulty_slider.setValue(initial_difficulty)
-        self.difficulty_label = create_label(DIFFICULTY_LEVELS[initial_difficulty], font_size=12)
+        
+        # ✅ FIX: Initial Difficulty Label Localization
+        localized_initial_level = self.get_localized_difficulty(initial_difficulty)
+        self.difficulty_label = create_label(localized_initial_level, font_size=12)
+        
         self.difficulty_label.setProperty("class", "difficulty-label")
         self.difficulty_label.setProperty("theme", parent.current_theme)
-        # ✅ ACCESSIBILITY: Silence this label so it doesn't override the slider's numeric value
         self.difficulty_label.setAccessibleName(" ")
 
         self.difficulty_slider.valueChanged.connect(self.update_difficulty_label)
         
-        # REDUCED DELAY: 250ms for focus (snappier but safe)
         QTimer.singleShot(250, lambda: self.difficulty_slider.setFocus())
-        self.setProperty("theme", parent.current_theme)  # pass current theme
+        self.setProperty("theme", parent.current_theme)
         
-
-    
-
-        # 🔁 Reset Language Button
-        self.language_reset_btn = QPushButton("Reset Language")
+        # ✅ EXPLICIT DYNAMIC TRANSLATION
+        reset_text = "भाषा रीसेट करें" if current_lang == "हिंदी" else "Reset Language"
+        self.language_reset_btn = QPushButton(reset_text)
         self.language_reset_btn.setFixedHeight(30)
         self.language_reset_btn.clicked.connect(self.handle_reset_language)
-        # ✅ ACCESSIBILITY: Screen reader announces button purpose
-        self.language_reset_btn.setAccessibleName("Reset Language")
-        self.language_reset_btn.setAccessibleDescription("Clear saved language preference and choose a new language")
+        self.language_reset_btn.setAccessibleName(reset_text)
+        self.language_reset_btn.setAccessibleDescription(tr("Clear saved language preference and choose a new language"))
 
-        button_box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        # ✅ EXPLICIT DYNAMIC TRANSLATION FOR OK/CANCEL
+        ok_text = "ठीक है" if current_lang == "हिंदी" else "OK"
+        cancel_text = "रद्द करें" if current_lang == "हिंदी" else "Cancel"
+        
+        button_box = QDialogButtonBox()
+        ok_btn = button_box.addButton(ok_text, QDialogButtonBox.AcceptRole)
+        cancel_btn = button_box.addButton(cancel_text, QDialogButtonBox.RejectRole)
+        
         button_box.accepted.connect(self.accept_settings)
         button_box.rejected.connect(self.reject)
-        # ✅ ACCESSIBILITY: Set accessible names on OK/Cancel buttons
-        ok_btn = button_box.button(QDialogButtonBox.Ok)
-        cancel_btn = button_box.button(QDialogButtonBox.Cancel)
-        if ok_btn:
-            ok_btn.setAccessibleName("OK — Apply settings")
-        if cancel_btn:
-            cancel_btn.setAccessibleName("Cancel — Discard changes")
+        
+        ok_btn.setAccessibleName(tr("OK — Apply settings"))
+        cancel_btn.setAccessibleName(tr("Cancel — Discard changes"))
 
-        self.setMinimumSize(400, 280)  # Better size for spacing
+        self.setMinimumSize(400, 280)
 
         layout = QVBoxLayout()
-        layout.setSpacing(12)  # Add breathing space between widgets
+        layout.setSpacing(12) 
         layout.setContentsMargins(20, 20, 20, 20)
 
-        difficulty_label = QLabel("Select Difficulty:")
+        # ✅ EXPLICIT DYNAMIC TRANSLATION
+        diff_label_text = "कठिनाई चुनें:" if current_lang == "हिंदी" else "Select Difficulty:"
+        difficulty_label = QLabel(diff_label_text)
         difficulty_label.setProperty("class", "difficulty-label")
         difficulty_label.setProperty("theme", parent.current_theme)
-        # ✅ ACCESSIBILITY: Link label to slider for screen readers and put instruction here
-        difficulty_label.setAccessibleName("Select Difficulty. Use left or right arrow keys to select difficulty level.") 
+        difficulty_label.setAccessibleName(tr("Select Difficulty. Use left or right arrow keys to select difficulty level.")) 
         difficulty_label.setBuddy(self.difficulty_slider)
+        
         layout.addWidget(difficulty_label)
         layout.addWidget(self.difficulty_slider)
         layout.addWidget(self.difficulty_label)
-
-
         layout.addWidget(self.language_reset_btn)
 
-        # Add Help and About side by side
+        # ✅ EXPLICIT DYNAMIC TRANSLATION
+        help_text = "मदद" if current_lang == "हिंदी" else "Help"
+        about_text = "के बारे में" if current_lang == "हिंदी" else "About"
+        
         extra_buttons_layout = QHBoxLayout()
-        self.help_button = QPushButton("Help")
-        self.about_button = QPushButton("About")
+        self.help_button = QPushButton(help_text)
+        self.about_button = QPushButton(about_text)
+        
         for btn in [self.help_button, self.about_button]:
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             btn.setFixedHeight(30)
-        # ✅ ACCESSIBILITY: Screen reader announces button purpose
-        self.help_button.setAccessibleName("Help")
-        self.help_button.setAccessibleDescription("View help information about Maths Tutor")
-        self.about_button.setAccessibleName("About")
-        self.about_button.setAccessibleDescription("View information about the application")
+            
+        self.help_button.setAccessibleName(help_text)
+        self.about_button.setAccessibleName(about_text)
+        
         extra_buttons_layout.addWidget(self.help_button)
         extra_buttons_layout.addWidget(self.about_button)
         layout.addLayout(extra_buttons_layout)
@@ -921,7 +922,7 @@ class SettingsDialog(QDialog):
 
         self.setLayout(layout)
 
-        # ✅ ACCESSIBILITY: Explicit tab order through Settings dialog
+        # Accessibility Tab Order
         QWidget.setTabOrder(self.difficulty_slider, self.language_reset_btn)
         QWidget.setTabOrder(self.language_reset_btn, self.help_button)
         QWidget.setTabOrder(self.help_button, self.about_button)
@@ -929,24 +930,31 @@ class SettingsDialog(QDialog):
             QWidget.setTabOrder(self.about_button, ok_btn)
             QWidget.setTabOrder(ok_btn, cancel_btn)
 
+    # ✅ FIX: Helper function for Difficulty Translation
+    def get_localized_difficulty(self, index):
+        eng_level = DIFFICULTY_LEVELS[index]
+        if self.updated_language == "हिंदी":
+            hindi_map = {
+                "Simple": "सरल",
+                "Easy": "आसान",
+                "Medium": "मध्यम",
+                "Hard": "कठिन",
+                "Challenging": "चुनौतीपूर्ण"
+            }
+            return hindi_map.get(eng_level, eng_level)
+        return eng_level
 
     def update_difficulty_label(self, index):
-        level = DIFFICULTY_LEVELS[index]
-        self.difficulty_label.setText(level)
-        # ✅ ACCESSIBILITY: Keep label silent (TTS handles the name, slider handles the number)
+        # ✅ FIX: Dynamically update the slider label and text-to-speech
+        localized_level = self.get_localized_difficulty(index)
+        self.difficulty_label.setText(localized_level)
         self.difficulty_label.setAccessibleName(" ")
 
-
-
-        # ✅ ACCESSIBILITY FIX: Manually announce the level via TTS
-        # Use a short delay (200ms) for responsiveness during interaction
         if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
-             # Stop previous speech to prevent queue build-up
              self.main_window.tts.stop()
-             QTimer.singleShot(200, lambda: self.main_window.tts.speak(level))
-    # In pages/shared_ui.py -> SettingsDialog class
+             QTimer.singleShot(200, lambda: self.main_window.tts.speak(localized_level))
+
     def handle_reset_language(self):
-        print("--- [DEBUG] handle_reset_language START ---")
         from main import RootWindow 
         from language.language import clear_remember_language, set_language
 
@@ -955,31 +963,22 @@ class SettingsDialog(QDialog):
         dialog = RootWindow(minimal=True)
         if dialog.exec_() == QDialog.Accepted:
             new_lang = dialog.language_combo.currentText()
-            print(f"--- [DEBUG] Dialog Accepted. New Language: {new_lang}")
             
             set_language(new_lang)
             self.updated_language = new_lang
 
-            QMessageBox.information(self, "Language Changed",
-                                    f"Language changed to {new_lang}. The app will now reload.")
-            print("--- [DEBUG] Info box closed. Ready to refresh.")
+            QMessageBox.information(self, tr("Language Changed"),
+                                    tr("Language changed to {new_lang}. The app will now reload.").format(new_lang=new_lang))
 
             if self.main_window:
-                print("--- [DEBUG] Calling main_window.refresh_ui()...")
                 self.main_window.refresh_ui(new_lang)
-                print("--- [DEBUG] Returned from refresh_ui().")
-            else:
-                print("--- [DEBUG] ERROR: self.main_window is None!")
 
-            print("--- [DEBUG] Closing Settings Dialog...")
             self.close() 
-            print("--- [DEBUG] Settings Dialog Closed.")
 
     def accept_settings(self):
         selected_index = self.difficulty_slider.value()
         settings.set_difficulty(selected_index)
         settings.set_language(self.updated_language)
-        print(f"[Difficulty] Index set to: {selected_index}")
         self.accept()
 
     def get_difficulty_index(self):
@@ -987,4 +986,3 @@ class SettingsDialog(QDialog):
 
     def get_selected_language(self):
         return self.updated_language
-    
