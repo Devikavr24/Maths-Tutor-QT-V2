@@ -53,36 +53,61 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 
 ---
 
-## 📦 Installation (Windows)
+## � Getting Started
 
-### Prerequisites
+Follow these steps to set up and run Maths-Tutor-QT-V2 on your local machine.
 
-- Windows 10 or later  
-- Python **3.8+** installed and added to PATH  
-
----
-
-### Clone the Repository
-
+### 1. Clone the Repository
+Download the application source code to your computer:
 ```bash
 git clone https://github.com/Devikavr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
 ```
 
-### Install Dependencies
-```bash
-pip install PyQt5
-pip install pandas
-pip install pyttsx3
-pip install openpyxl
-```
----
+### 2. Windows Setup
 
-### Run the Application
-```bash
+**Prerequisites:**
+* Windows 10 or later
+* [Python 3.8+](https://www.python.org/downloads/) (Ensure "Add Python to PATH" is checked during installation)
+
+**Installation Steps:**
+1. Open a terminal (Command Prompt or PowerShell) in the project folder.
+2. Install the required Python dependencies:
+   ```cmd
+   pip install -r requirements.txt
+   ```
+3. **(Optional but Recommended)** Install the offline TTS engine for robust language support:
+   * Download and run the installer from the [eSpeak-NG Releases Page](https://github.com/espeak-ng/espeak-ng/releases).
+
+**Running the Application:**
+```cmd
 python main.py
 ```
+
 ---
+
+### 3. Linux (Ubuntu/Debian) Setup
+
+**Prerequisites:**
+* Python 3.8+
+* `pip` package manager
+
+**Installation Steps:**
+1. Open your terminal in the project folder.
+2. Install the required Python dependencies:
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+3. Install the `espeak-ng` package for native TTS voice support:
+   ```bash
+   sudo apt update
+   sudo apt install espeak-ng
+   ```
+
+**Running the Application:**
+```bash
+python3 main.py
+```
 
 ## 🎮 How to Use
 

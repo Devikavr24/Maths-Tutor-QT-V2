@@ -101,12 +101,31 @@ class TTSWorker(QObject):
             if not hindi_voice_found:
                 print("Windows Hindi pack not found. Falling back to espeak-ng...")
                 try:
+                    # Look for espeak-ng in standard Windows path if not in global PATH
+                    import shutil, os
+                    espeak_exe = shutil.which('espeak-ng')
+                    if not espeak_exe:
+                        fallback_path = r"C:\Program Files\eSpeak NG\espeak-ng.exe"
+                        if os.path.exists(fallback_path):
+                            espeak_exe = fallback_path
+
+                    if not espeak_exe:
+                        print("🚨 [TTS ERROR] espeak-ng is not installed or added to system PATH.")
+                        return
+
                     # 0x08000000 = CREATE_NO_WINDOW (Hides the ugly terminal popup on Windows)
                     flags = 0x08000000 
-                    self.process = subprocess.Popen(['espeak-ng', '-v', 'hi', text], creationflags=flags)
+                    self.process = subprocess.Popen(
+                        [espeak_exe, '-v', 'hi', '--stdin'], 
+                        stdin=subprocess.PIPE,
+                        creationflags=flags
+                    )
+                    # Write the UTF-8 text directly to the process stdin to avoid Windows command-line encoding corruption
+                    self.process.stdin.write(text.encode('utf-8'))
+                    self.process.stdin.close() # Close it so espeak knows it's the end of the text
                     return
-                except FileNotFoundError:
-                    print("🚨 [TTS ERROR] espeak-ng is not installed or added to system PATH.")
+                except Exception as e:
+                    print(f"🚨 [TTS ERROR] Failed to run espeak-ng fallback: {e}")
                     return
 
         # 3. STANDARD ENGLISH / DEFAULT PYTTSX3 LOGIC
