@@ -62,6 +62,7 @@ git clone https://github.com/Devikavr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
 ```
 ### Windows Setup
+
 #### Requirements
 
 * Windows 10 or later
