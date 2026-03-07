@@ -53,56 +53,58 @@ It provides interactive math practice with **text-to-speech**, **keyboard-first 
 
 ---
 
-## 📦 Installation
+## � Getting Started
 
-### Clone the Repository
+Follow these steps to set up and run Maths-Tutor-QT-V2 on your local machine.
 
+### 1. Clone the Repository
+Download the application source code to your computer:
 ```bash
 git clone https://github.com/Devikavr24/Maths-Tutor-QT-V2.git
 cd Maths-Tutor-QT-V2
 ```
-### Windows Setup
 
-#### Requirements
+### 2. Windows Setup
 
+**Prerequisites:**
 * Windows 10 or later
+* [Python 3.8+](https://www.python.org/downloads/) (Ensure "Add Python to PATH" is checked during installation)
 
-* Python 3.8+ installed and added to PATH
+**Installation Steps:**
+1. Open a terminal (Command Prompt or PowerShell) in the project folder.
+2. Install the required Python dependencies:
+   ```cmd
+   pip install -r requirements.txt
+   ```
+3. **(Optional but Recommended)** Install the offline TTS engine for robust language support:
+   * Download and run the installer from the [eSpeak-NG Releases Page](https://github.com/espeak-ng/espeak-ng/releases).
 
-#### Install Dependencies
-
-* Install all required Python packages:
-
-```bash
-pip install -r requirements.txt
-```
-* Install eSpeak-NG (Offline TTS) from:
-
-https://github.com/espeak-ng/espeak-ng/releases
-
-### Run the Application
-```bash
+**Running the Application:**
+```cmd
 python main.py
 ```
+
 ---
-### 🐧 Linux Setup
-#### Requirements
 
+### 3. Linux (Ubuntu/Debian) Setup
+
+**Prerequisites:**
 * Python 3.8+
-* pip
-* espeak-ng
+* `pip` package manager
 
-#### Install Dependencies
-```bash 
-pip3 install -r requirements.txt 
-```
+**Installation Steps:**
+1. Open your terminal in the project folder.
+2. Install the required Python dependencies:
+   ```bash
+   pip3 install -r requirements.txt
+   ```
+3. Install the `espeak-ng` package for native TTS voice support:
+   ```bash
+   sudo apt update
+   sudo apt install espeak-ng
+   ```
 
-#### Install espeak-ng:
-```bash
-sudo apt install espeak-ng
-```
-
-### Run the Application
+**Running the Application:**
 ```bash
 python3 main.py
 ```
