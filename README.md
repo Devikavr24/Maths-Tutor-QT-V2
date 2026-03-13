@@ -86,26 +86,85 @@ python main.py
 
 ---
 
-### 3. Linux (Ubuntu/Debian) Setup
+### 3. 🐧 Linux Setup
 
-**Prerequisites:**
-* Python 3.8+
-* `pip` package manager
+#### System Prerequisites
 
-**Installation Steps:**
-1. Open your terminal in the project folder.
-2. Install the required Python dependencies:
-   ```bash
-   pip3 install -r requirements.txt
-   ```
-3. Install the `espeak-ng` package for native TTS voice support:
-   ```bash
-   sudo apt update
-   sudo apt install espeak-ng
-   ```
+| Prerequisite | Purpose |
+|---|---|
+| **`espeak-ng`** | TTS engine — called directly via subprocess on Linux |
+| **`python3-pyqt5`** | Qt5 GUI framework (can be installed via pip or system package) |
 
-**Running the Application:**
+#### Installation by Distro
+
+##### Debian / Ubuntu / Linux Mint
+
 ```bash
+# 1. Update package list
+sudo apt update
+
+# 2. Install system dependencies
+sudo apt install python3 python3-pip espeak-ng python3-pyqt5
+
+# 3. Clone the repo
+git clone https://github.com/Zendalona/Maths-Tutor-QT-V2.git
+cd Maths-Tutor-QT-V2
+
+# 4. Install Python packages
+pip install -r requirements.txt
+
+# 5. Run the application
+python3 main.py
+```
+
+##### Fedora / RHEL / CentOS
+
+```bash
+# 1. Install system dependencies
+sudo dnf install python3 python3-pip espeak-ng python3-qt5
+
+# 2. Clone the repo
+git clone https://github.com/Zendalona/Maths-Tutor-QT-V2.git
+cd Maths-Tutor-QT-V2
+
+# 3. Install Python packages
+pip install -r requirements.txt
+
+# 4. Run the application
+python3 main.py
+```
+
+##### Arch Linux / Manjaro
+
+```bash
+# 1. Install system dependencies
+sudo pacman -S python python-pip espeak-ng python-pyqt5
+
+# 2. Clone the repo
+git clone https://github.com/Zendalona/Maths-Tutor-QT-V2.git
+cd Maths-Tutor-QT-V2
+
+# 3. Install Python packages
+pip install -r requirements.txt
+
+# 4. Run the application
+python main.py
+```
+
+##### openSUSE
+
+```bash
+# 1. Install system dependencies
+sudo zypper install python3 python3-pip espeak-ng python3-qt5
+
+# 2. Clone the repo
+git clone https://github.com/Zendalona/Maths-Tutor-QT-V2.git
+cd Maths-Tutor-QT-V2
+
+# 3. Install Python packages
+pip install -r requirements.txt
+
+# 4. Run the application
 python3 main.py
 ```
 

@@ -4,8 +4,8 @@ from PyQt5.QtWidgets import ( QWidget, QLabel, QHBoxLayout, QPushButton,
                               QVBoxLayout,QSizePolicy, QDialog, QSlider, QDialogButtonBox
                               ,QSpacerItem,QLineEdit,QMessageBox,QApplication,QShortcut )
 
-from PyQt5.QtCore import Qt, QSize, QPoint, QTimer
-from PyQt5.QtGui import QFont, QPalette, QColor, QKeySequence, QIcon
+from PyQt5.QtCore import Qt, QSize, QPoint, QTimer, QRegExp
+from PyQt5.QtGui import QFont, QPalette, QColor, QKeySequence, QIcon, QRegExpValidator
 from PyQt5.QtCore import QPropertyAnimation, QSequentialAnimationGroup
 from question.loader import QuestionProcessor
 from time import time
@@ -172,6 +172,9 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box.setPlaceholderText(tr("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
     input_box.setProperty("class", "answer-input")
+    # Only allow digits, optional leading minus, and optional decimal point
+    validator = QRegExpValidator(QRegExp(r"-?\d*\.?\d*"))
+    input_box.setValidator(validator)
     return input_box
 
 def wrap_center(widget):
