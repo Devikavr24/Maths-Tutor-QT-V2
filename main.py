@@ -37,6 +37,8 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from language.language import get_saved_language, save_selected_language_to_file, tr, set_language
 
 from PyQt5.QtGui import QMovie, QKeySequence, QPixmap, QFont, QIcon
+from PyQt5.QtCore import Qt
+
 
 
 class RootWindow(QDialog):
@@ -173,6 +175,14 @@ class MainWindow(QMainWindow):
 
         self.difficulty_index = 1 
 
+        # Ctrl+; shortcut to decrease speed / re-read question
+        self._slower_shortcut = QShortcut(QKeySequence("Ctrl+;"), self)
+        self._slower_shortcut.activated.connect(self._on_slower)
+        
+        # Alt+; shortcut to increase speed
+        self._faster_shortcut = QShortcut(QKeySequence("Alt+;"), self)
+        self._faster_shortcut.activated.connect(self._on_faster)
+
     def refresh_ui(self, new_language):
         """Rebuilds the entire UI with the new language WITHOUT closing the window."""
         print(f"[System] Refreshing UI to {new_language}...")
@@ -301,6 +311,60 @@ class MainWindow(QMainWindow):
             
         self.focus_story_button()
         self.focus_quickplay_button()
+
+    def _get_question_text(self):
+        """Find and return the current question text, or None."""
+        current_page = self.stack.currentWidget()
+        if current_page:
+            question_widget = current_page.findChild(QuestionWidget)
+            if question_widget and hasattr(question_widget, 'label'):
+                text = question_widget.label.text()
+                if text:
+                    return text
+        return None
+
+    def _on_slower(self):
+        """Alt+; : If TTS is speaking, decrease speed. If idle, re-read question slower."""
+        step = self.tts.RATE_STEP
+        current_rate = self.tts.speech_rate
+        new_rate = max(50, current_rate - step)
+        
+        if self.tts.is_speaking:
+            # TTS is active: just decrease speed
+            if new_rate != current_rate:
+                self.tts.set_rate(new_rate)
+                print(f"[Alt+;] Speed decreased: {new_rate} WPM")
+        else:
+            # TTS is idle: decrease speed and re-read the question
+            if new_rate != current_rate:
+                self.tts.set_rate(new_rate)
+            question_text = self._get_question_text()
+            if question_text:
+                self.tts.speak(question_text)
+                print(f"[Alt+;] Re-reading at {self.tts.speech_rate} WPM: {question_text}")
+
+    def _on_faster(self):
+        """Alt+; : If TTS is speaking, increase speed. If idle, increase (capped) and re-read."""
+        step = self.tts.RATE_STEP
+        default = self.tts.DEFAULT_RATE
+        current_rate = self.tts.speech_rate
+        
+        if self.tts.is_speaking:
+            # TTS is active: increase speed (up to max 300)
+            new_rate = min(300, current_rate + step)
+            if new_rate != current_rate:
+                self.tts.set_rate(new_rate)
+                print(f"[Alt+;] Speed increased: {new_rate} WPM")
+        else:
+            # TTS is idle: increase but cap at default + 1 step, then re-read
+            max_idle_rate = default + step
+            new_rate = min(max_idle_rate, current_rate + step)
+            if new_rate != current_rate:
+                self.tts.set_rate(new_rate)
+            question_text = self._get_question_text()
+            if question_text:
+                self.tts.speak(question_text)
+                print(f"[Alt+;] Re-reading at {self.tts.speech_rate} WPM: {question_text}")
 
     def focus_story_button(self):
         for btn in self.menu_buttons:

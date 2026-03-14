@@ -21,6 +21,42 @@ class TTSWorker(QObject):
             self.timer = None
             self.iterating_lock = QMutex()
             self.sapi = None  # Dedicated engine for Windows Modern (OneCore) voices
+            
+        self.speech_rate = 150  # Default WPM
+        self.DEFAULT_RATE = 150
+        self.RATE_STEP = 25
+
+    @property
+    def is_speaking(self):
+        if self.system == "Windows":
+            busy = False
+            if self.engine:
+                try:
+                    busy = self.engine.isBusy()
+                except Exception:
+                    pass
+            # SAPI doesn't have a simple isBusy, but if sapi exists we assume it might be speaking
+            return busy
+        else:
+            return self.process is not None and self.process.poll() is None
+
+    def set_rate(self, rate):
+        # Clip rate between 50 and 300
+        self.speech_rate = max(50, min(300, rate))
+        
+        if self.system == "Windows":
+            if self.engine:
+                try:
+                    self.engine.setProperty('rate', self.speech_rate)
+                except Exception:
+                    pass
+            if self.sapi:
+                try:
+                    # SAPI rate is from -10 to 10. Map 150 -> 0, 50 -> -10, 300 -> 10
+                    sapi_rate = int((self.speech_rate - 150) / 15)
+                    self.sapi.Rate = max(-10, min(10, sapi_rate))
+                except Exception:
+                    pass
 
     def speak(self, text):
         current_lang = getattr(lang_config, 'selected_language', 'English')
@@ -62,7 +98,7 @@ class TTSWorker(QObject):
     def _init_windows_engine(self):
         if not self.engine:
             self.engine = pyttsx3.init()
-            self.engine.setProperty('rate', 150)
+            self.engine.setProperty('rate', self.speech_rate)
             self.timer = QTimer(self)
             self.timer.timeout.connect(self._iterate_windows_loop)
             self.timer.start(100)
@@ -92,6 +128,9 @@ class TTSWorker(QObject):
                 
                 if hindi_voice_found and hindi_voice:
                     self.sapi.Voice = hindi_voice
+                    # Map WPM to SAPI's -10 to 10 scale
+                    sapi_rate = int((self.speech_rate - 150) / 15)
+                    self.sapi.Rate = max(-10, min(10, sapi_rate))
                     self.sapi.Speak(text, 1) # 1 = Speak Asynchronously
                     return  # Success! Skip the rest.
             except Exception as e:
@@ -198,7 +237,8 @@ class TTSWorker(QObject):
         self._stop_linux()
         try:
             voice_arg = 'hi' if current_lang == "हिंदी" else 'en'
-            self.process = subprocess.Popen(['espeak-ng', '-v', voice_arg, text])
+            
+            self.process = subprocess.Popen(['espeak-ng', '-v', voice_arg, '-s', str(self.speech_rate), text])
         except FileNotFoundError:
             print("espeak-ng not found. Please install it.")
         except Exception as e:
@@ -221,6 +261,7 @@ class TextToSpeech(QObject):
     stop_signal = pyqtSignal()
     reset_signal = pyqtSignal()
     cleanup_signal = pyqtSignal()
+    set_rate_signal = pyqtSignal(int)
 
     def __init__(self):
         super().__init__()
@@ -232,6 +273,7 @@ class TextToSpeech(QObject):
         self.stop_signal.connect(self.worker.stop)
         self.reset_signal.connect(self.worker.reset)
         self.cleanup_signal.connect(self.worker.cleanup)
+        self.set_rate_signal.connect(self.worker.set_rate)
         
         self.thread.finished.connect(self.thread.deleteLater)
         self.thread.start()
@@ -249,3 +291,22 @@ class TextToSpeech(QObject):
         self.cleanup_signal.emit()
         self.thread.quit()
         self.thread.wait()
+        
+    def set_rate(self, rate):
+        self.set_rate_signal.emit(rate)
+        
+    @property
+    def speech_rate(self):
+        return self.worker.speech_rate
+    
+    @property
+    def is_speaking(self):
+        return self.worker.is_speaking
+    
+    @property
+    def DEFAULT_RATE(self):
+        return self.worker.DEFAULT_RATE
+    
+    @property
+    def RATE_STEP(self):
+        return self.worker.RATE_STEP
