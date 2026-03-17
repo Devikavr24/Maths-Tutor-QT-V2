@@ -11,6 +11,7 @@ if platform.system() == "Windows":
 
 class TTSWorker(QObject):
     finished = pyqtSignal()
+    play_custom_sound = pyqtSignal(str) # 👈 Signal to trigger play_sound in MainThread
     
     def __init__(self):
         super().__init__()
@@ -61,6 +62,23 @@ class TTSWorker(QObject):
     def speak(self, text):
         current_lang = getattr(lang_config, 'selected_language', 'English')
         
+        # Malayalam support
+        if current_lang == "മലയാളം":
+            import asyncio, edge_tts, os, uuid
+            try:
+                # Unique cache file
+                cache_file = f"tts_cache_{uuid.uuid4().hex[:8]}.mp3"
+                cache_path = os.path.join("sounds", cache_file)
+
+                # Direct execution avoiding Subprocess interpreter latency
+                communicate = edge_tts.Communicate(text, "ml-IN-SobhanaNeural")
+                asyncio.run(communicate.save(cache_path))
+                
+                self.play_custom_sound.emit(cache_file)
+                return # Skip standard fallback logic
+            except Exception as e:
+                print("[Edge TTS Error] Fallback failed:", e)
+        
         # ✅ FIX: Convert standard numbers to Hindi Devanagari numerals for correct pronunciation
         if current_lang == "हिंदी":
             hindi_numerals = {
@@ -106,9 +124,12 @@ class TTSWorker(QObject):
     def _speak_windows(self, text, current_lang):
         self._stop_windows() # Stop any previous speech
 
-        # 1. ATTEMPT NATIVE HINDI (OneCore) OR FALLBACK TO ESPEAK-NG
-        if current_lang == "हिंदी":
-            hindi_voice_found = False
+        # 1. ATTEMPT NATIVE VOICE (OneCore) OR FALLBACK TO ESPEAK-NG
+        if current_lang in ["हिंदी", "മലയാളം"]:
+            voice_found = False
+            lang_code = 'hi' if current_lang == "हिंदी" else 'ml'
+            search_name = "hindi" if current_lang == "हिंदी" else "malayalam"
+            
             try:
                 pythoncom.CoInitialize() # Required for COM in QThread
                 if not self.sapi:
@@ -118,29 +139,28 @@ class TTSWorker(QObject):
                 cat = win32com.client.Dispatch("SAPI.SpObjectTokenCategory")
                 cat.SetId(r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", False)
                 
-                hindi_voice = None
+                target_voice = None
                 for token in cat.EnumerateTokens():
                     desc = token.GetDescription().lower()
-                    if "hindi" in desc or "kalpana" in desc or "hemant" in desc:
-                        hindi_voice = token
-                        hindi_voice_found = True
+                    if search_name in desc or (current_lang == "हिंदी" and ("kalpana" in desc or "hemant" in desc)):
+                        target_voice = token
+                        voice_found = True
                         break
                 
-                if hindi_voice_found and hindi_voice:
-                    self.sapi.Voice = hindi_voice
+                if voice_found and target_voice:
+                    self.sapi.Voice = target_voice
                     # Map WPM to SAPI's -10 to 10 scale
                     sapi_rate = int((self.speech_rate - 150) / 15)
                     self.sapi.Rate = max(-10, min(10, sapi_rate))
                     self.sapi.Speak(text, 1) # 1 = Speak Asynchronously
                     return  # Success! Skip the rest.
             except Exception as e:
-                print("Native Windows Hindi check failed:", e)
+                print(f"Native Windows {search_name} check failed:", e)
 
-            # 2. ESPEAK-NG FALLBACK (If Native Hindi fails or isn't installed)
-            if not hindi_voice_found:
-                print("Windows Hindi pack not found. Falling back to espeak-ng...")
+            # 2. ESPEAK-NG FALLBACK (If Native fails or isn't installed)
+            if not voice_found:
+                print(f"Windows {current_lang} pack not found. Falling back to espeak-ng...")
                 try:
-                    # Look for espeak-ng in standard Windows path if not in global PATH
                     import shutil, os
                     espeak_exe = shutil.which('espeak-ng')
                     if not espeak_exe:
@@ -148,20 +168,15 @@ class TTSWorker(QObject):
                         if os.path.exists(fallback_path):
                             espeak_exe = fallback_path
 
-                    if not espeak_exe:
-                        print("🚨 [TTS ERROR] espeak-ng is not installed or added to system PATH.")
-                        return
-
-                    # 0x08000000 = CREATE_NO_WINDOW (Hides the ugly terminal popup on Windows)
+                    # 0x08000000 = CREATE_NO_WINDOW (Hides terminal popup)
                     flags = 0x08000000 
                     self.process = subprocess.Popen(
-                        [espeak_exe, '-v', 'hi', '--stdin'], 
+                        [espeak_exe, '-v', lang_code + '+f3', '--stdin'], # 👈 Add variant +f3 for smoother node
                         stdin=subprocess.PIPE,
                         creationflags=flags
                     )
-                    # Write the UTF-8 text directly to the process stdin to avoid Windows command-line encoding corruption
                     self.process.stdin.write(text.encode('utf-8'))
-                    self.process.stdin.close() # Close it so espeak knows it's the end of the text
+                    self.process.stdin.close()
                     return
                 except Exception as e:
                     print(f"🚨 [TTS ERROR] Failed to run espeak-ng fallback: {e}")
@@ -236,7 +251,9 @@ class TTSWorker(QObject):
     def _speak_linux(self, text, current_lang):
         self._stop_linux()
         try:
-            voice_arg = 'hi' if current_lang == "हिंदी" else 'en'
+            if current_lang == "हिंदी": voice_arg = 'hi'
+            elif current_lang == "മലയാളം": voice_arg = 'ml'
+            else: voice_arg = 'en'
             
             self.process = subprocess.Popen(['espeak-ng', '-v', voice_arg, '-s', str(self.speech_rate), text])
         except FileNotFoundError:
@@ -258,6 +275,7 @@ class TTSWorker(QObject):
 
 class TextToSpeech(QObject):
     speak_signal = pyqtSignal(str)
+    play_custom_sound_signal = pyqtSignal(str) # 👈 Forward Signal
     stop_signal = pyqtSignal()
     reset_signal = pyqtSignal()
     cleanup_signal = pyqtSignal()
@@ -270,6 +288,7 @@ class TextToSpeech(QObject):
         self.worker.moveToThread(self.thread)
         
         self.speak_signal.connect(self.worker.speak)
+        self.worker.play_custom_sound.connect(self.play_custom_sound_signal.emit) # 👈 Connect forward
         self.stop_signal.connect(self.worker.stop)
         self.reset_signal.connect(self.worker.reset)
         self.cleanup_signal.connect(self.worker.cleanup)
