@@ -1,4 +1,3 @@
-@"
 # Python cache and compiled files
 __pycache__/
 *.py[cod]
@@ -11,6 +10,7 @@ __pycache__/
 venv/
 myenv/
 .myenv/
+env/
 
 # Editor & IDE folders
 .vscode/
@@ -38,7 +38,10 @@ Thumbs.db
 
 # Jupyter Notebook
 .ipynb_checkpoints/
-"@ | Out-File -FilePath .gitignore -Encoding utf8
-env/
+
+# Miscellaneous
 LinuxandWindowschanges.md
 changes.patch
+
+# TTS Audio Caches
+sounds/tts_cache_*.mp3
