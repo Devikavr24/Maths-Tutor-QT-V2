@@ -163,6 +163,7 @@ class MainWindow(QMainWindow):
         self.init_ui()
 
         self.tts = TextToSpeech()
+        self.tts.play_custom_sound_signal.connect(self.play_sound)
         self.load_style("main_window.qss")
         self.current_theme = "light"  
 
@@ -373,7 +374,7 @@ class MainWindow(QMainWindow):
                 break
             
     def focus_quickplay_button(self):
-        if hasattr(self, "quickPlayButton") and self.quickPlayButton:
+        if hasattr(self, "quickPlayButton") and self.quickPlayButton and not sip.isdeleted(self.quickPlayButton):
             self.quickPlayButton.setFocus()
 
     def create_mode_selection_page(self):
@@ -439,12 +440,7 @@ class MainWindow(QMainWindow):
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setProperty("class", "main-title")
         layout.addWidget(title_label)
-
-        subtitle_label = QLabel(tr("Choose your challenge level"))
-        subtitle_label.setAlignment(Qt.AlignCenter)
-        subtitle_label.setProperty("class", "subtitle")
-        layout.addWidget(subtitle_label)
-
+        layout.addSpacing(10) #
         difficulties = [(tr("Easy"), 1), (tr("Medium"), 2), (tr("Hard"), 3), (tr("Extra Hard"), 4)]
         for text, index in difficulties:
             btn = QPushButton(text)
@@ -549,6 +545,16 @@ class MainWindow(QMainWindow):
     def play_sound(self, filename):
         if self.is_muted:
             return
+            
+        # Cleanup old cache files
+        if filename.startswith("tts_cache_"):
+            try:
+                sounds_dir = "sounds"
+                for f in os.listdir(sounds_dir):
+                    if f.startswith("tts_cache_") and f != filename:
+                        os.remove(os.path.join(sounds_dir, f))
+            except Exception:
+                pass
         
         filepath = os.path.abspath(os.path.join("sounds", filename))
         if os.path.exists(filepath):

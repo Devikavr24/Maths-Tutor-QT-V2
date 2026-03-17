@@ -4,3 +4,4 @@ pywin32; sys_platform == "win32"
 pyttsx3
 openpyxl
 pandas
+edge-tts

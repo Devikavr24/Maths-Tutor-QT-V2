@@ -199,10 +199,10 @@ def setup_exit_handling(window, require_confirmation=False):
             # ✅ EXPLICIT DYNAMIC TRANSLATION (Bypassing tr() to guarantee it works)
             current_lang = getattr(window, 'language', 'English')
             
-            title_text = "एप्लिकेशन से बाहर निकलें" if current_lang == "हिंदी" else "Exit Application"
-            msg_text = "क्या आप वाकई बाहर निकलना चाहते हैं?" if current_lang == "हिंदी" else "Are you sure you want to exit?"
-            yes_text = "हाँ" if current_lang == "हिंदी" else "Yes"
-            no_text = "नहीं" if current_lang == "हिंदी" else "No"
+            title_text = tr("Exit Application")
+            msg_text = tr("Are you sure you want to exit?")
+            yes_text = tr("Yes")
+            no_text = tr("No")
 
             msg_box = QMessageBox(window)
             msg_box.setWindowTitle(title_text)
@@ -268,6 +268,7 @@ class QuestionWidget(QWidget):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setProperty("class", "question-label")
         self.label.setWordWrap(True)
+        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         if self.is_bell_mode:
             # ── Bell Ring Mode: button instead of text input ──
@@ -369,7 +370,36 @@ class QuestionWidget(QWidget):
         self._active = True  # Re-enable for new question
         self.start_time = time()
 
-        # Update Visuals
+        # --- TTS START ---
+        app_tts_active = False
+        if self.main_window and not self.main_window.is_muted:
+            app_tts_active = True
+        
+        if self.processor.questionType.lower() == "bellring":
+            app_tts_active = False
+
+        if app_tts_active:
+            if hasattr(self, 'tts'):
+                current_lang = getattr(self.main_window, 'language', 'English')
+                instruction = tr("Type your answer")
+                tts_text = f"{question_text}. {instruction}"
+                
+                if self._question_count == 0:
+                    QTimer.singleShot(10, lambda: self.tts.speak(tts_text))
+                else:
+                    self.tts.speak(tts_text)
+
+        # Dynamically Adjust Font Size for long questions
+        text_len = len(question_text)
+        if text_len > 140:
+            self.label.setStyleSheet("font-size: 14pt;")
+        elif text_len > 100:
+            self.label.setStyleSheet("font-size: 16pt;")
+        elif text_len > 60:
+            self.label.setStyleSheet("font-size: 19pt;")
+        else:
+            self.label.setStyleSheet("") # Revert to stylesheet default
+            
         self.label.setText(question_text)
 
         if self.input_box:
@@ -383,32 +413,6 @@ class QuestionWidget(QWidget):
             if self.bell_pause_timer and self.bell_pause_timer.isActive():
                 self.bell_pause_timer.stop()
         
-        # --- TTS START ---
-        app_tts_active = False
-        if self.main_window and not self.main_window.is_muted:
-            app_tts_active = True
-        
-        print(f"[DEBUG] load_new_question type: '{self.processor.questionType}'")
-
-        if self.processor.questionType.lower() == "bellring":
-            print("[BellRing] Mode detected. Suppressing standard TTS.")
-            app_tts_active = False
-
-        if app_tts_active:
-            # OPTION A: TTS IS ON
-            if hasattr(self, 'tts'):
-                # ✅ DYNAMICALLY TRANSLATE INSTRUCTION
-                current_lang = getattr(self.main_window, 'language', 'English')
-                instruction = "अपना उत्तर टाइप करें" if current_lang == "हिंदी" else "Type your answer"
-                
-                tts_text = f"{question_text}. {instruction}"
-                
-                if self._question_count == 0:
-                    # Brief delay for first question to let UI settle
-                    QTimer.singleShot(500, lambda: self.tts.speak(tts_text))
-                else:
-                    # Subsequent questions: immediate TTS
-                    self.tts.speak(tts_text)
                     
         # --- Bell Ring Question Audio ---
         if self.processor.questionType.lower() == "bellring":
@@ -479,7 +483,7 @@ class QuestionWidget(QWidget):
             current_lang = getattr(self.main_window, 'language', 'English')
 
             if not result["valid"]:
-                invalid_msg = "कृपया एक मान्य संख्या दर्ज करें।" if current_lang == "हिंदी" else "Please enter a valid number."
+                invalid_msg = tr("Please enter a valid number.")
                 self.result_label.setText(invalid_msg)
                 self.result_label.setAccessibleName(invalid_msg)
                 return
@@ -494,56 +498,57 @@ class QuestionWidget(QWidget):
                 if hasattr(self, 'tts'): self.tts.stop()
 
                 # ✅ TRANSLATED: "Correct!"
-                correct_text = "सही!" if current_lang == "हिंदी" else "Correct!"
-                self.result_label.setText(f'<span style="font-size:16pt;">{correct_text}</span>')
+                correct_text = tr("Correct!")
                 
-                # ✅ TRANSLATED: Feedback Sound & Text
                 sound_index = random.randint(1, 3)
-                if current_lang == "हिंदी":
-                    if elapsed < 5: feedback_text = "🌟 बहुत बढ़िया"   # Excellent
-                    elif elapsed < 10: feedback_text = "👏 बहुत अच्छा" # Very Good
-                    elif elapsed < 15: feedback_text = "👍 अच्छा"       # Good
-                    elif elapsed < 20: feedback_text = "👌 बुरा नहीं"   # Not Bad
-                    else: feedback_text = "🙂 ठीक है"                   # Okay
-                else:
-                    if elapsed < 5: feedback_text = "🌟 Excellent"
-                    elif elapsed < 10: feedback_text = "👏 Very Good"
-                    elif elapsed < 15: feedback_text = "👍 Good"
-                    elif elapsed < 20: feedback_text = "👌 Not Bad"
-                    else: feedback_text = "🙂 Okay"
                 
+                # Dynamically scale thresholds for long questions
+                time_offset = len(self.label.text()) // 30 # 1s per 30 chars
+                
+                # Map thresholds to lookup Keys, Emojis, and SFX prefixes
+                feedback_tiers = [
+                    (5 + time_offset, "Excellent", "🌟", "excellent"),
+                    (10 + time_offset, "Very Good", "👏", "very-good"),
+                    (15 + time_offset, "Good", "👍", "good"),
+                    (20 + time_offset, "Not Bad", "👌", "not-bad"),
+                    (float('inf'), "Okay", "🙂", "okay")
+                ]
+                
+                feedback_key = "Okay"; emoji = "🙂"; sound_file = f"okay-{sound_index}.mp3" # Fallback
+                for limit, key, emj, prefix in feedback_tiers:
+                    if elapsed < limit:
+                        feedback_key = key
+                        emoji = emj
+                        sound_file = f"{prefix}-{sound_index}.mp3"
+                        break
+                
+                feedback_text = f"{emoji} " + tr(feedback_key)
                 self.result_label.setText(f'<span style="font-size:16pt;">{feedback_text}</span>')
                 
-                # ✅ ACCESSIBILITY: Update accessible name with clean feedback for screen readers
-                clean_feedback = feedback_text.replace("🌟", "").replace("👏", "").replace("👍", "").replace("👌", "").replace("🙂", "").strip()
+                # ✅ ACCESSIBILITY: Update accessible name with clean feedback
+                clean_feedback = tr(feedback_key)
                 self.result_label.setAccessibleName(f"{correct_text} {clean_feedback}")
                 
-                if app_audio_active:
-                    if self.main_window:
-                        # Keep the English audio files playing the sound effects
-                        if elapsed < 5: sound_file = f"excellent-{sound_index}.mp3"
-                        elif elapsed < 10: sound_file = f"very-good-{sound_index}.mp3"
-                        elif elapsed < 15: sound_file = f"good-{sound_index}.mp3"
-                        elif elapsed < 20: sound_file = f"not-bad-{sound_index}.mp3"
-                        else: sound_file = f"okay-{sound_index}.mp3"
-
-                        self.main_window.play_sound(sound_file)
-                        self.show_feedback_gif(sound_file)
+                if app_audio_active and self.main_window:
+                    self.main_window.play_sound(sound_file)
+                    self.show_feedback_gif(sound_file)
                     
                     # ✅ TTS FEEDBACK: Announce translated feedback after a short delay
                     if hasattr(self, 'tts'):
-                        QTimer.singleShot(300, lambda t=clean_feedback: self.tts.speak(t))
-
+                        QTimer.singleShot(10, lambda t=clean_feedback: self.tts.speak(t))
+                        
                 self.processor.retry_count = 0
                 QTimer.singleShot(2000, self.call_next_question)
+                return # Skip remaining logic
+
 
             else:
                 self.processor.retry_count += 1
                 
                 # ✅ TRANSLATED: "Try Again" visual and speech
-                try_again_visual = "फिर से प्रयास करें।" if current_lang == "हिंदी" else "Try Again."
-                try_again_tts = "फिर से प्रयास करें" if current_lang == "हिंदी" else "Try Again"
-                incorrect_tts = "गलत।" if current_lang == "हिंदी" else "Incorrect."
+                try_again_visual = tr("Try Again.")
+                try_again_tts = tr("Try Again.")
+                incorrect_tts = tr("Incorrect.")
                 
                 self.result_label.setText(f'<span style="font-size:16pt;">{try_again_visual}</span>')
                 self.result_label.setAccessibleName(f"{incorrect_tts} {try_again_tts}")
@@ -828,9 +833,7 @@ class SettingsDialog(QDialog):
         self.main_window = main_window
         self.updated_language = main_window.language if main_window else "English"
         
-        # ✅ EXPLICIT DYNAMIC TRANSLATION (Bypassing tr() for titles and buttons)
-        current_lang = self.updated_language
-        title_text = "सेटिंग्स" if current_lang == "हिंदी" else "Settings"
+        title_text = tr("Settings")
         
         self.setWindowTitle(title_text)
         self.setFixedSize(400, 220)
@@ -861,7 +864,7 @@ class SettingsDialog(QDialog):
         self.setProperty("theme", parent.current_theme)
         
         # ✅ EXPLICIT DYNAMIC TRANSLATION
-        reset_text = "भाषा रीसेट करें" if current_lang == "हिंदी" else "Reset Language"
+        reset_text = tr("Reset Language")
         self.language_reset_btn = QPushButton(reset_text)
         self.language_reset_btn.setFixedHeight(30)
         self.language_reset_btn.clicked.connect(self.handle_reset_language)
@@ -869,8 +872,8 @@ class SettingsDialog(QDialog):
         self.language_reset_btn.setAccessibleDescription(tr("Clear saved language preference and choose a new language"))
 
         # ✅ EXPLICIT DYNAMIC TRANSLATION FOR OK/CANCEL
-        ok_text = "ठीक है" if current_lang == "हिंदी" else "OK"
-        cancel_text = "रद्द करें" if current_lang == "हिंदी" else "Cancel"
+        ok_text = tr("OK")
+        cancel_text = tr("Cancel")
         
         button_box = QDialogButtonBox()
         ok_btn = button_box.addButton(ok_text, QDialogButtonBox.AcceptRole)
@@ -889,7 +892,7 @@ class SettingsDialog(QDialog):
         layout.setContentsMargins(20, 20, 20, 20)
 
         # ✅ EXPLICIT DYNAMIC TRANSLATION
-        diff_label_text = "कठिनाई चुनें:" if current_lang == "हिंदी" else "Select Difficulty:"
+        diff_label_text = tr("Select Difficulty:")
         difficulty_label = QLabel(diff_label_text)
         difficulty_label.setProperty("class", "difficulty-label")
         difficulty_label.setProperty("theme", parent.current_theme)
@@ -902,8 +905,8 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.language_reset_btn)
 
         # ✅ EXPLICIT DYNAMIC TRANSLATION
-        help_text = "मदद" if current_lang == "हिंदी" else "Help"
-        about_text = "के बारे में" if current_lang == "हिंदी" else "About"
+        help_text = tr("Help")
+        about_text = tr("About")
         
         extra_buttons_layout = QHBoxLayout()
         self.help_button = QPushButton(help_text)

@@ -95,9 +95,10 @@ class QuestionProcessor:
         # ✅ DYNAMIC LANGUAGE SELECTION USING YOUR EXCEL FILE
         current_lang = getattr(lang_config, 'selected_language', 'English')
         
-        # If Hindi is selected AND you have the 'questin_hi' column, use it!
-        if current_lang == "हिंदी" and "questin_hi" in self.df.columns:
-            question_template = str(self.df.iloc[self.rowIndex]["questin_hi"])
+        if current_lang == "हिंदी" and "question_hi" in self.df.columns:
+            question_template = str(self.df.iloc[self.rowIndex]["question_hi"])
+        elif current_lang == "മലയാളം" and "question_mal" in self.df.columns:
+            question_template = str(self.df.iloc[self.rowIndex]["question_mal"])
         else:
             # Otherwise default to the English 'question' column
             question_template = str(self.df.iloc[self.rowIndex]["question"])
@@ -201,6 +202,9 @@ class QuestionProcessor:
             if time_taken > 15:
                 self.current_performance_rate -= 5 
  
+        if isinstance(self.current_difficulty, list):
+            return {"valid": True, "correct": is_correct}
+
         if self.current_performance_rate >= 30:
             if self.current_difficulty < 5:  
                 self.current_difficulty += 1
