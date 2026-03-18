@@ -44,7 +44,6 @@ def load_pages(section_name, back_callback, difficulty_index,
         for i, sub in enumerate(operations):
             translated=tr(sub)
             btn = create_menu_button(translated, lambda _, s=sub: main_window.load_section(s))
-            btn.setFixedSize(180, 60)
             # ✅ ACCESSIBILITY: Screen reader announces each operation button
             btn.setAccessibleName(translated)
             btn.setAccessibleDescription(f"Practice {translated} problems")

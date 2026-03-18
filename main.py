@@ -24,7 +24,8 @@ if sys.platform.startswith("linux"):
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QLabel, QDialog, QVBoxLayout,
     QPushButton, QComboBox, QHBoxLayout, QCheckBox, QFrame,
-    QWidget, QGridLayout,QStackedWidget, QSizePolicy, QShortcut, QMessageBox
+    QWidget, QGridLayout, QStackedWidget, QSizePolicy, QShortcut, QMessageBox,
+    QBoxLayout
 )
 from PyQt5.QtCore import Qt,QUrl, QSize, QTimer
 from question.loader import QuestionProcessor
@@ -164,6 +165,7 @@ class MainWindow(QMainWindow):
 
         self.tts = TextToSpeech()
         self.tts.play_custom_sound_signal.connect(self.play_sound)
+        self.base_qss = ""  # For dynamic scaling
         self.load_style("main_window.qss")
         self.current_theme = "light"  
 
@@ -209,13 +211,17 @@ class MainWindow(QMainWindow):
         self.init_ui()
         
         apply_theme(self.central_widget, self.current_theme)
+        
+    def resizeEvent(self, event):
+        super(MainWindow, self).resizeEvent(event)
+        self.update_dynamic_styles()
 
     def init_ui(self):
         self.central_widget = QWidget()
         self.central_widget.setProperty("class", "central-widget")
         self.central_widget.setProperty("theme", "light")
         self.main_layout = QVBoxLayout()
-        self.main_layout.setContentsMargins(4, 4, 4, 4)
+        self.main_layout.setContentsMargins(25, 15, 25, 15)
         self.central_widget.setLayout(self.main_layout)
         self.setCentralWidget(self.central_widget)
 
@@ -248,32 +254,35 @@ class MainWindow(QMainWindow):
         title = QLabel(tr("🎓 Learning Mode"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
-
         menu_layout.addWidget(title, alignment=Qt.AlignCenter)
-        menu_layout.addSpacing(15)
-
-        menu_layout.addLayout(self.create_buttons())
-        menu_layout.addSpacing(25) 
-
-        self.gif_label = QLabel()
-        self.gif_label.setAlignment(Qt.AlignCenter)
-        self.gif_label.setAccessibleName("")
-        self.gif_label.setAccessibleDescription("")
-        self.movie = QMovie("images/welcome-2.gif")
-        self.movie.setScaledSize(QSize(220, 220)) 
-        self.gif_label.setMovie(self.movie)
-        self.movie.start()
-
-        gif_container = QWidget()
-        gif_layout = QHBoxLayout()
+            # Side-by-side layout for Content (fits down to minimum size with 2 columns)
+        self.learn_mode_layout = QHBoxLayout()
+        self.learn_mode_layout.setSpacing(40)
+        self.learn_mode_layout.setAlignment(Qt.AlignCenter)
+ 
+        # GIF Container
+        self.gif_label_learn = QLabel()
+        self.gif_label_learn.setAlignment(Qt.AlignCenter)
+        self.gif_label_learn.setAccessibleName("")
+        self.gif_label_learn.setAccessibleDescription("")
+        self.movie_learn = QMovie("images/welcome-2.gif")
+        self.movie_learn.setScaledSize(QSize(240, 240)) 
+        self.gif_label_learn.setMovie(self.movie_learn)
+        self.movie_learn.start()
+ 
+        self.gif_learn_container = QWidget()
+        gif_layout = QHBoxLayout(self.gif_learn_container)
         gif_layout.setContentsMargins(0, 0, 0, 0)
-        gif_layout.addStretch()
-        gif_layout.addWidget(self.gif_label, alignment=Qt.AlignCenter)
-        gif_layout.addStretch()
-        gif_container.setLayout(gif_layout)
-
-        menu_layout.addWidget(gif_container)
-        
+        gif_layout.addWidget(self.gif_label_learn, alignment=Qt.AlignCenter)
+         
+        # Buttons Grid Wrapper
+        self.buttons_learn_widget = QWidget()
+        self.buttons_learn_widget.setLayout(self.create_buttons())
+ 
+        self.learn_mode_layout.addWidget(self.gif_learn_container, alignment=Qt.AlignCenter)
+        self.learn_mode_layout.addWidget(self.buttons_learn_widget, alignment=Qt.AlignCenter)
+ 
+        menu_layout.addLayout(self.learn_mode_layout)
         menu_layout.addStretch() # Bottom centering spacer
 
         self.stack = QStackedWidget()
@@ -395,21 +404,22 @@ class MainWindow(QMainWindow):
 
         #Content Layout, gif+buttons sidebyside
         content_layout = QHBoxLayout()
-        content_layout.setSpacing(40) 
+        content_layout.setSpacing(60) 
         content_layout.setAlignment(Qt.AlignCenter)
-
+        
         #Leftmost Gif
         gif_label = QLabel()
         gif_label.setAlignment(Qt.AlignCenter)
         movie = QMovie("images/welcome-1.gif")
-        movie.setScaledSize(QSize(250, 250)) # Bigger!
+        movie.setScaledSize(QSize(280, 280)) 
         gif_label.setMovie(movie)
         movie.start()
         self._welcome_movie = movie # Keep reference
         content_layout.addWidget(gif_label, alignment=Qt.AlignCenter)
 
         #Right- Buttons list
-        buttons_layout = QVBoxLayout()
+        buttons_widget = QWidget()
+        buttons_layout = QVBoxLayout(buttons_widget)
         buttons_layout.setSpacing(15) 
         buttons_layout.setAlignment(Qt.AlignCenter)
 
@@ -420,7 +430,9 @@ class MainWindow(QMainWindow):
         ]
         for text, callback in buttons:
             btn = QPushButton(text)
-            btn.setMinimumSize(250, 65) 
+            btn.setMinimumHeight(65)
+            btn.setMaximumHeight(80)
+            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
             btn.setProperty("class", "menu-button")
             btn.setProperty("theme", self.current_theme)
             btn.clicked.connect(callback)
@@ -428,12 +440,12 @@ class MainWindow(QMainWindow):
             clean_text = text.replace("⚡", "").replace("🎮", "").replace("🎓", "").strip()
             btn.setAccessibleName(clean_text)
             btn.setAccessibleDescription(f"Start {clean_text}")
-            buttons_layout.addWidget(btn, alignment=Qt.AlignCenter)
+            buttons_layout.addWidget(btn)
             
             if "Quickplay" in text or "त्वरित" in text or "Quickplay" in clean_text:
                 self.quickPlayButton = btn
 
-        content_layout.addLayout(buttons_layout)
+        content_layout.addWidget(buttons_widget, alignment=Qt.AlignCenter)
         
         # Add side-by-side layout to main page
         layout.addLayout(content_layout)
@@ -655,14 +667,15 @@ class MainWindow(QMainWindow):
         for i, name in enumerate(sections):
             translated_name = tr(name)
             button = QPushButton(translated_name)
-            button.setMinimumSize(220, 60) # Bigger buttons
-            button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+            button.setMinimumSize(250, 65) 
+            button.setMaximumSize(300, 75)
+            button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             button.setProperty("class", "menu-button")
             button.setAccessibleName(translated_name)
             button.clicked.connect(lambda checked, n=name: self.load_section(n))
 
             self.menu_buttons.append(button)
-            row, col = divmod(i, 3)
+            row, col = divmod(i, 2)
             button_grid.addWidget(button, row, col)
 
         return button_grid
@@ -796,7 +809,86 @@ class MainWindow(QMainWindow):
         path = os.path.join("styles", qss_file)
         if os.path.exists(path):
             with open(path, "r") as f:
-                self.setStyleSheet(f.read())
+                self.base_qss = f.read()
+                self.setStyleSheet(self.base_qss)
+
+    def update_dynamic_styles(self):
+        # Uniform scaling factoring based on both width and height
+        width_scale = self.width() / 900.0 if self.width() > 0 else 1.0
+        height_scale = self.height() / 600.0 if self.height() > 0 else 1.0
+        scale = min(width_scale, height_scale)
+        
+        # Allow slight shrinking, e.g. down to 0.82 for smaller windows
+        if scale < 0.82:
+            scale = 0.82 
+            
+        footer_font_size = 17 * scale
+        button_font_size = 18 * scale
+        if getattr(self, 'language', '') == "മലയാളം":
+            footer_font_size = 14 * scale # Shrink for Malayalam
+            button_font_size = 16 * scale
+            
+        dynamic_css = f"""
+        QWidget {{ font-size: {int(16 * scale)}px; }}
+        QLabel[class="main-title"] {{ font-size: {int(28 * scale)}px; }}
+        QLabel[class="subtitle"] {{ font-size: {int(20 * scale)}px; }}
+        QLabel[class="question-label"] {{ font-size: {int(28 * scale)}px; }}
+        QLineEdit.answer-input {{ font-size: {int(24 * scale)}px; }}
+        QPushButton[theme="light"] {{ 
+            font-size: {int(button_font_size)}px; 
+            padding: {int(12 * scale)}px {int(20 * scale)}px; 
+        }}
+        QPushButton[theme="dark"] {{ 
+            font-size: {int(button_font_size)}px; 
+            padding: {int(12 * scale)}px {int(20 * scale)}px; 
+        }}
+        QPushButton.footer-button {{ 
+            font-size: {int(footer_font_size)}px; 
+            padding: {int(8 * scale)}px {int(12 * scale)}px; 
+        }}
+        QComboBox.combo-box {{ font-size: {int(19 * scale)}px; }}
+        """
+        self.setStyleSheet(getattr(self, 'base_qss', '') + dynamic_css)
+        
+        # Scale all menu buttons (including those in operations/subsections)
+        for btn in self.findChildren(QPushButton):
+            if not sip.isdeleted(btn) and btn.property("class") == "menu-button":
+                max_width = int(340 * scale) if getattr(self, 'language', '') == "മലയാളം" else int(280 * scale)
+                btn.setMaximumSize(max_width, int(75 * scale))
+                
+        # Scale active question widgets
+        for qwidget in self.findChildren(QuestionWidget):
+            if not sip.isdeleted(qwidget):
+                qwidget.update_scaling(scale)
+                    
+        if hasattr(self, '_welcome_movie') and self._welcome_movie:
+            if hasattr(self, 'gif_label') and self.gif_label:
+                # Scale gif with window height, maintaining proportion
+                target_size = int(280 * (self.height() / 600.0))
+                target_size = min(max(200, target_size), 450)
+                self._welcome_movie.setScaledSize(QSize(target_size, target_size))
+                self.gif_label.setFixedSize(target_size, target_size)
+
+        # Dynamic Footer heights supporting scaling avoids text clipping
+        if hasattr(self, 'main_footer') and self.main_footer:
+            self.main_footer.setMinimumHeight(int(65 * scale))
+        if hasattr(self, 'section_footer') and self.section_footer:
+            self.section_footer.setMinimumHeight(int(65 * scale))
+
+        # Responsive Layout Switching for learn mode
+        if hasattr(self, 'learn_mode_layout_box'):
+            if self.width() < 950:
+                self.learn_mode_layout_box.setDirection(QBoxLayout.TopToBottom)
+            else:
+                self.learn_mode_layout_box.setDirection(QBoxLayout.LeftToRight)
+                
+        # Scale learn_mode movie gif size
+        if hasattr(self, 'movie_learn') and self.movie_learn:
+            if hasattr(self, 'gif_label_learn') and self.gif_label_learn:
+                target_size = int(240 * scale)
+                target_size = min(max(200, target_size), 450)
+                self.movie_learn.setScaledSize(QSize(target_size, target_size))
+                self.gif_label_learn.setFixedSize(target_size, target_size)
 
     def toggle_theme(self):
         self.current_theme = "dark" if self.current_theme == "light" else "light"
