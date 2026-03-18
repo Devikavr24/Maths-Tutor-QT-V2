@@ -110,10 +110,11 @@ def create_colored_page(title: str, color: str = "#d0f0c0") -> QWidget:
 
 def create_menu_button(text, callback):
     button = QPushButton(text)
-    button.setFixedSize(200, 40)
+    button.setMinimumSize(200, 40)
+    button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
     button.setProperty("class", "menu-button")
-    # ✅ ACCESSIBILITY: Screen reader announces button text
-    button.setAccessibleName(text)
+    btn_clean = text.replace("⚡", "").replace("🎮", "").replace("🎓", "").strip()
+    button.setAccessibleName(btn_clean)
     button.clicked.connect(callback)
     return button
 
@@ -167,7 +168,7 @@ def create_main_footer_buttons(self):
 
 def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box = QLineEdit()
-    input_box.setFixedSize(width, height)
+    input_box.setMinimumSize(width, height)
     input_box.setAlignment(Qt.AlignCenter)
     input_box.setPlaceholderText(tr("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
@@ -301,16 +302,26 @@ class QuestionWidget(QWidget):
         self.result_label.setAlignment(Qt.AlignCenter)
         self.result_label.setFont(QFont("Arial", 46))
 
-        # Assemble layout (no wrapper QWidget — prevents NVDA "grouping" announcement)
-        self.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        # Assemble layout with references for dynamic scaling
+        self.top_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.layout.addSpacerItem(self.top_spacer)
+        
         self.layout.addWidget(self.label)
-        self.layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
-        self.layout.addSpacing(20)
+        
+        self.mid_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.layout.addSpacerItem(self.mid_spacer)
+        
+        self.input_spacing_item = QSpacerItem(20, 20, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.layout.addSpacerItem(self.input_spacing_item)
+
         if self.is_bell_mode:
             self.layout.addWidget(self.bell_button, alignment=Qt.AlignCenter)
         else:
             self.layout.addWidget(self.input_box, alignment=Qt.AlignCenter)
-        self.layout.addSpacing(10)
+
+        self.result_spacing_item = QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.layout.addSpacerItem(self.result_spacing_item)
+        
         self.layout.addWidget(self.result_label)
         self.layout.addStretch()
 
@@ -327,6 +338,29 @@ class QuestionWidget(QWidget):
         self.layout.addWidget(self.gif_feedback_label, alignment=Qt.AlignCenter)
 
         self.load_new_question()
+
+    def update_scaling(self, scale):
+        if hasattr(self, 'gif_feedback_label') and self.gif_feedback_label:
+            target_size = int(220 * scale)
+            target_size = min(max(150, target_size), 450)
+            self.gif_feedback_label.setFixedSize(target_size, target_size)
+            
+        if hasattr(self, 'bell_button') and self.bell_button:
+            target_size = int(140 * scale)
+            self.bell_button.setMinimumSize(target_size, target_size)
+            self.bell_button.setIconSize(QSize(target_size - 18, target_size - 18))
+        elif hasattr(self, 'input_box') and self.input_box:
+            self.input_box.setFixedHeight(int(55 * scale))
+            self.input_box.setMinimumWidth(int(380 * scale))
+            
+        # Dynamically scale layout spacer heights 
+        if hasattr(self, 'top_spacer'):
+            self.top_spacer.changeSize(20, int(40 * scale), QSizePolicy.Minimum, QSizePolicy.Expanding)
+        if hasattr(self, 'mid_spacer'):
+            self.mid_spacer.changeSize(20, int(40 * scale), QSizePolicy.Minimum, QSizePolicy.Expanding)
+        if hasattr(self, 'input_spacing_item'):
+            self.input_spacing_item.changeSize(20, int(25 * scale), QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.layout.invalidate() 
 
     def show_feedback_gif(self, sound_filename):
         if sound_filename == "question":
