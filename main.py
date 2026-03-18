@@ -240,31 +240,27 @@ class MainWindow(QMainWindow):
 
         self.menu_widget = QWidget()
         menu_layout = QVBoxLayout()
-        menu_layout.setSpacing(10)
-        menu_layout.setAlignment(Qt.AlignTop)
+        menu_layout.setSpacing(20)
+        self.menu_widget.setLayout(menu_layout)
 
-        title = QLabel(tr("welcome"))
+        menu_layout.addStretch() # Top centering spacer
+
+        title = QLabel(tr("🎓 Learning Mode"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
 
-        subtitle = QLabel(tr("ready").format(lang=self.language))
-        subtitle.setAlignment(Qt.AlignCenter)
-        subtitle.setProperty("class", "subtitle")
-
-        menu_layout.addWidget(title)
-        menu_layout.addWidget(subtitle)
-        menu_layout.addSpacing(20)
+        menu_layout.addWidget(title, alignment=Qt.AlignCenter)
+        menu_layout.addSpacing(15)
 
         menu_layout.addLayout(self.create_buttons())
-        menu_layout.addSpacing(10)
-        menu_layout.addStretch()
+        menu_layout.addSpacing(25) 
 
         self.gif_label = QLabel()
         self.gif_label.setAlignment(Qt.AlignCenter)
         self.gif_label.setAccessibleName("")
         self.gif_label.setAccessibleDescription("")
-        self.movie = QMovie("images/welcome-1.gif")
-        self.movie.setScaledSize(QSize(150, 150))
+        self.movie = QMovie("images/welcome-2.gif")
+        self.movie.setScaledSize(QSize(220, 220)) 
         self.gif_label.setMovie(self.movie)
         self.movie.start()
 
@@ -277,7 +273,8 @@ class MainWindow(QMainWindow):
         gif_container.setLayout(gif_layout)
 
         menu_layout.addWidget(gif_container)
-        self.menu_widget.setLayout(menu_layout)
+        
+        menu_layout.addStretch() # Bottom centering spacer
 
         self.stack = QStackedWidget()
         self.stack.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -383,11 +380,38 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignCenter)
         widget.setLayout(layout)
 
-        label = QLabel(tr("Choose Mode"))
-        label.setAlignment(Qt.AlignCenter)
-        label.setProperty("class", "main-title")
-        label.setAccessibleName("Choose Mode Menu")
-        layout.addWidget(label)
+        #Welcome to Maths Tutor!
+        title = QLabel(tr("welcome"))
+        title.setAlignment(Qt.AlignCenter)
+        title.setProperty("class", "main-title")
+        layout.addWidget(title, alignment=Qt.AlignCenter)
+
+        #Ready to learn...
+        subtitle = QLabel(tr("ready").format(lang=self.language))
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setProperty("class", "subtitle")
+        layout.addWidget(subtitle, alignment=Qt.AlignCenter)
+        layout.addSpacing(30) # More space for split layout 
+
+        #Content Layout, gif+buttons sidebyside
+        content_layout = QHBoxLayout()
+        content_layout.setSpacing(40) 
+        content_layout.setAlignment(Qt.AlignCenter)
+
+        #Leftmost Gif
+        gif_label = QLabel()
+        gif_label.setAlignment(Qt.AlignCenter)
+        movie = QMovie("images/welcome-1.gif")
+        movie.setScaledSize(QSize(250, 250)) # Bigger!
+        gif_label.setMovie(movie)
+        movie.start()
+        self._welcome_movie = movie # Keep reference
+        content_layout.addWidget(gif_label, alignment=Qt.AlignCenter)
+
+        #Right- Buttons list
+        buttons_layout = QVBoxLayout()
+        buttons_layout.setSpacing(15) 
+        buttons_layout.setAlignment(Qt.AlignCenter)
 
         buttons = [
             (tr("⚡Quickplay"), self.start_quickplay_mode),
@@ -396,7 +420,7 @@ class MainWindow(QMainWindow):
         ]
         for text, callback in buttons:
             btn = QPushButton(text)
-            btn.setMinimumSize(240, 65)
+            btn.setMinimumSize(250, 65) 
             btn.setProperty("class", "menu-button")
             btn.setProperty("theme", self.current_theme)
             btn.clicked.connect(callback)
@@ -404,11 +428,15 @@ class MainWindow(QMainWindow):
             clean_text = text.replace("⚡", "").replace("🎮", "").replace("🎓", "").strip()
             btn.setAccessibleName(clean_text)
             btn.setAccessibleDescription(f"Start {clean_text}")
-            
-            layout.addWidget(btn)
+            buttons_layout.addWidget(btn, alignment=Qt.AlignCenter)
             
             if "Quickplay" in text or "त्वरित" in text or "Quickplay" in clean_text:
                 self.quickPlayButton = btn
+
+        content_layout.addLayout(buttons_layout)
+        
+        # Add side-by-side layout to main page
+        layout.addLayout(content_layout)
 
         return widget
 
@@ -618,8 +646,8 @@ class MainWindow(QMainWindow):
         
     def create_buttons(self):
         button_grid = QGridLayout() 
-        button_grid.setSpacing(12)
-        button_grid.setContentsMargins(6, 6, 6, 6)
+        button_grid.setSpacing(20) # More spacing for rich aesthetics
+        button_grid.setContentsMargins(10, 10, 10, 10)
 
         sections = ["Story", "Time", "Currency", "Distance", "Bellring", "Operations"]
         self.menu_buttons = []
@@ -627,7 +655,7 @@ class MainWindow(QMainWindow):
         for i, name in enumerate(sections):
             translated_name = tr(name)
             button = QPushButton(translated_name)
-            button.setMinimumSize(160, 45)
+            button.setMinimumSize(220, 60) # Bigger buttons
             button.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
             button.setProperty("class", "menu-button")
             button.setAccessibleName(translated_name)
