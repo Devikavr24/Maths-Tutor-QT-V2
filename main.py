@@ -186,6 +186,10 @@ class MainWindow(QMainWindow):
         self._faster_shortcut = QShortcut(QKeySequence("Alt+;"), self)
         self._faster_shortcut.activated.connect(self._on_faster)
 
+        # Ctrl+R shortcut to repeat question
+        self._repeat_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
+        self._repeat_shortcut.activated.connect(self._on_repeat_question)
+
     def refresh_ui(self, new_language):
         """Rebuilds the entire UI with the new language WITHOUT closing the window."""
         print(f"[System] Refreshing UI to {new_language}...")
@@ -330,8 +334,16 @@ class MainWindow(QMainWindow):
                     return text
         return None
 
+    def _on_repeat_question(self):
+        """Ctrl+R : Repeat the current question text."""
+        question_text = self._get_question_text()
+        if question_text:
+            if hasattr(self, 'tts'):
+                self.tts.speak(question_text)
+                print(f"[Ctrl+R] Repeating question: {question_text}")
+
     def _on_slower(self):
-        """Alt+; : If TTS is speaking, decrease speed. If idle, re-read question slower."""
+        """Ctrl+; : If TTS is speaking, decrease speed. If idle, re-read question slower."""
         step = self.tts.RATE_STEP
         current_rate = self.tts.speech_rate
         new_rate = max(50, current_rate - step)
