@@ -182,6 +182,20 @@ python3 main.py
 4. Answer questions using the keyboard
 
 ---
+ 
+## ⌨️ Keyboard Shortcuts
+
+For quick navigation and control, you can use the following keyboard shortcuts:
+
+| Shortcut | Action |
+| :--- | :--- |
+| **`Ctrl + R`** | **Repeat current question** |
+| **`Ctrl + ;`** | Decrease speech speed / Re-read slower |
+| **`Alt + ;`** | Increase speech speed |
+| **`Ctrl + Q`** | Quit Application |
+| **`Escape`** | Cancel / Close Dialog (in menus) |
+
+---
 
 ## 🔊 Audio & Theme
 
