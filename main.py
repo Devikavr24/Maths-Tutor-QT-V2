@@ -177,7 +177,11 @@ class MainWindow(QMainWindow):
         self.play_background_music()
 
         self.difficulty_index = 1 
-
+        
+        # Initialize single game_timer to avoid speed-up bug on restarts
+        self.game_timer = QTimer(self)
+        self.game_timer.setInterval(1000)
+        self.game_timer.timeout.connect(self._on_game_tick)
         # Ctrl+; shortcut to decrease speed / re-read question
         self._slower_shortcut = QShortcut(QKeySequence("Ctrl+;"), self)
         self._slower_shortcut.activated.connect(self._on_slower)
@@ -471,6 +475,12 @@ class MainWindow(QMainWindow):
         back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
+            
+        # Bulletproof hide upload button in modes outside main menu
+        for btn in self.main_footer.findChildren(QPushButton):
+             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                 btn.hide()
+             
         self.play_sound("click-button.wav")
 
     def start_game_mode(self):
@@ -481,6 +491,11 @@ class MainWindow(QMainWindow):
             back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
             if back_btn:
                 back_btn.show()
+            
+            # Bulletproof hide upload button in game mode starting phases
+            for btn in self.main_footer.findChildren(QPushButton):
+                 if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                     btn.hide()
             return
 
         self.game_mode_container = QWidget()
@@ -520,31 +535,249 @@ class MainWindow(QMainWindow):
         if back_btn:
             back_btn.show()
 
+        # Bulletproof hide upload button in game mode starting phases
+        for btn in self.main_footer.findChildren(QPushButton):
+             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                 btn.hide()
+
         apply_theme(self.game_mode_container, self.current_theme)
 
     def load_game_questions(self, difficulty_index):
-        import random
+        from question.loader import GameSession, QuestionProcessor
+        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QWidget, QPushButton
+        from PyQt5.QtCore import QTimer, Qt
+        from language.language import tr
 
-        self.clear_main_layout()
+        if hasattr(self, 'tts'):
+             self.tts.stop()
 
-        self.game_types = ["Multiplication", "Percentage", "Division", "Currency", "Story", "Time", "Distance", "Bellring","Addition", "Subtraction", "Remainder"]
-        self.game_difficulty = difficulty_index
+        # Create or retrieve standard game page inside stack
+        if not hasattr(self, 'game_page_container'):
+            self.game_page_container = QWidget()
+            self.game_page_layout = QVBoxLayout(self.game_page_container)
+            self.game_page_layout.setContentsMargins(0, 0, 0, 0)
+            self.stack.addWidget(self.game_page_container)
 
-        random_type = random.choice(self.game_types)
-        print("[load_game_question] current random type:", random_type)
-        processor = QuestionProcessor(random_type, difficultyIndex=self.game_difficulty)
-        processor.process_file()
+        # Clear previous layout widgets on game restarted iterations
+        for i in reversed(range(self.game_page_layout.count())):
+            widget = self.game_page_layout.itemAt(i).widget()
+            if widget: widget.setParent(None)
+
+        self.game_session = GameSession(difficulty_index)
+        self.time_remaining = 90
+        self.game_active = True
+
+        # Timer Bar Only
+        self.timer_bar = QProgressBar()
+        self.timer_bar.setMaximum(self.game_session.session_time)
+        self.timer_bar.setMinimum(0)
+        self.timer_bar.setValue(self.game_session.session_time)
+        self.timer_bar.setTextVisible(True)
+        self.timer_bar.setFormat("%vs")
+        self.timer_bar.setAccessibleName("")
+        self.timer_bar.setAccessibleDescription("")
+        self.game_page_layout.addWidget(self.timer_bar)
+
+        # Timer setup
+        self.game_timer.start()
+
+        if hasattr(self, 'tts') and not self.is_muted:
+            self.tts.speak(tr("Game mode! Let's go!"))
+
+        processor = self.game_session.get_next_question()
 
         def load_next_question():
-            new_type = random.choice(self.game_types)
-            print("[load_game_question] current random type:", new_type)
-            new_processor = QuestionProcessor(new_type, difficultyIndex=self.game_difficulty)
-            new_processor.process_file()
-            question_widget.processor = new_processor
-            question_widget.load_new_question()
+            if not self.game_active:
+                return
 
-        question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
-        self.main_layout.addWidget(question_widget)
+            result = getattr(self.question_widget, '_last_result', None)
+            if result:
+                self.game_session.submit_answer(result['skill'], result['correct'], result['elapsed'])
+                self._log_diagnostics()
+
+            if self.game_session.is_session_complete():
+                self._end_game_session()
+                return
+
+            next_processor = self.game_session.get_next_question()
+            self.question_widget.processor = next_processor
+            self.question_widget.load_new_question()
+            
+            # Deduplication now handled by GameSession during get_next_question
+
+
+
+        from pages.shared_ui import QuestionWidget
+        self.question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
+        self.game_page_layout.addWidget(self.question_widget)
+
+        # Apply standard page switch
+        self.stack.setCurrentWidget(self.game_page_container)
+
+        # Navigation Footer overrides
+        if hasattr(self, 'section_footer'):
+             self.main_footer.hide()
+             self.section_footer.show()
+             # Hide Back to Operations and Back to Learn
+             back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
+             if back_ops: back_ops.hide()
+             back_learn = self.section_footer.findChild(QPushButton, "back_to_learn")
+             if back_learn: back_learn.hide()
+
+             # Bulletproof Upload button hide
+             for btn in self.section_footer.findChildren(QPushButton):
+                 if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                     btn.hide()
+
+
+             self._original_back_to_home = self.back_to_home
+
+             def safe_back_to_home():
+                 if hasattr(self, 'game_timer') and self.game_timer.isActive():
+                     self.game_timer.stop()
+                 if hasattr(self, 'game_active'):
+                     self.game_active = False
+                 if hasattr(self, 'tts'):
+                     self.tts.stop()
+                 if hasattr(self, 'question_widget'):
+                     self.question_widget.stop_all_activity()
+                 if hasattr(self, '_original_back_to_home'):
+                     self.back_to_home = self._original_back_to_home
+                 self._cleanup_game_footer()
+                 self.back_to_main_menu()
+
+             self.back_to_home = safe_back_to_home
+
+             # Add Back to Difficulty button
+             back_to_diff_btn = QPushButton(tr("Back to Difficulty"))
+             back_to_diff_btn.setObjectName("back_to_difficulty")
+             back_to_diff_btn.setProperty("class", "footer-button")
+             back_to_diff_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+             back_to_diff_btn.adjustSize() 
+             back_to_diff_btn.setFont(QFont("Arial", 14))
+             back_to_diff_btn.setAccessibleName(tr("Back to Difficulty"))
+             back_to_diff_btn.setAccessibleDescription(tr("Return to difficulty selection"))
+             back_to_diff_btn.clicked.connect(self._back_to_difficulty)
+             
+             # Apply theme to trigger styles (Fix incomplete UI)
+             from pages.shared_ui import apply_theme
+             apply_theme(back_to_diff_btn, self.current_theme)
+             
+             # Insert at correct index (before Back to Home or Operations)
+             back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
+             back_home = self.section_footer.findChild(QPushButton, "back_to_home")
+             
+             if back_ops:
+                 idx = self.section_footer.layout().indexOf(back_ops)
+             elif back_home:
+                 idx = self.section_footer.layout().indexOf(back_home)
+             else:
+                 idx = 2 # Fallback index after stretch
+                 
+             self.section_footer.layout().insertWidget(idx, back_to_diff_btn)
+             self._back_to_diff_btn = back_to_diff_btn
+
+
+    def _cleanup_game_footer(self):
+        if hasattr(self, '_back_to_diff_btn') and self._back_to_diff_btn:
+            self._back_to_diff_btn.setParent(None)
+            self._back_to_diff_btn = None
+
+    def _back_to_difficulty(self):
+        if hasattr(self, 'game_timer') and self.game_timer.isActive():
+            self.game_timer.stop()
+        if hasattr(self, 'game_active'):
+            self.game_active = False
+        if hasattr(self, 'tts'):
+            self.tts.stop()
+        if hasattr(self, 'question_widget'):
+            self.question_widget.stop_all_activity()
+        if hasattr(self, '_original_back_to_home'):
+            self.back_to_home = self._original_back_to_home
+        self._cleanup_game_footer()
+        
+        self.stack.setCurrentWidget(self.game_mode_container)
+        self.main_footer.hide()
+        self.section_footer.show()
+        back_ops = self.section_footer.findChild(QPushButton, "back_operations")
+        if back_ops: back_ops.hide()
+
+    def _update_timer_bar(self):
+        self.timer_bar.setValue(self.time_remaining)
+        if self.time_remaining > 30:
+            color = "#1D9E75"   # green
+        elif self.time_remaining > 15:
+            color = "#EF9F27"   # amber
+        else:
+            color = "#E24B4A"   # red
+        self.timer_bar.setStyleSheet(f"QProgressBar::chunk {{ background-color: {color}; border-radius: 4px; }}")
+
+    def _log_diagnostics(self):
+        session = self.game_session
+        print(f"[GAME] State: {session.state}")
+        print(f"[GAME] Phase: {session.phase}")
+        print(f"[GAME] Question: {session.question_count}")
+        print(f"[GAME] Skill scores: {session.skill_scores}")
+        print(f"[GAME] Mistake queue: {len(session.mistake_queue)} items")
+
+    def _get_difficulty_name(self, index):
+        levels = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
+        if 0 <= index < len(levels):
+             from language.language import tr
+             return tr(levels[index])
+        return ""
+
+    def _on_game_tick(self):
+        self.time_remaining -= 1
+        self._update_timer_bar()
+        
+        from language.language import tr
+
+        if self.time_remaining == 15:
+            self.game_session.set_finale()
+            self.tts.speak(tr("Keep going!"))
+        elif self.time_remaining == 5:
+            self.tts.speak(tr("One more!"))
+        elif self.time_remaining <= 0:
+            self._end_game_session()
+
+    def _end_game_session(self):
+        if not self.game_active:
+             return
+        self.game_active = False
+        self.game_timer.stop()
+        self.tts.stop()
+        self.question_widget.stop_all_activity()
+
+        if hasattr(self, '_original_back_to_home'):
+            self.back_to_home = self._original_back_to_home
+
+        from language.language import tr
+        print(f"[GAME] Session ended. Final scores: {self.game_session.skill_scores}")
+        
+        QTimer.singleShot(500, lambda: self.tts.speak(tr("Time's up! Amazing effort.")))
+        QTimer.singleShot(2500, self.show_end_report)
+
+    def show_end_report(self):
+        from pages.shared_ui import GameReportWidget, apply_theme
+        from language.language import tr
+        
+        self._cleanup_game_footer()
+        report = GameReportWidget(session=self.game_session, window=self, tts=self.tts)
+        apply_theme(report, self.current_theme)
+        
+        self.stack.addWidget(report)
+        self.stack.setCurrentWidget(report)
+        
+        if hasattr(self, 'section_footer'): self.section_footer.hide()
+        if hasattr(self, 'main_footer'): self.main_footer.show()
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn: back_btn.show()
+
+        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
+        if upload_btn: upload_btn.hide()
+
+
 
     def start_quickplay_mode(self):
         self._proceed_to_quickplay()
@@ -574,18 +807,15 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, '_quickplay_question_widget') and self._quickplay_question_widget:
             processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-            processor.process_file()
             self._quickplay_question_widget.processor = processor
             self._quickplay_question_widget.load_new_question()
             self.stack.setCurrentWidget(self.quickplay_container)
             return
 
         processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-        processor.process_file()
 
         def load_next_question():
             new_processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-            new_processor.process_file()
             self._quickplay_question_widget.processor = new_processor
             self._quickplay_question_widget.load_new_question()
 
@@ -693,11 +923,12 @@ class MainWindow(QMainWindow):
         return button_grid
     
     def create_section_footer(self):
-        buttons = ["Back to Operations", "Back to Home", "Settings"]
+        buttons = ["Back to Operations", "Back to Learn", "Back to Home", "Settings"]
         translated = [tr(b) for b in buttons]
 
         callbacks = {
             tr("Back to Operations"): lambda: self.load_section("Operations"),
+            tr("Back to Learn"): self.back_to_learn_menu,
             tr("Back to Home"): self.back_to_home,
             tr("Settings"): self.handle_settings
         }
@@ -711,6 +942,8 @@ class MainWindow(QMainWindow):
         for btn in footer.findChildren(QPushButton):
             if btn.text() == tr("Back to Operations"):
                 btn.setObjectName("back_to_operations")
+            elif btn.text() == tr("Back to Learn"):
+                btn.setObjectName("back_to_learn")
             elif btn.text() == tr("Back to Home"):
                 btn.setObjectName("back_to_home")
 
@@ -775,22 +1008,19 @@ class MainWindow(QMainWindow):
         self.section_footer.hide()
         self.main_footer.show()
         
-        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
-        if upload_btn:
-            upload_btn.show()
+        # Bulletproof show upload button
+        for btn in self.main_footer.findChildren(QPushButton):
+             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                 btn.show()
         
         back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.hide()
         self.focus_quickplay_button()
         
-    def back_to_home(self):
-        # ✅ FIX RETAINED: "Back to Home" for Uploaded Quizzes goes to Mode Selection
-        if isinstance(self.stack.currentWidget(), QuestionWidget):
-            self.back_to_main_menu()
-            return
+    def back_to_learn_menu(self):
+        from pages.shared_ui import QuestionWidget
 
-        self.top_bar.show()  
         current_page = self.stack.currentWidget()
         if current_page:
             question_widget = current_page.findChild(QuestionWidget)
@@ -800,13 +1030,40 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tts'):
             self.tts.stop()
             self.tts.reset()
-        self.stack.setCurrentWidget(self.menu_widget)     
-        self.section_footer.hide()                        
-        self.main_footer.show()                           
+
+        self.stack.setCurrentWidget(self.menu_widget)
+        self.section_footer.hide()
+        self.main_footer.show()
+
+    def back_to_home(self):
+        current_page = self.stack.currentWidget()
         
-        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
-        if upload_btn:
-            upload_btn.show()
+        # ✅ Game Mode Check: Redirect to Landing Page with cleanups
+        if hasattr(self, 'game_page_container') and current_page == self.game_page_container:
+            if hasattr(self, 'game_timer') and self.game_timer.isActive():
+                self.game_timer.stop()
+            if hasattr(self, 'game_active'):
+                self.game_active = False
+            if hasattr(self, 'tts'):
+                self.tts.stop()
+            if hasattr(self, 'question_widget'):
+                self.question_widget.stop_all_activity()
+            if hasattr(self, '_cleanup_game_footer'):
+                self._cleanup_game_footer()
+            self.back_to_main_menu()
+            return
+
+        # Standard Cleanup for any page with a QuestionWidget
+        if current_page:
+            question_widget = current_page.findChild(QuestionWidget)
+            if question_widget:
+                question_widget.stop_all_activity()
+
+        if hasattr(self, 'tts'):
+            self.tts.stop()
+            self.tts.reset()
+
+        self.back_to_main_menu()
 
     def clear_main_layout(self):
         for i in reversed(range(self.main_layout.count())):

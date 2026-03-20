@@ -4,7 +4,7 @@ import random
 import language.language as lang_config
 
 class QuestionProcessor:
-    def __init__(self, questionType, difficultyIndex):
+    def __init__(self, questionType, difficultyIndex, disable_dda=False):
         self.questionType = questionType
         self.widget = None
         self.difficultyIndex = difficultyIndex
@@ -13,17 +13,20 @@ class QuestionProcessor:
         self.oprands = []
         self.rowIndex = 0
         self.retry_count = 0
-        # DDA-related fields
+        # DDA related fields
         self.total_attempts = 0
         self.correct_answers = 0
         self.correct_streak = 0
         self.incorrect_streak = 0
         self.current_performance_rate = 0
         self.current_difficulty = difficultyIndex 
+        self._used_rows = set()
+        self.disable_dda = disable_dda
 
     def get_questions(self):
         self.process_file()
         return self.get_random_question()
+
 
     def process_file(self):
         file_path = os.path.join(os.getcwd(), "question", "question.xlsx")
@@ -85,9 +88,17 @@ class QuestionProcessor:
         if self.df is None or self.df.empty:
             return "No questions found.", None
  
-        self.rowIndex = random.randint(0, len(self.df) - 1)
+        all_rows = list(range(len(self.df)))
+        available = [r for r in all_rows if r not in self._used_rows]
+        if not available:
+            self._used_rows = set()
+            available = all_rows
+        self.rowIndex = random.choice(available)
+        self._used_rows.add(self.rowIndex)
  
         variable_string = str(self.df.iloc[self.rowIndex]["operands"])
+
+
         input_string = ''.join(c for c in variable_string if not c.isalpha())
         self.variables = [c for c in variable_string if c.isalpha()]
         self.oprands = self.parseInputRange(input_string)
@@ -205,6 +216,9 @@ class QuestionProcessor:
         if isinstance(self.current_difficulty, list):
             return {"valid": True, "correct": is_correct}
 
+        if getattr(self, 'disable_dda', False):
+            return {"valid": True, "correct": is_correct}
+
         if self.current_performance_rate >= 30:
             if self.current_difficulty < 5:  
                 self.current_difficulty += 1
@@ -220,3 +234,222 @@ class QuestionProcessor:
         "valid": True,
         "correct": is_correct
     }
+
+class GameSession:
+    TIER1 = ["Addition", "Subtraction", "Multiplication", "Division", "Remainder", "Percentage"]
+    TIER2 = ["Story", "Time", "Currency", "Distance", "Bellring"]
+    MAX_QUESTIONS = 20
+
+    def __init__(self, difficulty_index):
+        self.difficulty_index = difficulty_index
+        self.difficulty = difficulty_index
+        self.skill_scores = {skill: 50 for skill in self.TIER1}
+        self.correct_streak = 0
+        self.incorrect_streak = 0
+        self.state = "Normal"  # "Normal" | "Thriving" | "Struggling"
+        self.mistake_queue = []
+        self.question_count = 0
+        self.questions_answered = 0
+        self.phase = "Warmup"  # "Warmup" | "Main" | "Finale"
+        self.tier2_index = 0
+        self.current_skill = None
+        self.recent_performance = []
+        self.session_time = 90
+        
+        self.processors = {}
+        self._warmup_used = set()
+
+
+    def is_session_complete(self):
+        return self.question_count >= self.MAX_QUESTIONS
+
+    def set_finale(self):
+        self.phase = "Finale"
+
+    def get_phase(self):
+        return self.phase
+
+    def get_next_question(self):
+        skill = None
+
+        if self.question_count >= 19:
+            self.phase = "Finale"
+
+        if self.phase == "Finale":
+            skill = max(self.skill_scores, key=self.skill_scores.get)
+        elif self.phase == "Warmup" and self.question_count < 3:
+            sorted_skills = sorted(
+                self.skill_scores.items(),
+                key=lambda x: x[1],
+                reverse=True)
+            strong_skills = [s for s, score in sorted_skills[:3]]
+            available = [s for s in strong_skills 
+                         if s not in self._warmup_used]
+            if not available:
+                available = [s for s in self.TIER1 
+                             if s not in self._warmup_used]
+            if not available:
+                available = self.TIER1
+            if all(s == 50 for s in self.skill_scores.values()):
+                # Avoid hard ops on first session
+                safe = [s for s in available 
+                        if s not in ["Multiplication","Division","Remainder"]]
+                if safe:
+                    available = safe
+            skill = random.choice(available)
+            self._warmup_used.add(skill)
+
+        else:
+            self.phase = "Main"
+            if self.question_count % 5 == 0 and self.question_count > 0:
+                skill = self.TIER2[self.tier2_index % len(self.TIER2)]
+                self.tier2_index += 1
+            else:
+                for item in list(self.mistake_queue):
+                    if item['resurfaced_at'] <= self.question_count:
+                        skill = item['skill_type']
+                        self.mistake_queue.remove(item)
+                        break
+                
+                if not skill:
+                    weights = self._get_weights_for_state(self.state)
+                    roll = random.random()
+                    
+                    if roll < weights["weakness"]:
+                        skill = min(self.skill_scores, key=self.skill_scores.get)
+                    elif roll < weights["weakness"] + weights["strength"]:
+                        skill = max(self.skill_scores, key=self.skill_scores.get)
+                    else:
+                        skill = random.choice(self.TIER1)
+
+        self.current_skill = skill
+        self.question_count += 1
+        if skill not in self.processors:
+            p = QuestionProcessor(skill, self.difficulty, disable_dda=True)
+            p.process_file()
+            
+            if p.df is None or p.df.empty:
+                # Dynamic scaling to empty level fallback
+                p.difficultyIndex = [1, 2, 3, 4, 5]
+                p.process_file()
+                
+            self.processors[skill] = p
+        else:
+            p = self.processors[skill]
+            p.disable_dda = True
+            if p.difficultyIndex != self.difficulty:
+                p.difficultyIndex = self.difficulty
+                p.process_file()
+                
+                if p.df is None or p.df.empty:
+                     p.difficultyIndex = [1, 2, 3, 4, 5]
+                     p.process_file()
+        processor = p
+
+        return processor
+
+
+
+    def _get_weights_for_state(self, state):
+        if state == "Struggling":
+            return {"weakness": 0.10, "strength": 0.60, "novelty": 0.30}
+        elif state == "Thriving":
+            return {"weakness": 0.65, "strength": 0.10, "novelty": 0.25}
+        else: # Normal
+            return {"weakness": 0.45, "strength": 0.20, "novelty": 0.35}
+
+    def submit_answer(self, skill_type, is_correct, elapsed):
+        delta = 0
+        self.questions_answered += 1
+        if is_correct:
+            self.correct_streak += 1
+            self.incorrect_streak = 0
+            if elapsed < 5:
+                delta = 8
+                perf = "excellent"
+            elif elapsed < 10:
+                delta = 5
+                perf = "good"
+            elif elapsed < 15:
+                delta = 3
+                perf = "fair"
+            else:
+                delta = 1
+                perf = "slow"
+            self.recent_performance.append(perf)
+        else:
+            self.incorrect_streak += 1
+            self.correct_streak = 0
+            if self.incorrect_streak == 1:
+                delta = -5
+            else:
+                delta = -8
+            if len(self.mistake_queue) < 2:
+                self.mistake_queue.append({'skill_type': skill_type, 'resurfaced_at': self.question_count + 3})
+            self.recent_performance.append("incorrect")
+
+        if skill_type in self.skill_scores:
+            self.skill_scores[skill_type] = max(0, min(100, self.skill_scores[skill_type] + delta))
+
+        # State machine & Dynamic Difficulty Adjustment (DDA)
+        if self.incorrect_streak >= 2:
+            self.state = "Struggling"
+            if hasattr(self, 'difficulty') and self.difficulty > 1:
+                self.difficulty -= 1
+        elif self.correct_streak >= 3:
+            if len(self.recent_performance) >= 3 and all(p == "excellent" for p in self.recent_performance[-3:]):
+                self.state = "Thriving"
+                if hasattr(self, 'difficulty') and self.difficulty < 5:
+                    self.difficulty += 1
+        elif self.state == "Struggling" and is_correct:
+            self.state = "Normal"
+        elif self.state == "Thriving" and not is_correct:
+            self.state = "Normal"
+
+        if len(self.recent_performance) > 10:
+            self.recent_performance = self.recent_performance[-10:]
+
+    def generate_report(self):
+        ranked = sorted(self.skill_scores.items(), key=lambda x: x[1], reverse=True)
+        strengths = [s for s, score in ranked if score >= 60][:2]
+        weakness = [s for s, score in ranked if score < 45][:1]
+
+        if not weakness and ranked:
+            # Fallback to the lowest-performing skill that isn't already a strength
+            non_strengths = [s for s, score in ranked if s not in strengths]
+            if non_strengths:
+                weakness = [non_strengths[-1]]
+            else:
+                weakness = [ranked[-1][0]]
+
+        from language.language import tr
+
+        if strengths:
+            s1 = tr(strengths[0])
+            s2 = tr(strengths[1]) if len(strengths) > 1 else None
+            strength_text = f"{s1} {tr('and')} {s2}" if s2 else s1
+        else:
+            strength_text = tr("trying hard")
+
+        if weakness:
+             weak_name = tr(weakness[0])
+             endings = [
+                 tr("{skill} is your next adventure!").format(skill=weak_name),
+                 tr("Keep exploring {skill}!").format(skill=weak_name),
+                 tr("{skill} wants more of your attention!").format(skill=weak_name)
+             ]
+             weak_sentence = random.choice(endings)
+        else:
+             weak_sentence = tr("You are brilliant across everything!")
+
+        templates = [
+             tr("You were amazing at {strength} today! {weakness}").format(
+                 strength=strength_text, weakness=weak_sentence),
+             tr("Wow! {strength} is your superpower. {weakness}").format(
+                 strength=strength_text, weakness=weak_sentence),
+             tr("Great session! You really know your {strength}. {weakness}").format(
+                 strength=strength_text, weakness=weak_sentence)
+        ]
+        return random.choice(templates)
+
+
