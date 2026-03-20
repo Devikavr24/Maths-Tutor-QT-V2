@@ -475,6 +475,12 @@ class MainWindow(QMainWindow):
         back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
+            
+        # Bulletproof hide upload button in modes outside main menu
+        for btn in self.main_footer.findChildren(QPushButton):
+             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                 btn.hide()
+             
         self.play_sound("click-button.wav")
 
     def start_game_mode(self):
@@ -485,6 +491,11 @@ class MainWindow(QMainWindow):
             back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
             if back_btn:
                 back_btn.show()
+            
+            # Bulletproof hide upload button in game mode starting phases
+            for btn in self.main_footer.findChildren(QPushButton):
+                 if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                     btn.hide()
             return
 
         self.game_mode_container = QWidget()
@@ -523,6 +534,11 @@ class MainWindow(QMainWindow):
         back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
+
+        # Bulletproof hide upload button in game mode starting phases
+        for btn in self.main_footer.findChildren(QPushButton):
+             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                 btn.hide()
 
         apply_theme(self.game_mode_container, self.current_theme)
 
@@ -633,13 +649,32 @@ class MainWindow(QMainWindow):
              self.back_to_home = safe_back_to_home
 
              # Add Back to Difficulty button
-             back_to_diff_btn = QPushButton(tr("Difficulty"))
+             back_to_diff_btn = QPushButton(tr("Back to Difficulty"))
              back_to_diff_btn.setObjectName("back_to_difficulty")
              back_to_diff_btn.setProperty("class", "footer-button")
+             back_to_diff_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
+             back_to_diff_btn.adjustSize() 
+             back_to_diff_btn.setFont(QFont("Arial", 14))
              back_to_diff_btn.setAccessibleName(tr("Back to Difficulty"))
              back_to_diff_btn.setAccessibleDescription(tr("Return to difficulty selection"))
              back_to_diff_btn.clicked.connect(self._back_to_difficulty)
-             self.section_footer.layout().addWidget(back_to_diff_btn)
+             
+             # Apply theme to trigger styles (Fix incomplete UI)
+             from pages.shared_ui import apply_theme
+             apply_theme(back_to_diff_btn, self.current_theme)
+             
+             # Insert at correct index (before Back to Menu or Operations)
+             back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
+             back_menu = self.section_footer.findChild(QPushButton, "back_to_menu")
+             
+             if back_ops:
+                 idx = self.section_footer.layout().indexOf(back_ops)
+             elif back_menu:
+                 idx = self.section_footer.layout().indexOf(back_menu)
+             else:
+                 idx = 2 # Fallback index after stretch
+                 
+             self.section_footer.layout().insertWidget(idx, back_to_diff_btn)
              self._back_to_diff_btn = back_to_diff_btn
 
 
@@ -891,12 +926,12 @@ class MainWindow(QMainWindow):
         return button_grid
     
     def create_section_footer(self):
-        buttons = ["Back to Operations", "Back to Home", "Settings"]
+        buttons = ["Back to Operations", "Back to Menu", "Settings"]
         translated = [tr(b) for b in buttons]
 
         callbacks = {
             tr("Back to Operations"): lambda: self.load_section("Operations"),
-            tr("Back to Home"): self.back_to_home,
+            tr("Back to Menu"): self.back_to_home,
             tr("Settings"): self.handle_settings
         }
 
@@ -909,8 +944,8 @@ class MainWindow(QMainWindow):
         for btn in footer.findChildren(QPushButton):
             if btn.text() == tr("Back to Operations"):
                 btn.setObjectName("back_to_operations")
-            elif btn.text() == tr("Back to Home"):
-                btn.setObjectName("back_to_home")
+            elif btn.text() == tr("Back to Menu"):
+                btn.setObjectName("back_to_menu")
 
         return footer
 
@@ -973,9 +1008,10 @@ class MainWindow(QMainWindow):
         self.section_footer.hide()
         self.main_footer.show()
         
-        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
-        if upload_btn:
-            upload_btn.show()
+        # Bulletproof show upload button
+        for btn in self.main_footer.findChildren(QPushButton):
+             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                 btn.show()
         
         back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
