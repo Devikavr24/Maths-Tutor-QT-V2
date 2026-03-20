@@ -177,7 +177,11 @@ class MainWindow(QMainWindow):
         self.play_background_music()
 
         self.difficulty_index = 1 
-
+        
+        # Initialize single game_timer to avoid speed-up bug on restarts
+        self.game_timer = QTimer(self)
+        self.game_timer.setInterval(1000)
+        self.game_timer.timeout.connect(self._on_game_tick)
         # Ctrl+; shortcut to decrease speed / re-read question
         self._slower_shortcut = QShortcut(QKeySequence("Ctrl+;"), self)
         self._slower_shortcut.activated.connect(self._on_slower)
@@ -559,9 +563,6 @@ class MainWindow(QMainWindow):
         self.game_page_layout.addWidget(self.timer_bar)
 
         # Timer setup
-        self.game_timer = QTimer(self)
-        self.game_timer.setInterval(1000)
-        self.game_timer.timeout.connect(self._on_game_tick)
         self.game_timer.start()
 
         if hasattr(self, 'tts') and not self.is_muted:
