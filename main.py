@@ -627,7 +627,7 @@ class MainWindow(QMainWindow):
                  if hasattr(self, '_original_back_to_home'):
                      self.back_to_home = self._original_back_to_home
                  self._cleanup_game_footer()
-                 self._original_back_to_home()
+                 self.back_to_main_menu()
 
              self.back_to_home = safe_back_to_home
 
@@ -982,13 +982,29 @@ class MainWindow(QMainWindow):
         self.focus_quickplay_button()
         
     def back_to_home(self):
+        current_page = self.stack.currentWidget()
+        
+        # ✅ Game Mode Check: Redirect to Landing Page with cleanups
+        if hasattr(self, 'game_page_container') and current_page == self.game_page_container:
+            if hasattr(self, 'game_timer') and self.game_timer.isActive():
+                self.game_timer.stop()
+            if hasattr(self, 'game_active'):
+                self.game_active = False
+            if hasattr(self, 'tts'):
+                self.tts.stop()
+            if hasattr(self, 'question_widget'):
+                self.question_widget.stop_all_activity()
+            if hasattr(self, '_cleanup_game_footer'):
+                self._cleanup_game_footer()
+            self.back_to_main_menu()
+            return
+
         # ✅ FIX RETAINED: "Back to Home" for Uploaded Quizzes goes to Mode Selection
-        if isinstance(self.stack.currentWidget(), QuestionWidget):
+        if isinstance(current_page, QuestionWidget):
             self.back_to_main_menu()
             return
 
         self.top_bar.show()  
-        current_page = self.stack.currentWidget()
         if current_page:
             question_widget = current_page.findChild(QuestionWidget)
             if question_widget:

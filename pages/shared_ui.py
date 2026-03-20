@@ -587,7 +587,7 @@ class QuestionWidget(QWidget):
                 self.processor.retry_count += 1
                 from language.language import tr
 
-                if hasattr(self.main_window, 'game_active') and self.main_window.game_active and self.processor.retry_count >= 2:
+                if hasattr(self.main_window, 'game_active') and self.main_window.game_active and self.processor.retry_count >= 1:
                     self.result_label.setText(f'<span style="font-size:16pt;">{tr("Let\'s try another one!")}</span>')
                     QTimer.singleShot(2000, self.call_next_question)
                     return

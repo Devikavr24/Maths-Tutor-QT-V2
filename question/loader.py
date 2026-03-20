@@ -20,18 +20,9 @@ class QuestionProcessor:
         self.incorrect_streak = 0
         self.current_performance_rate = 0
         self.current_difficulty = difficultyIndex 
+        self._used_rows = set()
 
     def get_questions(self):
-        if hasattr(self, '_prepared_question') and self._prepared_question:
-            q = self._prepared_question
-            a = self._prepared_answer
-            self._prepared_question = None  # clear for next call
-            try:
-                answer = round(float(a)) if a is not None else None
-            except (TypeError, ValueError):
-                answer = None
-            return q, answer
-            
         self.process_file()
         return self.get_random_question()
 
@@ -96,7 +87,13 @@ class QuestionProcessor:
         if self.df is None or self.df.empty:
             return "No questions found.", None
  
-        self.rowIndex = random.randint(0, len(self.df) - 1)
+        all_rows = list(range(len(self.df)))
+        available = [r for r in all_rows if r not in self._used_rows]
+        if not available:
+            self._used_rows = set()
+            available = all_rows
+        self.rowIndex = random.choice(available)
+        self._used_rows.add(self.rowIndex)
  
         variable_string = str(self.df.iloc[self.rowIndex]["operands"])
 
@@ -255,9 +252,8 @@ class GameSession:
         self.recent_performance = []
         self.session_time = 90
         
-        # Deduplication
-        self.used_question_indices = {}
-        self.used_question_texts = set()
+        self.processors = {}
+        self._warmup_used = set()
 
 
     def is_session_complete(self):
@@ -278,13 +274,26 @@ class GameSession:
         if self.phase == "Finale":
             skill = max(self.skill_scores, key=self.skill_scores.get)
         elif self.phase == "Warmup" and self.question_count < 3:
-            scores = list(self.skill_scores.values())
-            if all(s == scores[0] for s in scores):
-                # Avoid Multiplication/Division on absolute first question for warmups
-                safe_warmup = [s for s in self.TIER1 if s not in ["Multiplication", "Division"]]
-                skill = random.choice(safe_warmup)
-            else:
-                skill = max(self.skill_scores, key=self.skill_scores.get)
+            sorted_skills = sorted(
+                self.skill_scores.items(),
+                key=lambda x: x[1],
+                reverse=True)
+            strong_skills = [s for s, score in sorted_skills[:3]]
+            available = [s for s in strong_skills 
+                         if s not in self._warmup_used]
+            if not available:
+                available = [s for s in self.TIER1 
+                             if s not in self._warmup_used]
+            if not available:
+                available = self.TIER1
+            if all(s == 50 for s in self.skill_scores.values()):
+                # Avoid hard ops on first session
+                safe = [s for s in available 
+                        if s not in ["Multiplication","Division","Remainder"]]
+                if safe:
+                    available = safe
+            skill = random.choice(available)
+            self._warmup_used.add(skill)
 
         else:
             self.phase = "Main"
@@ -311,62 +320,26 @@ class GameSession:
 
         self.current_skill = skill
         self.question_count += 1
-        processor = QuestionProcessor(skill, self.difficulty)
-        processor.process_file() 
-
-        if hasattr(processor, 'df') and processor.df is not None and not processor.df.empty:
-            used = self.used_question_indices.get(skill, set())
-            available = [i for i in range(len(processor.df)) if i not in used]
-
-            if not available:
-                print(f"[GAME] All questions used for {skill}, resetting pool")
-                self.used_question_indices[skill] = set()
-                available = list(range(len(processor.df)))
-
-            chosen_row = None
-            translated_template = None
-
-            # Retry loop to avoid text duplicates
-            while available:
-                row_index = random.choice(available)
-                available.remove(row_index)
-
-                processor.rowIndex = row_index
-                variable_string = str(processor.df.iloc[row_index]["operands"])
-                input_string = ''.join(c for c in variable_string if not c.isalpha())
-                processor.variables = [c for c in variable_string if c.isalpha()]
-                processor.oprands = processor.parseInputRange(input_string)
-                processor.extractAnswer()
-
-                import language.language as lang_config
-                current_lang = getattr(lang_config, 'selected_language', 'English')
-
-                template = "No question template found"
-                if current_lang == "हिंदी" and "question_hi" in processor.df.columns:
-                    template = str(processor.df.iloc[row_index]["question_hi"])
-                elif current_lang == "മലയാളം" and "question_mal" in processor.df.columns:
-                    template = str(processor.df.iloc[row_index]["question_mal"])
-                elif current_lang == "தமிழ்" and "question_tam" in processor.df.columns:
-                    template = str(processor.df.iloc[row_index]["question_tam"])
-                else:
-                    template = str(processor.df.iloc[row_index]["question"])
-
-                # Replacements
-                for i, var in enumerate(processor.variables):
-                    template = template.replace(f"{{{var}}}", str(processor.oprands[i]))
-
-                if template not in self.used_question_texts or not available:
-                    chosen_row = row_index
-                    translated_template = template
-                    break
-
-            if chosen_row is not None:
-                processor.rowIndex = chosen_row
-                self.used_question_indices.setdefault(skill, set()).add(chosen_row)
-                self.used_question_texts.add(translated_template)
-                processor._prepared_question = translated_template
-                processor._prepared_answer = processor.Pr_answer
-                print(f"[GAME] Skill: {skill} | Row: {chosen_row} | Q: '{translated_template}'")
+        if skill not in self.processors:
+            p = QuestionProcessor(skill, self.difficulty)
+            p.process_file()
+            
+            if p.df is None or p.df.empty:
+                # Dynamic scaling to empty level fallback
+                p.difficultyIndex = [1, 2, 3, 4, 5]
+                p.process_file()
+                
+            self.processors[skill] = p
+        else:
+            p = self.processors[skill]
+            if p.difficultyIndex != self.difficulty:
+                p.difficultyIndex = self.difficulty
+                p.process_file()
+                
+                if p.df is None or p.df.empty:
+                     p.difficultyIndex = [1, 2, 3, 4, 5]
+                     p.process_file()
+        processor = p
 
         return processor
 
@@ -413,12 +386,16 @@ class GameSession:
         if skill_type in self.skill_scores:
             self.skill_scores[skill_type] = max(0, min(100, self.skill_scores[skill_type] + delta))
 
-        # State machine
+        # State machine & Dynamic Difficulty Adjustment (DDA)
         if self.incorrect_streak >= 2:
             self.state = "Struggling"
+            if hasattr(self, 'difficulty') and self.difficulty > 1:
+                self.difficulty -= 1
         elif self.correct_streak >= 3:
             if len(self.recent_performance) >= 3 and all(p == "excellent" for p in self.recent_performance[-3:]):
                 self.state = "Thriving"
+                if hasattr(self, 'difficulty') and self.difficulty < 5:
+                    self.difficulty += 1
         elif self.state == "Struggling" and is_correct:
             self.state = "Normal"
         elif self.state == "Thriving" and not is_correct:
@@ -431,6 +408,14 @@ class GameSession:
         ranked = sorted(self.skill_scores.items(), key=lambda x: x[1], reverse=True)
         strengths = [s for s, score in ranked if score >= 60][:2]
         weakness = [s for s, score in ranked if score < 45][:1]
+
+        if not weakness and ranked:
+            # Fallback to the lowest-performing skill that isn't already a strength
+            non_strengths = [s for s, score in ranked if s not in strengths]
+            if non_strengths:
+                weakness = [non_strengths[-1]]
+            else:
+                weakness = [ranked[-1][0]]
 
         from language.language import tr
 
