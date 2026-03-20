@@ -618,9 +618,11 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'section_footer'):
              self.main_footer.hide()
              self.section_footer.show()
-             # Hide Back to Operations
+             # Hide Back to Operations and Back to Learn
              back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
              if back_ops: back_ops.hide()
+             back_learn = self.section_footer.findChild(QPushButton, "back_to_learn")
+             if back_learn: back_learn.hide()
 
              # Bulletproof Upload button hide
              for btn in self.section_footer.findChildren(QPushButton):
@@ -661,14 +663,14 @@ class MainWindow(QMainWindow):
              from pages.shared_ui import apply_theme
              apply_theme(back_to_diff_btn, self.current_theme)
              
-             # Insert at correct index (before Back to Menu or Operations)
+             # Insert at correct index (before Back to Home or Operations)
              back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
-             back_menu = self.section_footer.findChild(QPushButton, "back_to_menu")
+             back_home = self.section_footer.findChild(QPushButton, "back_to_home")
              
              if back_ops:
                  idx = self.section_footer.layout().indexOf(back_ops)
-             elif back_menu:
-                 idx = self.section_footer.layout().indexOf(back_menu)
+             elif back_home:
+                 idx = self.section_footer.layout().indexOf(back_home)
              else:
                  idx = 2 # Fallback index after stretch
                  
@@ -921,12 +923,13 @@ class MainWindow(QMainWindow):
         return button_grid
     
     def create_section_footer(self):
-        buttons = ["Back to Operations", "Back to Menu", "Settings"]
+        buttons = ["Back to Operations", "Back to Learn", "Back to Home", "Settings"]
         translated = [tr(b) for b in buttons]
 
         callbacks = {
             tr("Back to Operations"): lambda: self.load_section("Operations"),
-            tr("Back to Menu"): self.back_to_home,
+            tr("Back to Learn"): self.back_to_learn_menu,
+            tr("Back to Home"): self.back_to_home,
             tr("Settings"): self.handle_settings
         }
 
@@ -939,8 +942,10 @@ class MainWindow(QMainWindow):
         for btn in footer.findChildren(QPushButton):
             if btn.text() == tr("Back to Operations"):
                 btn.setObjectName("back_to_operations")
-            elif btn.text() == tr("Back to Menu"):
-                btn.setObjectName("back_to_menu")
+            elif btn.text() == tr("Back to Learn"):
+                btn.setObjectName("back_to_learn")
+            elif btn.text() == tr("Back to Home"):
+                btn.setObjectName("back_to_home")
 
         return footer
 
@@ -1013,6 +1018,23 @@ class MainWindow(QMainWindow):
             back_btn.hide()
         self.focus_quickplay_button()
         
+    def back_to_learn_menu(self):
+        from pages.shared_ui import QuestionWidget
+
+        current_page = self.stack.currentWidget()
+        if current_page:
+            question_widget = current_page.findChild(QuestionWidget)
+            if question_widget:
+                question_widget.stop_all_activity()
+
+        if hasattr(self, 'tts'):
+            self.tts.stop()
+            self.tts.reset()
+
+        self.stack.setCurrentWidget(self.menu_widget)
+        self.section_footer.hide()
+        self.main_footer.show()
+
     def back_to_home(self):
         current_page = self.stack.currentWidget()
         
@@ -1031,12 +1053,7 @@ class MainWindow(QMainWindow):
             self.back_to_main_menu()
             return
 
-        # ✅ FIX RETAINED: "Back to Home" for Uploaded Quizzes goes to Mode Selection
-        if isinstance(current_page, QuestionWidget):
-            self.back_to_main_menu()
-            return
-
-        self.top_bar.show()  
+        # Standard Cleanup for any page with a QuestionWidget
         if current_page:
             question_widget = current_page.findChild(QuestionWidget)
             if question_widget:
@@ -1045,13 +1062,8 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tts'):
             self.tts.stop()
             self.tts.reset()
-        self.stack.setCurrentWidget(self.menu_widget)     
-        self.section_footer.hide()                        
-        self.main_footer.show()                           
-        
-        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
-        if upload_btn:
-            upload_btn.show()
+
+        self.back_to_main_menu()
 
     def clear_main_layout(self):
         for i in reversed(range(self.main_layout.count())):
