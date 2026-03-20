@@ -4,7 +4,7 @@ import random
 import language.language as lang_config
 
 class QuestionProcessor:
-    def __init__(self, questionType, difficultyIndex):
+    def __init__(self, questionType, difficultyIndex, disable_dda=False):
         self.questionType = questionType
         self.widget = None
         self.difficultyIndex = difficultyIndex
@@ -13,7 +13,7 @@ class QuestionProcessor:
         self.oprands = []
         self.rowIndex = 0
         self.retry_count = 0
-        # DDA-related fields
+        # DDA related fields
         self.total_attempts = 0
         self.correct_answers = 0
         self.correct_streak = 0
@@ -21,6 +21,7 @@ class QuestionProcessor:
         self.current_performance_rate = 0
         self.current_difficulty = difficultyIndex 
         self._used_rows = set()
+        self.disable_dda = disable_dda
 
     def get_questions(self):
         self.process_file()
@@ -215,6 +216,9 @@ class QuestionProcessor:
         if isinstance(self.current_difficulty, list):
             return {"valid": True, "correct": is_correct}
 
+        if getattr(self, 'disable_dda', False):
+            return {"valid": True, "correct": is_correct}
+
         if self.current_performance_rate >= 30:
             if self.current_difficulty < 5:  
                 self.current_difficulty += 1
@@ -243,7 +247,7 @@ class GameSession:
         self.correct_streak = 0
         self.incorrect_streak = 0
         self.state = "Normal"  # "Normal" | "Thriving" | "Struggling"
-        self.mistake_queue = []  # list of dict: {'skill_type': ..., 'resurfaced_at': ...}
+        self.mistake_queue = []
         self.question_count = 0
         self.questions_answered = 0
         self.phase = "Warmup"  # "Warmup" | "Main" | "Finale"
@@ -321,7 +325,7 @@ class GameSession:
         self.current_skill = skill
         self.question_count += 1
         if skill not in self.processors:
-            p = QuestionProcessor(skill, self.difficulty)
+            p = QuestionProcessor(skill, self.difficulty, disable_dda=True)
             p.process_file()
             
             if p.df is None or p.df.empty:
@@ -332,6 +336,7 @@ class GameSession:
             self.processors[skill] = p
         else:
             p = self.processors[skill]
+            p.disable_dda = True
             if p.difficultyIndex != self.difficulty:
                 p.difficultyIndex = self.difficulty
                 p.process_file()
@@ -447,4 +452,4 @@ class GameSession:
         ]
         return random.choice(templates)
 
-
+
