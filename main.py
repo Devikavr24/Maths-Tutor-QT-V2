@@ -585,7 +585,6 @@ class MainWindow(QMainWindow):
             self.tts.speak(tr("Game mode! Let's go!"))
 
         processor = self.game_session.get_next_question()
-        processor.process_file() 
 
         def load_next_question():
             if not self.game_active:
@@ -601,7 +600,6 @@ class MainWindow(QMainWindow):
                 return
 
             next_processor = self.game_session.get_next_question()
-            next_processor.process_file()
             self.question_widget.processor = next_processor
             self.question_widget.load_new_question()
             
@@ -807,18 +805,15 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, '_quickplay_question_widget') and self._quickplay_question_widget:
             processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-            processor.process_file()
             self._quickplay_question_widget.processor = processor
             self._quickplay_question_widget.load_new_question()
             self.stack.setCurrentWidget(self.quickplay_container)
             return
 
         processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-        processor.process_file()
 
         def load_next_question():
             new_processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
-            new_processor.process_file()
             self._quickplay_question_widget.processor = new_processor
             self._quickplay_question_widget.load_new_question()
 
