@@ -501,6 +501,7 @@ class QuestionWidget(QWidget):
 
 
     def check_answer(self):
+            from language.language import tr
             # ✅ Stop any ongoing bell sequences or audio immediately when user answers
             self.stop_all_activity()
             self._active = True  # Re-enable: user is answering, not navigating away
@@ -513,6 +514,7 @@ class QuestionWidget(QWidget):
 
             result = self.processor.submit_answer(user_input, self.answer, elapsed)
 
+
             # ✅ Check current language for dynamic translations
             current_lang = getattr(self.main_window, 'language', 'English')
 
@@ -523,6 +525,11 @@ class QuestionWidget(QWidget):
                 return
 
             correct = result["correct"]
+            self._last_result = {
+                'correct': correct,
+                'elapsed': elapsed,
+                'skill': self.processor.questionType
+            }
 
             app_audio_active = False
             if self.main_window and not self.main_window.is_muted:
@@ -578,7 +585,13 @@ class QuestionWidget(QWidget):
 
             else:
                 self.processor.retry_count += 1
-                
+                from language.language import tr
+
+                if hasattr(self.main_window, 'game_active') and self.main_window.game_active and self.processor.retry_count >= 2:
+                    self.result_label.setText(f'<span style="font-size:16pt;">{tr("Let\'s try another one!")}</span>')
+                    QTimer.singleShot(2000, self.call_next_question)
+                    return
+
                 # ✅ TRANSLATED: "Try Again" visual and speech
                 try_again_visual = tr("Try Again.")
                 try_again_tts = tr("Try Again.")
@@ -586,6 +599,7 @@ class QuestionWidget(QWidget):
                 
                 self.result_label.setText(f'<span style="font-size:16pt;">{try_again_visual}</span>')
                 self.result_label.setAccessibleName(f"{incorrect_tts} {try_again_tts}")
+
 
                 if app_audio_active:
                     sound_index = random.randint(1, 2)
@@ -760,6 +774,11 @@ class QuestionWidget(QWidget):
 
         elapsed = time() - self.start_time
         is_correct = (count == correct_answer)
+        self._last_result = {
+            'correct': is_correct,
+            'elapsed': elapsed,
+            'skill': self.processor.questionType
+        }
 
         app_audio_active = self.main_window and not self.main_window.is_muted
 
@@ -799,8 +818,16 @@ class QuestionWidget(QWidget):
 
         else:
             self.processor.retry_count += 1
+            from language.language import tr
+
+            if hasattr(self.main_window, 'game_active') and self.main_window.game_active and self.processor.retry_count >= 2:
+                self.result_label.setText(f'<span style="font-size:16pt;">{tr("Let\'s try another one!")}</span>')
+                QTimer.singleShot(2000, self.call_next_question)
+                return
+
             self.result_label.setText('<span style="font-size:16pt;">Try Again.</span>')
             self.result_label.setAccessibleName("Incorrect. Try Again.")
+
 
             if app_audio_active and self.main_window:
                 sound_index = random.randint(1, 2)
@@ -1020,9 +1047,162 @@ class SettingsDialog(QDialog):
         settings.set_difficulty(selected_index)
         settings.set_language(self.updated_language)
         self.accept()
-
     def get_difficulty_index(self):
         return self.difficulty_slider.value()
 
     def get_selected_language(self):
         return self.updated_language
+
+class GameReportWidget(QWidget):
+    def __init__(self, session, window, tts):
+        super().__init__()
+        self.session = session
+        self.main_window = window
+        self.tts = tts
+        self.setAccessibleName("")
+        self.setAccessibleDescription("")
+
+        # Calculate advancement eligibility
+        avg_skill = sum(session.skill_scores.values()) / len(session.skill_scores)
+        self.can_advance = (
+            avg_skill >= 65 and
+            session.questions_answered >= 10 and
+            session.difficulty_index < 4
+        )
+
+        self.report_text = session.generate_report()
+        self.init_ui()
+        self._speak_report()
+
+    def init_ui(self):
+        from language.language import tr
+        levels = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
+        
+        layout = QVBoxLayout()
+
+        layout.setAlignment(Qt.AlignCenter)
+        layout.setSpacing(20)
+        layout.setContentsMargins(30, 20, 30, 20)
+        self.setLayout(layout)
+
+        # Title
+        title = QLabel(tr("Session Complete!"))
+        title.setAlignment(Qt.AlignCenter)
+        title.setProperty("class", "main-title")
+        layout.addWidget(title)
+
+        # Report text
+        report_label = QLabel(self.report_text)
+        report_label.setAlignment(Qt.AlignCenter)
+        report_label.setProperty("class", "subtitle")
+        report_label.setWordWrap(True)
+        report_label.setAccessibleName(self.report_text)
+        layout.addWidget(report_label)
+
+        layout.addSpacing(10)
+
+        # Cards
+        ranked = sorted(self.session.skill_scores.items(), key=lambda x: x[1], reverse=True)
+        strengths = [s for s, score in ranked if score >= 60][:2]
+        weakness = [s for s, score in ranked if score < 45][:1]
+
+        if strengths:
+            strength_row = QHBoxLayout()
+            strength_row.setAlignment(Qt.AlignCenter)
+            for skill in strengths:
+                card = self._make_card(skill, "superpower", "teal")
+                strength_row.addWidget(card)
+            layout.addLayout(strength_row)
+
+        if weakness:
+            weak_row = QHBoxLayout()
+            weak_row.setAlignment(Qt.AlignCenter)
+            card = self._make_card(weakness[0], "next adventure", "coral")
+            weak_row.addWidget(card)
+            layout.addLayout(weak_row)
+
+        cur_level = levels[self.session.difficulty_index] if self.session.difficulty_index < len(levels) else ""
+        info_label = QLabel(f"{self.session.questions_answered} {tr('questions answered')} · {tr('Level')}: {tr(cur_level)}")
+        info_label.setAlignment(Qt.AlignCenter)
+        info_label.setProperty("class", "subtitle")
+        layout.addWidget(info_label)
+
+        layout.addSpacing(10)
+
+        # Action Buttons
+        btn_row = QHBoxLayout()
+        btn_row.setAlignment(Qt.AlignCenter)
+        btn_row.setSpacing(20)
+
+        current_name = tr(cur_level)
+
+        if self.can_advance:
+            next_name = tr(levels[self.session.difficulty_index + 1])
+            self.primary_btn = QPushButton(tr("Next Level: {level}").format(level=next_name))
+            self.primary_btn.setMinimumHeight(65)
+            self.primary_btn.setProperty("class", "menu-button")
+            self.primary_btn.setProperty("theme", self.main_window.current_theme)
+            self.primary_btn.setAccessibleName(tr("Next Level: {level}").format(level=next_name))
+            self.primary_btn.clicked.connect(self._go_next_level)
+            btn_row.addWidget(self.primary_btn)
+
+        self.replay_btn = QPushButton(tr("Play {level} Again").format(level=current_name))
+        self.replay_btn.setMinimumHeight(65)
+        self.replay_btn.setProperty("class", "menu-button")
+        self.replay_btn.setProperty("theme", self.main_window.current_theme)
+        self.replay_btn.setAccessibleName(tr("Play {level} Again").format(level=current_name))
+        self.replay_btn.clicked.connect(self._replay_level)
+        btn_row.addWidget(self.replay_btn)
+
+        layout.addLayout(btn_row)
+
+    def _make_card(self, title, subtitle, card_type):
+        from language.language import tr
+        card = QWidget()
+        card.setProperty("theme", self.main_window.current_theme)
+        card.setProperty("class", "central-widget")
+        
+        card_layout = QVBoxLayout(card)
+        card_layout.setAlignment(Qt.AlignCenter)
+        card_layout.setContentsMargins(20, 15, 20, 15)
+        card.setMinimumSize(150, 80)
+        
+        if card_type == "teal":
+            card.setStyleSheet("QWidget { border: 2px solid #1D9E75; border-radius: 10px; }")
+        else:
+            card.setStyleSheet("QWidget { border: 2px solid #D85A30; border-radius: 10px; }")
+        
+        title_label = QLabel(tr(title))
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setProperty("class", "subtitle")
+        
+        sub_label = QLabel(tr(subtitle))
+        sub_label.setAlignment(Qt.AlignCenter)
+        sub_label.setProperty("class", "subtitle")
+        
+        card_layout.addWidget(title_label)
+        card_layout.addWidget(sub_label)
+        return card
+
+    def _speak_report(self):
+        from language.language import tr
+        QTimer.singleShot(800, lambda: self.tts.speak(self.report_text))
+
+        estimated_ms = len(self.report_text) * 65
+        choice_text = tr("Ready for the next level?") if self.can_advance else tr("Play again?")
+
+        QTimer.singleShot(800 + estimated_ms, lambda: self.tts.speak(choice_text))
+
+        focus_delay = 800 + estimated_ms + len(choice_text) * 65
+        primary = self.primary_btn if self.can_advance else self.replay_btn
+        QTimer.singleShot(focus_delay, lambda: primary.setFocus())
+
+    def _go_next_level(self):
+        self.tts.stop()
+        self.main_window.load_game_questions(self.session.difficulty_index + 1)
+
+    def _replay_level(self):
+        self.tts.stop()
+        self.main_window.load_game_questions(self.session.difficulty_index)
+
+

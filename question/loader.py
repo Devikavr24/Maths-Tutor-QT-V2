@@ -22,8 +22,19 @@ class QuestionProcessor:
         self.current_difficulty = difficultyIndex 
 
     def get_questions(self):
+        if hasattr(self, '_prepared_question') and self._prepared_question:
+            q = self._prepared_question
+            a = self._prepared_answer
+            self._prepared_question = None  # clear for next call
+            try:
+                answer = round(float(a)) if a is not None else None
+            except (TypeError, ValueError):
+                answer = None
+            return q, answer
+            
         self.process_file()
         return self.get_random_question()
+
 
     def process_file(self):
         file_path = os.path.join(os.getcwd(), "question", "question.xlsx")
@@ -88,6 +99,8 @@ class QuestionProcessor:
         self.rowIndex = random.randint(0, len(self.df) - 1)
  
         variable_string = str(self.df.iloc[self.rowIndex]["operands"])
+
+
         input_string = ''.join(c for c in variable_string if not c.isalpha())
         self.variables = [c for c in variable_string if c.isalpha()]
         self.oprands = self.parseInputRange(input_string)
@@ -220,3 +233,233 @@ class QuestionProcessor:
         "valid": True,
         "correct": is_correct
     }
+
+class GameSession:
+    TIER1 = ["Addition", "Subtraction", "Multiplication", "Division", "Remainder", "Percentage"]
+    TIER2 = ["Story", "Time", "Currency", "Distance", "Bellring"]
+    MAX_QUESTIONS = 20
+
+    def __init__(self, difficulty_index):
+        self.difficulty_index = difficulty_index
+        self.difficulty = difficulty_index
+        self.skill_scores = {skill: 50 for skill in self.TIER1}
+        self.correct_streak = 0
+        self.incorrect_streak = 0
+        self.state = "Normal"  # "Normal" | "Thriving" | "Struggling"
+        self.mistake_queue = []  # list of dict: {'skill_type': ..., 'resurfaced_at': ...}
+        self.question_count = 0
+        self.questions_answered = 0
+        self.phase = "Warmup"  # "Warmup" | "Main" | "Finale"
+        self.tier2_index = 0
+        self.current_skill = None
+        self.recent_performance = []
+        self.session_time = 90
+        
+        # Deduplication
+        self.used_question_indices = {}
+        self.used_question_texts = set()
+
+
+    def is_session_complete(self):
+        return self.question_count >= self.MAX_QUESTIONS
+
+    def set_finale(self):
+        self.phase = "Finale"
+
+    def get_phase(self):
+        return self.phase
+
+    def get_next_question(self):
+        skill = None
+
+        if self.question_count >= 19:
+            self.phase = "Finale"
+
+        if self.phase == "Finale":
+            skill = max(self.skill_scores, key=self.skill_scores.get)
+        elif self.phase == "Warmup" and self.question_count < 3:
+            scores = list(self.skill_scores.values())
+            if all(s == scores[0] for s in scores):
+                # Avoid Multiplication/Division on absolute first question for warmups
+                safe_warmup = [s for s in self.TIER1 if s not in ["Multiplication", "Division"]]
+                skill = random.choice(safe_warmup)
+            else:
+                skill = max(self.skill_scores, key=self.skill_scores.get)
+
+        else:
+            self.phase = "Main"
+            if self.question_count % 5 == 0 and self.question_count > 0:
+                skill = self.TIER2[self.tier2_index % len(self.TIER2)]
+                self.tier2_index += 1
+            else:
+                for item in list(self.mistake_queue):
+                    if item['resurfaced_at'] <= self.question_count:
+                        skill = item['skill_type']
+                        self.mistake_queue.remove(item)
+                        break
+                
+                if not skill:
+                    weights = self._get_weights_for_state(self.state)
+                    roll = random.random()
+                    
+                    if roll < weights["weakness"]:
+                        skill = min(self.skill_scores, key=self.skill_scores.get)
+                    elif roll < weights["weakness"] + weights["strength"]:
+                        skill = max(self.skill_scores, key=self.skill_scores.get)
+                    else:
+                        skill = random.choice(self.TIER1)
+
+        self.current_skill = skill
+        self.question_count += 1
+        processor = QuestionProcessor(skill, self.difficulty)
+        processor.process_file() 
+
+        if hasattr(processor, 'df') and processor.df is not None and not processor.df.empty:
+            used = self.used_question_indices.get(skill, set())
+            available = [i for i in range(len(processor.df)) if i not in used]
+
+            if not available:
+                print(f"[GAME] All questions used for {skill}, resetting pool")
+                self.used_question_indices[skill] = set()
+                available = list(range(len(processor.df)))
+
+            chosen_row = None
+            translated_template = None
+
+            # Retry loop to avoid text duplicates
+            while available:
+                row_index = random.choice(available)
+                available.remove(row_index)
+
+                processor.rowIndex = row_index
+                variable_string = str(processor.df.iloc[row_index]["operands"])
+                input_string = ''.join(c for c in variable_string if not c.isalpha())
+                processor.variables = [c for c in variable_string if c.isalpha()]
+                processor.oprands = processor.parseInputRange(input_string)
+                processor.extractAnswer()
+
+                import language.language as lang_config
+                current_lang = getattr(lang_config, 'selected_language', 'English')
+
+                template = "No question template found"
+                if current_lang == "हिंदी" and "question_hi" in processor.df.columns:
+                    template = str(processor.df.iloc[row_index]["question_hi"])
+                elif current_lang == "മലയാളം" and "question_mal" in processor.df.columns:
+                    template = str(processor.df.iloc[row_index]["question_mal"])
+                elif current_lang == "தமிழ்" and "question_tam" in processor.df.columns:
+                    template = str(processor.df.iloc[row_index]["question_tam"])
+                else:
+                    template = str(processor.df.iloc[row_index]["question"])
+
+                # Replacements
+                for i, var in enumerate(processor.variables):
+                    template = template.replace(f"{{{var}}}", str(processor.oprands[i]))
+
+                if template not in self.used_question_texts or not available:
+                    chosen_row = row_index
+                    translated_template = template
+                    break
+
+            if chosen_row is not None:
+                processor.rowIndex = chosen_row
+                self.used_question_indices.setdefault(skill, set()).add(chosen_row)
+                self.used_question_texts.add(translated_template)
+                processor._prepared_question = translated_template
+                processor._prepared_answer = processor.Pr_answer
+                print(f"[GAME] Skill: {skill} | Row: {chosen_row} | Q: '{translated_template}'")
+
+        return processor
+
+
+
+    def _get_weights_for_state(self, state):
+        if state == "Struggling":
+            return {"weakness": 0.10, "strength": 0.60, "novelty": 0.30}
+        elif state == "Thriving":
+            return {"weakness": 0.65, "strength": 0.10, "novelty": 0.25}
+        else: # Normal
+            return {"weakness": 0.45, "strength": 0.20, "novelty": 0.35}
+
+    def submit_answer(self, skill_type, is_correct, elapsed):
+        delta = 0
+        self.questions_answered += 1
+        if is_correct:
+            self.correct_streak += 1
+            self.incorrect_streak = 0
+            if elapsed < 5:
+                delta = 8
+                perf = "excellent"
+            elif elapsed < 10:
+                delta = 5
+                perf = "good"
+            elif elapsed < 15:
+                delta = 3
+                perf = "fair"
+            else:
+                delta = 1
+                perf = "slow"
+            self.recent_performance.append(perf)
+        else:
+            self.incorrect_streak += 1
+            self.correct_streak = 0
+            if self.incorrect_streak == 1:
+                delta = -5
+            else:
+                delta = -8
+            if len(self.mistake_queue) < 2:
+                self.mistake_queue.append({'skill_type': skill_type, 'resurfaced_at': self.question_count + 3})
+            self.recent_performance.append("incorrect")
+
+        if skill_type in self.skill_scores:
+            self.skill_scores[skill_type] = max(0, min(100, self.skill_scores[skill_type] + delta))
+
+        # State machine
+        if self.incorrect_streak >= 2:
+            self.state = "Struggling"
+        elif self.correct_streak >= 3:
+            if len(self.recent_performance) >= 3 and all(p == "excellent" for p in self.recent_performance[-3:]):
+                self.state = "Thriving"
+        elif self.state == "Struggling" and is_correct:
+            self.state = "Normal"
+        elif self.state == "Thriving" and not is_correct:
+            self.state = "Normal"
+
+        if len(self.recent_performance) > 10:
+            self.recent_performance = self.recent_performance[-10:]
+
+    def generate_report(self):
+        ranked = sorted(self.skill_scores.items(), key=lambda x: x[1], reverse=True)
+        strengths = [s for s, score in ranked if score >= 60][:2]
+        weakness = [s for s, score in ranked if score < 45][:1]
+
+        from language.language import tr
+
+        if strengths:
+            s1 = tr(strengths[0])
+            s2 = tr(strengths[1]) if len(strengths) > 1 else None
+            strength_text = f"{s1} {tr('and')} {s2}" if s2 else s1
+        else:
+            strength_text = tr("trying hard")
+
+        if weakness:
+             weak_name = tr(weakness[0])
+             endings = [
+                 tr("{skill} is your next adventure!").format(skill=weak_name),
+                 tr("Keep exploring {skill}!").format(skill=weak_name),
+                 tr("{skill} wants more of your attention!").format(skill=weak_name)
+             ]
+             weak_sentence = random.choice(endings)
+        else:
+             weak_sentence = tr("You are brilliant across everything!")
+
+        templates = [
+             tr("You were amazing at {strength} today! {weakness}").format(
+                 strength=strength_text, weakness=weak_sentence),
+             tr("Wow! {strength} is your superpower. {weakness}").format(
+                 strength=strength_text, weakness=weak_sentence),
+             tr("Great session! You really know your {strength}. {weakness}").format(
+                 strength=strength_text, weakness=weak_sentence)
+        ]
+        return random.choice(templates)
+
+
