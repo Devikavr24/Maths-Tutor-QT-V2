@@ -358,7 +358,7 @@ class LinearProgressionSession:
                 self.bucket_to_rows[bucket_tuple] = list(group.index)
             
         op_order = {"addition": 0, "subtraction": 1, "multiplication": 2, "division": 3}
-        self.buckets.sort(key=lambda b: (b[1], op_order.get(b[0], 99)))
+        self.buckets.sort(key=lambda b: (op_order.get(b[0], 99), b[1]))
         print("[BUCKET ORDER]", self.buckets)
         
         if not self.buckets:
