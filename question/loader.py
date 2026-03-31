@@ -223,13 +223,18 @@ class QuestionProcessor:
         try:
             if "," in inputRange:
                 return random.choice(list(map(int, inputRange.split(","))))
+            elif ";" in inputRange:
+                parts = inputRange.split(";")
+                base = int(parts[0])
+                if ":" in parts[1]:
+                    min_val, max_val = map(int, parts[1].split(":"))
+                    result = base * random.randint(min_val, max_val)
+                else:
+                    result = base * int(parts[1])
+                return result if result != 0 else base
             elif ":" in inputRange:
                 a, b = map(int, inputRange.split(":"))
                 return random.randint(a, b)
-            elif ";" in inputRange:
-                a, b, c = map(int, inputRange.split(";"))
-                result = a * random.randint(b, c)
-                return result if result != 0 else a
             return int(inputRange)
         except Exception:
             return 0
