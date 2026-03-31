@@ -345,6 +345,10 @@ class MainWindow(QMainWindow):
             if hasattr(self, 'tts'):
                 self.tts.speak(question_text)
                 print(f"[Ctrl+R] Repeating question: {question_text}")
+            
+            qw = self.stack.currentWidget().findChild(QuestionWidget) if self.stack.currentWidget() else None
+            if qw:
+                qw.increment_replay()
 
     def _on_slower(self):
         """Ctrl+; : If TTS is speaking, decrease speed. If idle, re-read question slower."""
@@ -365,6 +369,10 @@ class MainWindow(QMainWindow):
             if question_text:
                 self.tts.speak(question_text)
                 print(f"[Alt+;] Re-reading at {self.tts.speech_rate} WPM: {question_text}")
+                
+                qw = self.stack.currentWidget().findChild(QuestionWidget) if self.stack.currentWidget() else None
+                if qw:
+                    qw.increment_replay()
 
     def _on_faster(self):
         """Alt+; : If TTS is speaking, increase speed. If idle, increase (capped) and re-read."""
@@ -388,6 +396,10 @@ class MainWindow(QMainWindow):
             if question_text:
                 self.tts.speak(question_text)
                 print(f"[Alt+;] Re-reading at {self.tts.speech_rate} WPM: {question_text}")
+                
+                qw = self.stack.currentWidget().findChild(QuestionWidget) if self.stack.currentWidget() else None
+                if qw:
+                    qw.increment_replay()
 
     def focus_story_button(self):
         for btn in self.menu_buttons:
@@ -543,7 +555,7 @@ class MainWindow(QMainWindow):
         apply_theme(self.game_mode_container, self.current_theme)
 
     def load_game_questions(self, difficulty_index):
-        from question.loader import GameSession, QuestionProcessor
+        from question.loader import LinearProgressionSession, QuestionProcessor
         from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QWidget, QPushButton
         from PyQt5.QtCore import QTimer, Qt
         from language.language import tr
@@ -563,7 +575,7 @@ class MainWindow(QMainWindow):
             widget = self.game_page_layout.itemAt(i).widget()
             if widget: widget.setParent(None)
 
-        self.game_session = GameSession(difficulty_index)
+        self.game_session = LinearProgressionSession(difficulty_index)
         self.time_remaining = 90
         self.game_active = True
 
@@ -592,7 +604,13 @@ class MainWindow(QMainWindow):
 
             result = getattr(self.question_widget, '_last_result', None)
             if result:
-                self.game_session.submit_answer(result['skill'], result['correct'], result['elapsed'])
+                self.question_widget._last_result = None
+                self.game_session.submit_answer(
+                    result['skill'], 
+                    result['correct'], 
+                    result['elapsed'], 
+                    result.get('replay_count', 0)
+                )
                 self._log_diagnostics()
 
             if self.game_session.is_session_complete():
@@ -718,10 +736,9 @@ class MainWindow(QMainWindow):
         print(f"[GAME] Phase: {session.phase}")
         print(f"[GAME] Question: {session.question_count}")
         print(f"[GAME] Skill scores: {session.skill_scores}")
-        print(f"[GAME] Mistake queue: {len(session.mistake_queue)} items")
 
     def _get_difficulty_name(self, index):
-        levels = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
+        levels = ["Easy", "Medium", "Hard", "Extra Hard"]
         if 0 <= index < len(levels):
              from language.language import tr
              return tr(levels[index])

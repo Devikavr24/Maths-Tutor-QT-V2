@@ -1,10 +1,16 @@
 import os
+import re
 import pandas as pd
 import random
 import language.language as lang_config
 
+
+# ---------------------------------------------------------------------------
+# QuestionProcessor
+# ---------------------------------------------------------------------------
+
 class QuestionProcessor:
-    def __init__(self, questionType, difficultyIndex, disable_dda=False):
+    def __init__(self, questionType, difficultyIndex, disable_dda=False, is_game_mode=False):
         self.questionType = questionType
         self.widget = None
         self.difficultyIndex = difficultyIndex
@@ -13,22 +19,58 @@ class QuestionProcessor:
         self.oprands = []
         self.rowIndex = 0
         self.retry_count = 0
-        # DDA related fields
         self.total_attempts = 0
         self.correct_answers = 0
         self.correct_streak = 0
         self.incorrect_streak = 0
         self.current_performance_rate = 0
-        self.current_difficulty = difficultyIndex 
+        self.current_difficulty = difficultyIndex
         self._used_rows = set()
         self.disable_dda = disable_dda
+        self.is_game_mode = is_game_mode
+        # Digit-level gate set by GameSession before get_random_question()
+        # None = no restriction (non-game / learning mode)
+        self.max_digit_level = None
 
     def get_questions(self):
-        self.process_file()
+        if not getattr(self, '_skip_process_file', False):
+            self.process_file()
         return self.get_random_question()
 
-
     def process_file(self):
+        if getattr(self, 'is_game_mode', False):
+            file_path = os.path.join(os.getcwd(), "question", "game_ques.xlsx")
+            print(f"Processing Game File: {file_path}")
+
+            self.df = pd.read_excel(file_path)
+            self.df["difficulty"] = pd.to_numeric(self.df["difficulty"], errors="coerce")
+            self.df["type"] = self.df["type"].astype(str).str.strip().str.lower()
+
+            # Parse digits column into a clean integer column for filtering
+            if "digits" in self.df.columns:
+                self.df["_digit_int"] = (
+                    self.df["digits"]
+                    .astype(str)
+                    .str.extract(r'(\d+)', expand=False)
+                    .pipe(pd.to_numeric, errors="coerce")
+                    .fillna(1)
+                    .astype(int)
+                )
+            else:
+                self.df["_digit_int"] = 1
+
+            valid_difficulties = (
+                self.difficultyIndex if isinstance(self.difficultyIndex, list)
+                else [self.difficultyIndex]
+            )
+            level_df = self.df[self.df["difficulty"].isin(valid_difficulties)]
+            q_type   = self.questionType.lower().strip()
+            typed_df = level_df[level_df["type"] == q_type]
+
+            self.df = (typed_df if len(typed_df) > 0 else level_df).reset_index(drop=True)
+            return
+
+        # ── Non-game / learning mode ───────────────────────────────────
         file_path = os.path.join(os.getcwd(), "question", "question.xlsx")
         print(f"Processing file: {file_path}")
 
@@ -43,16 +85,15 @@ class QuestionProcessor:
         self.df["type"] = self.df["type"].astype(str).str.strip().str.lower()
 
         print(f"[Processor] Filtering with section: {self.questionType}")
-        
-        if isinstance(self.difficultyIndex, list):
-             valid_difficulties = self.difficultyIndex
-        else:
-             valid_difficulties = [self.difficultyIndex]
 
+        valid_difficulties = (
+            self.difficultyIndex if isinstance(self.difficultyIndex, list)
+            else [self.difficultyIndex]
+        )
         self.df = self.df[
-        (self.df["type"] == self.questionType.lower().strip()) &
-        (self.df["difficulty"].isin(valid_difficulties))]
-
+            (self.df["type"] == self.questionType.lower().strip()) &
+            (self.df["difficulty"].isin(valid_difficulties))
+        ]
         self.df = self.df.sort_values(by="difficulty", ascending=True)
 
     def quickplay(self):
@@ -65,15 +106,13 @@ class QuestionProcessor:
 
         df = pd.read_excel(file_path)
         df = pd.DataFrame(df)
-
-        df["type"] = df["type"].astype(str).str.strip().str.lower()
+        df["type"]       = df["type"].astype(str).str.strip().str.lower()
         df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce")
 
-        if isinstance(self.difficultyIndex, list):
-             valid_difficulties = self.difficultyIndex
-        else:
-             valid_difficulties = [self.difficultyIndex]
-
+        valid_difficulties = (
+            self.difficultyIndex if isinstance(self.difficultyIndex, list)
+            else [self.difficultyIndex]
+        )
         df = df[df["difficulty"].isin(valid_difficulties)]
 
         if df.empty:
@@ -81,42 +120,57 @@ class QuestionProcessor:
         else:
             print(f"[QuickPlay] {len(df)} questions found at difficulty {self.difficultyIndex}")
 
-        df = df.sample(frac=1).reset_index(drop=True)
-        self.df = df
+        self.df = df.sample(frac=1).reset_index(drop=True)
 
     def get_random_question(self):
         if self.df is None or self.df.empty:
             return "No questions found.", None
- 
-        all_rows = list(range(len(self.df)))
-        available = [r for r in all_rows if r not in self._used_rows]
-        if not available:
-            self._used_rows = set()
-            available = all_rows
-        self.rowIndex = random.choice(available)
-        self._used_rows.add(self.rowIndex)
- 
-        variable_string = str(self.df.iloc[self.rowIndex]["operands"])
 
+        # Apply per-skill digit gate (game mode only)
+        working_df = self.df
+        if (
+            getattr(self, 'is_game_mode', False)
+            and self.max_digit_level is not None
+            and "_digit_int" in self.df.columns
+        ):
+            gated = self.df[self.df["_digit_int"] <= self.max_digit_level]
+            if not gated.empty:
+                working_df = gated
+            # else fall back to full df so we never get stuck with no rows
 
-        input_string = ''.join(c for c in variable_string if not c.isalpha())
-        self.variables = [c for c in variable_string if c.isalpha()]
-        self.oprands = self.parseInputRange(input_string)
- 
-        # ✅ DYNAMIC LANGUAGE SELECTION USING YOUR EXCEL FILE
-        current_lang = getattr(lang_config, 'selected_language', 'English')
-        
-        if current_lang == "हिंदी" and "question_hi" in self.df.columns:
-            question_template = str(self.df.iloc[self.rowIndex]["question_hi"])
-        elif current_lang == "മലയാളം" and "question_mal" in self.df.columns:
-            question_template = str(self.df.iloc[self.rowIndex]["question_mal"])
+        all_rows = list(range(len(working_df)))
+
+        if getattr(self, 'is_game_mode', False):
+            local_idx = random.choice(all_rows)
         else:
-            # Otherwise default to the English 'question' column
-            question_template = str(self.df.iloc[self.rowIndex]["question"])
+            available = [r for r in all_rows if r not in self._used_rows]
+            if not available:
+                self._used_rows = set()
+                available       = all_rows
+            local_idx = random.choice(available)
+            self._used_rows.add(local_idx)
+
+        # Store the *actual* DataFrame index so digit logging works with .loc
+        self.rowIndex = working_df.index[local_idx]
+        row           = working_df.iloc[local_idx]
+
+        variable_string = str(row["operands"])
+        input_string    = ''.join(c for c in variable_string if not c.isalpha())
+        self.variables  = [c for c in variable_string if c.isalpha()]
+        self.oprands    = self.parseInputRange(input_string)
+
+        current_lang = getattr(lang_config, 'selected_language', 'English')
+
+        if current_lang == "हिंदी" and "question_hi" in working_df.columns:
+            question_template = str(row["question_hi"])
+        elif current_lang == "മലയാളം" and "question_mal" in working_df.columns:
+            question_template = str(row["question_mal"])
+        else:
+            question_template = str(row["question"])
 
         for i, var in enumerate(self.variables):
             question_template = question_template.replace(f"{{{var}}}", str(self.oprands[i]))
- 
+
         self.extractAnswer()
         try:
             answer = round(float(self.Pr_answer)) if self.Pr_answer is not None else None
@@ -127,33 +181,34 @@ class QuestionProcessor:
 
     def extractAnswer(self):
         answer_equation = self.getAnswer(self.rowIndex, "equation")
-        final_answer = self.solveEquation(answer_equation)
-        self.Pr_answer = str(final_answer)
- 
+        self.Pr_answer  = str(self.solveEquation(answer_equation))
+
     def getAnswer(self, row, column):
-        ans_equation = str(self.df.iloc[row][column])
-        ans_equation = ans_equation.replace("×", "*")  
+        ans_equation = str(self.df.loc[row, column])
+        ans_equation = ans_equation.replace("×", "*")
         for i in range(len(self.variables)):
-            ans_equation = ans_equation.replace(f"{{{self.variables[i]}}}", str(self.oprands[i]))
+            ans_equation = ans_equation.replace(
+                f"{{{self.variables[i]}}}", str(self.oprands[i])
+            )
         return ans_equation
 
     def solveEquation(self, ans_equation):
         try:
             return eval(ans_equation)
-        except Exception as e:
+        except Exception:
             return None
- 
+
     def removeVariables(self, row, column):
         val = self.df.iloc[row, column]
         return ''.join(c for c in val if not c.isalpha())
- 
+
     def allVariables(self, row, column):
         val = self.df.iloc[row, column]
         return [c for c in val if c.isalpha()]
 
     def parseInputRange(self, inputRange):
         operands = []
-        current = ""
+        current  = ""
         for c in inputRange:
             if c == "*":
                 operands.append(int(self.extractType(current)))
@@ -163,7 +218,7 @@ class QuestionProcessor:
         if current:
             operands.append(int(self.extractType(current)))
         return operands
- 
+
     def extractType(self, inputRange):
         try:
             if "," in inputRange:
@@ -173,46 +228,56 @@ class QuestionProcessor:
                 return random.randint(a, b)
             elif ";" in inputRange:
                 a, b, c = map(int, inputRange.split(";"))
-                return a * random.randint(b, c)
+                result = a * random.randint(b, c)
+                return result if result != 0 else a
             return int(inputRange)
-        except Exception as e:
-            return 0  
- 
+        except Exception:
+            return 0
+
     def replaceVariables(self, rowIndex, columnIndex):
-        val = str(self.df.iloc[rowIndex, columnIndex])  
+        val = str(self.df.iloc[rowIndex, columnIndex])
         for i, var in enumerate(self.variables):
             val = val.replace(f"{{{var}}}", str(self.oprands[i]))
         return val
- 
+
     def submit_answer(self, user_answer, correct_answer, time_taken):
         if user_answer is None or str(user_answer).strip() == "":
             return {"valid": False}
 
         try:
-            user_val = float(user_answer)
+            user_val    = float(user_answer)
             correct_val = float(correct_answer)
         except (ValueError, TypeError):
             return {"valid": False}
-        
+
         self.total_attempts += 1
-        is_correct = user_val == correct_val
-    
-        if is_correct:
-            self.correct_answers += 1
-            self.correct_streak += 1
-            self.incorrect_streak = 0
-            self.current_performance_rate += 5  
-            if time_taken < 5:
+        is_correct = (user_val == correct_val)
+
+        if not getattr(self, 'disable_dda', False):
+            if is_correct:
+                self.correct_answers         += 1
+                self.correct_streak          += 1
+                self.incorrect_streak         = 0
                 self.current_performance_rate += 5
-            elif time_taken < 10:
-                self.current_performance_rate += 2
+                if time_taken < 5:
+                    self.current_performance_rate += 5
+                elif time_taken < 10:
+                    self.current_performance_rate += 2
+            else:
+                self.incorrect_streak         += 1
+                self.correct_streak            = 0
+                self.current_performance_rate -= 10
+                if time_taken > 15:
+                    self.current_performance_rate -= 5
         else:
-            self.incorrect_streak += 1
-            self.correct_streak = 0
-            self.current_performance_rate -= 10  
-            if time_taken > 15:
-                self.current_performance_rate -= 5 
- 
+            if is_correct:
+                self.correct_answers += 1
+                self.correct_streak  += 1
+                self.incorrect_streak = 0
+            else:
+                self.incorrect_streak += 1
+                self.correct_streak    = 0
+
         if isinstance(self.current_difficulty, list):
             return {"valid": True, "correct": is_correct}
 
@@ -220,48 +285,107 @@ class QuestionProcessor:
             return {"valid": True, "correct": is_correct}
 
         if self.current_performance_rate >= 30:
-            if self.current_difficulty < 5:  
-                self.current_difficulty += 1
-                self.difficultyIndex = self.current_difficulty
-            self.current_performance_rate = 0
- 
+            if self.current_difficulty < 5:
+                self.current_difficulty      += 1
+                self.difficultyIndex          = self.current_difficulty
+            self.current_performance_rate     = 0
         elif self.current_performance_rate <= -30:
             if self.current_difficulty > 1:
                 self.current_difficulty -= 1
             self.current_performance_rate = 0
-        
-        return {
-        "valid": True,
-        "correct": is_correct
-    }
 
-class GameSession:
-    TIER1 = ["Addition", "Subtraction", "Multiplication", "Division", "Remainder", "Percentage"]
-    TIER2 = ["Story", "Time", "Currency", "Distance", "Bellring"]
+        return {"valid": True, "correct": is_correct}
+
+TIER2_SKILLS = ["story", "time", "currency"]
+
+class LinearProgressionSession:
     MAX_QUESTIONS = 20
 
-    def __init__(self, difficulty_index):
-        self.difficulty_index = difficulty_index
-        self.difficulty = difficulty_index
-        self.skill_scores = {skill: 50 for skill in self.TIER1}
+    def __init__(self, difficulty_index: int):
+        self.max_level = 3
+        self.level_index = max(0, min(difficulty_index - 1, self.max_level))
+        self.difficulty_index = self.level_index
+        self.starting_difficulty = self.level_index
+        
+        import time as _time
+        self.session_start_time = _time.time()
+        
+        import os
+        import pandas as pd
+        file_path = os.path.join(os.getcwd(), "question", "game_ques.xlsx")
+        self.full_df = pd.read_excel(file_path)
+        
+        self.tier2_skills = TIER2_SKILLS
+        self.user_time_factor = 1.0  
+
         self.correct_streak = 0
-        self.incorrect_streak = 0
-        self.state = "Normal"  # "Normal" | "Thriving" | "Struggling"
-        self.mistake_queue = []
+        self.wrong_streak = 0
         self.question_count = 0
         self.questions_answered = 0
-        self.phase = "Warmup"  # "Warmup" | "Main" | "Finale"
-        self.tier2_index = 0
-        self.current_skill = None
-        self.recent_performance = []
-        self.session_time = 90
         
+        self.game_active = True
+        self.session_time = 90
+        self.phase = "Main"
+        self.state = "Normal"
+        
+        self.skill_scores = {s: 50 for s in ["addition", "subtraction", "multiplication", "division"]}
+        self.skill_log = {}
+        self.recent_performance = []
+        self.speed_history = []
+        
+        self._build_buckets()
         self.processors = {}
-        self._warmup_used = set()
+        
+    def _build_buckets(self):
+        level_df = self.full_df[self.full_df['difficulty'] == self.level_index].copy()
+        
+        if level_df.empty:
+            level_df = self.full_df.copy()
+            
+        level_df['type_lower'] = level_df['type'].astype(str).str.lower().str.strip()
+        main_df = level_df[~level_df['type_lower'].isin(self.tier2_skills)].copy()
+        
+        self.buckets = []
+        self.bucket_to_rows = {}
+        
+        import re
+        def extract_digit(raw):
+            m = re.search(r'(\d+)', str(raw))
+            return int(m.group(1)) if m else 1
+            
+        main_df['_digit_int'] = main_df['digits'].apply(extract_digit)
+        self.main_df = main_df
+        
+        for (b_type, b_digits), group in main_df.groupby(['type_lower', '_digit_int']):
+            bucket_tuple = (b_type, b_digits)
+            if bucket_tuple not in self.buckets:
+                self.buckets.append(bucket_tuple)
+                self.bucket_to_rows[bucket_tuple] = list(group.index)
+            
+        op_order = {"addition": 0, "subtraction": 1, "multiplication": 2, "division": 3}
+        self.buckets.sort(key=lambda b: (op_order.get(b[0], 99), b[1]))
+        print("[BUCKET ORDER]", self.buckets)
+        
+        if not self.buckets:
+            self.buckets = [("addition", 1)]
+            self.bucket_to_rows = {("addition", 1): list(self.full_df.index)[:10]}
+            
+        self.bucket_index = 0
+        self.used_questions = {b: set() for b in self.buckets}
+        self.recent_patterns = []
 
+    def get_ideal_time(self, operation: str, digits: int) -> float:
+        base_time = {
+            "addition": 4,
+            "subtraction": 5, 
+            "multiplication": 7, 
+            "division": 9
+        }
+        b_time = base_time.get(operation.lower(), 5)
+        return (b_time + (digits * 2)) * 1.5
 
     def is_session_complete(self):
-        return self.question_count >= self.MAX_QUESTIONS
+        return self.question_count >= self.MAX_QUESTIONS or not self.game_active
 
     def set_finale(self):
         self.phase = "Finale"
@@ -269,187 +393,230 @@ class GameSession:
     def get_phase(self):
         return self.phase
 
+    def _get_tier2_processor(self, skill, difficulty):
+        from question.loader import QuestionProcessor
+        key = (skill, difficulty)
+        
+        def _get_filtered_df(diff):
+            skill_lower = skill.lower().strip()
+            df_slice = self.full_df[
+                (self.full_df['difficulty'] == diff) & 
+                (self.full_df['type'].astype(str).str.lower().str.strip() == skill_lower)
+            ].copy()
+            if df_slice.empty:
+                df_slice = self.full_df[
+                    (self.full_df['difficulty'].isin([0, 1, 2, 3])) & 
+                    (self.full_df['type'].astype(str).str.lower().str.strip() == skill_lower)
+                ].copy()
+            if "digits" in df_slice.columns and "_digit_int" not in df_slice.columns:
+                import re
+                df_slice["_digit_int"] = df_slice["digits"].apply(
+                    lambda raw: int(re.search(r'(\d+)', str(raw)).group(1)) if re.search(r'(\d+)', str(raw)) else 1
+                )
+            elif "_digit_int" not in df_slice.columns:
+                df_slice["_digit_int"] = 1
+            return df_slice.reset_index(drop=True)
+
+        if key not in self.processors:
+            p = QuestionProcessor(skill, difficulty, disable_dda=True, is_game_mode=True)
+            p.df = _get_filtered_df(difficulty)
+            p._skip_process_file = True
+            self.processors[key] = p
+        else:
+            p = self.processors[key]
+            if p.difficultyIndex != difficulty:
+                p.difficultyIndex = difficulty
+                p.df = _get_filtered_df(difficulty)
+        return p
+
     def get_next_question(self):
-        skill = None
-
-        if self.question_count >= 19:
-            self.phase = "Finale"
-
-        if self.phase == "Finale":
-            skill = max(self.skill_scores, key=self.skill_scores.get)
-        elif self.phase == "Warmup" and self.question_count < 3:
-            sorted_skills = sorted(
-                self.skill_scores.items(),
-                key=lambda x: x[1],
-                reverse=True)
-            strong_skills = [s for s, score in sorted_skills[:3]]
-            available = [s for s in strong_skills 
-                         if s not in self._warmup_used]
-            if not available:
-                available = [s for s in self.TIER1 
-                             if s not in self._warmup_used]
-            if not available:
-                available = self.TIER1
-            if all(s == 50 for s in self.skill_scores.values()):
-                # Avoid hard ops on first session
-                safe = [s for s in available 
-                        if s not in ["Multiplication","Division","Remainder"]]
-                if safe:
-                    available = safe
-            skill = random.choice(available)
-            self._warmup_used.add(skill)
-
-        else:
-            self.phase = "Main"
-            if self.question_count % 5 == 0 and self.question_count > 0:
-                skill = self.TIER2[self.tier2_index % len(self.TIER2)]
-                self.tier2_index += 1
-            else:
-                for item in list(self.mistake_queue):
-                    if item['resurfaced_at'] <= self.question_count:
-                        skill = item['skill_type']
-                        self.mistake_queue.remove(item)
-                        break
-                
-                if not skill:
-                    weights = self._get_weights_for_state(self.state)
-                    roll = random.random()
-                    
-                    if roll < weights["weakness"]:
-                        skill = min(self.skill_scores, key=self.skill_scores.get)
-                    elif roll < weights["weakness"] + weights["strength"]:
-                        skill = max(self.skill_scores, key=self.skill_scores.get)
-                    else:
-                        skill = random.choice(self.TIER1)
-
-        self.current_skill = skill
         self.question_count += 1
-        if skill not in self.processors:
-            p = QuestionProcessor(skill, self.difficulty, disable_dda=True)
-            p.process_file()
+        
+        if self.question_count % 4 == 0:
+            import random
+            t2 = random.choice(self.tier2_skills)
+            self.current_skill = t2
+            p = self._get_tier2_processor(t2, self.level_index)
+            self.current_processor = p
+            self._is_tier2_interleave = True
+            return p
+
+        self._is_tier2_interleave = False
+        import random
+        from question.loader import QuestionProcessor
+        
+        self.bucket_index = max(0, min(self.bucket_index, len(self.buckets) - 1))
+        bucket = self.buckets[self.bucket_index]
+        
+        available_rows = [r for r in self.bucket_to_rows[bucket] if r not in self.used_questions[bucket]]
+        
+        if not available_rows:
+            self.used_questions[bucket].clear()
+            available_rows = list(self.bucket_to_rows[bucket])
             
-            if p.df is None or p.df.empty:
-                # Dynamic scaling to empty level fallback
-                p.difficultyIndex = [1, 2, 3, 4, 5]
-                p.process_file()
+        valid_rows = []
+        for r in available_rows:
+            try:
+                pattern = str(self.main_df.loc[r, 'operands']).strip()
+                if pattern not in self.recent_patterns[-1:]:
+                    valid_rows.append(r)
+            except KeyError:
+                valid_rows.append(r)
                 
-            self.processors[skill] = p
+        if not valid_rows and available_rows:
+            valid_rows = available_rows 
+            
+        if not valid_rows:
+             chosen_row_index = self.main_df.index[0]
         else:
-            p = self.processors[skill]
-            p.disable_dda = True
-            if p.difficultyIndex != self.difficulty:
-                p.difficultyIndex = self.difficulty
-                p.process_file()
-                
-                if p.df is None or p.df.empty:
-                     p.difficultyIndex = [1, 2, 3, 4, 5]
-                     p.process_file()
-        processor = p
+             chosen_row_index = random.choice(valid_rows)
 
-        return processor
+        self.used_questions[bucket].add(chosen_row_index)
+        try:
+             pattern = str(self.main_df.loc[chosen_row_index, 'operands']).strip()
+             self.recent_patterns.append(pattern)
+        except KeyError:
+             self.recent_patterns.append("N/A")
+        
+        self.current_skill = bucket[0]
+        self.current_digits = bucket[1]
 
+        print(f"[BUCKET PROGRESSION] Serving `{self.current_skill}` {self.current_digits}d from bucket {self.bucket_index + 1}/{len(self.buckets)}")
 
+        p = QuestionProcessor(self.current_skill, self.level_index + 1, disable_dda=True, is_game_mode=True)
+        try:
+            p.df = self.main_df.loc[[chosen_row_index]].reset_index(drop=True)
+        except Exception:
+            p.df = self.main_df.iloc[[0]].reset_index(drop=True)
 
-    def _get_weights_for_state(self, state):
-        if state == "Struggling":
-            return {"weakness": 0.10, "strength": 0.60, "novelty": 0.30}
-        elif state == "Thriving":
-            return {"weakness": 0.65, "strength": 0.10, "novelty": 0.25}
-        else: # Normal
-            return {"weakness": 0.45, "strength": 0.20, "novelty": 0.35}
+        p.rowIndex = 0
+        p._used_rows = set()
+        p._skip_process_file = True
+        
+        self.current_processor = p
+        return p
 
-    def submit_answer(self, skill_type, is_correct, elapsed):
-        delta = 0
+    def submit_answer(self, skill_type, is_correct, time_taken, replay_count=0):
+        skill_type = str(skill_type).lower().strip()
         self.questions_answered += 1
+        
+        if skill_type not in self.skill_log:
+            self.skill_log[skill_type] = {'correct': 0, 'wrong': 0, 'times': [], 'weak_digits': []}
+
+        if getattr(self, '_is_tier2_interleave', False):
+            if is_correct:
+                self.skill_log[skill_type]['correct'] += 1
+                self.recent_performance.append("excellent")
+            else:
+                self.skill_log[skill_type]['wrong'] += 1
+                self.recent_performance.append("incorrect")
+            self.speed_history.append("NORMAL")
+            return
+
+        ideal = self.get_ideal_time(getattr(self, 'current_skill', skill_type), getattr(self, 'current_digits', 1))
+        adjusted_time = ideal * self.user_time_factor
+
+        if time_taken <= 0.8 * adjusted_time:
+            speed = "FAST"
+            perf_log = "excellent"
+        elif time_taken <= 1.5 * adjusted_time:
+            speed = "NORMAL"
+            perf_log = "good"
+        else:
+            speed = "SLOW"
+            perf_log = "slow"
+
+        if replay_count >= 1 and speed == "FAST":
+            speed = "NORMAL"
+        if replay_count >= 2:
+            speed = "NORMAL"
+
+        self.speed_history.append(speed)
+        delta = 0
+
         if is_correct:
             self.correct_streak += 1
-            self.incorrect_streak = 0
-            if elapsed < 5:
-                delta = 8
-                perf = "excellent"
-            elif elapsed < 10:
-                delta = 5
-                perf = "good"
-            elif elapsed < 15:
-                delta = 3
-                perf = "fair"
-            else:
-                delta = 1
-                perf = "slow"
-            self.recent_performance.append(perf)
+            self.wrong_streak = 0
+            self.skill_log[skill_type]['correct'] += 1
+            self.skill_log[skill_type]['times'].append(time_taken)
+            self.recent_performance.append(perf_log)
+            delta = 5
+
+            if speed == "SLOW":
+                 self.user_time_factor += 0.1
+
+            if self.correct_streak >= 2:
+                 self.bucket_index += 1
+                 self._reset_streaks()
+
         else:
-            self.incorrect_streak += 1
+            self.wrong_streak += 1
             self.correct_streak = 0
-            if self.incorrect_streak == 1:
-                delta = -5
-            else:
-                delta = -8
-            if len(self.mistake_queue) < 2:
-                self.mistake_queue.append({'skill_type': skill_type, 'resurfaced_at': self.question_count + 3})
+            self.skill_log[skill_type]['wrong'] += 1
             self.recent_performance.append("incorrect")
+            delta = -5
+
+            if self.wrong_streak >= 2:
+                self.bucket_index = max(0, self.bucket_index - 1)
 
         if skill_type in self.skill_scores:
             self.skill_scores[skill_type] = max(0, min(100, self.skill_scores[skill_type] + delta))
+            
+        self._check_level_transitions()
 
-        # State machine & Dynamic Difficulty Adjustment (DDA)
-        if self.incorrect_streak >= 2:
-            self.state = "Struggling"
-            if hasattr(self, 'difficulty') and self.difficulty > 1:
-                self.difficulty -= 1
-        elif self.correct_streak >= 3:
-            if len(self.recent_performance) >= 3 and all(p == "excellent" for p in self.recent_performance[-3:]):
-                self.state = "Thriving"
-                if hasattr(self, 'difficulty') and self.difficulty < 5:
-                    self.difficulty += 1
-        elif self.state == "Struggling" and is_correct:
-            self.state = "Normal"
-        elif self.state == "Thriving" and not is_correct:
-            self.state = "Normal"
+    def _reset_streaks(self):
+         self.correct_streak = 0
+         self.wrong_streak = 0
 
-        if len(self.recent_performance) > 10:
-            self.recent_performance = self.recent_performance[-10:]
+    def _check_level_transitions(self):
+        if self.bucket_index >= len(self.buckets):
+            self.level_index = min(self.level_index + 1, self.max_level)
+            self.difficulty_index = self.level_index
+            self._build_buckets()
+            self._reset_streaks()
+            
+        elif self.bucket_index == 0 and self.wrong_streak >= 3 and self.speed_history and self.speed_history[-1] == "SLOW":
+            if self.level_index > 0:
+                self.level_index -= 1
+                self.difficulty_index = self.level_index
+                self._build_buckets()
+                self._reset_streaks()
+            else:
+                self.wrong_streak = 0
+
+        self.bucket_index = max(0, min(self.bucket_index, len(self.buckets) - 1))
+
+    def generate_breakdown(self):
+        from language.language import tr
+        parts = []
+        for q_type, stats in sorted(self.skill_log.items()):
+            total = stats['correct'] + stats['wrong']
+            if total == 0: continue
+            parts.append(f"{tr(q_type.capitalize())}: {stats['correct']}/{total}")
+        return "  ·  ".join(parts) if parts else ""
+
+    def generate_summary(self):
+        from language.language import tr
+        total = self.questions_answered
+        correct = sum(s['correct'] for s in self.skill_log.values())
+        if total == 0:
+            return tr("Session complete!")
+        pct = int((correct / total) * 100)
+        elapsed = int(__import__('time').time() - self.session_start_time)
+        mins = elapsed // 60
+        secs = elapsed % 60
+        time_str = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
+        if pct >= 80:
+            mood = tr("Great job!")
+        elif pct >= 60:
+            mood = tr("Good effort!")
+        else:
+            mood = tr("Keep practicing!")
+        return f"{mood} {correct}/{total} correct · {time_str}"
 
     def generate_report(self):
-        ranked = sorted(self.skill_scores.items(), key=lambda x: x[1], reverse=True)
-        strengths = [s for s, score in ranked if score >= 60][:2]
-        weakness = [s for s, score in ranked if score < 45][:1]
+        return self.generate_breakdown() + ". " + self.generate_summary()
 
-        if not weakness and ranked:
-            # Fallback to the lowest-performing skill that isn't already a strength
-            non_strengths = [s for s, score in ranked if s not in strengths]
-            if non_strengths:
-                weakness = [non_strengths[-1]]
-            else:
-                weakness = [ranked[-1][0]]
-
-        from language.language import tr
-
-        if strengths:
-            s1 = tr(strengths[0])
-            s2 = tr(strengths[1]) if len(strengths) > 1 else None
-            strength_text = f"{s1} {tr('and')} {s2}" if s2 else s1
-        else:
-            strength_text = tr("trying hard")
-
-        if weakness:
-             weak_name = tr(weakness[0])
-             endings = [
-                 tr("{skill} is your next adventure!").format(skill=weak_name),
-                 tr("Keep exploring {skill}!").format(skill=weak_name),
-                 tr("{skill} wants more of your attention!").format(skill=weak_name)
-             ]
-             weak_sentence = random.choice(endings)
-        else:
-             weak_sentence = tr("You are brilliant across everything!")
-
-        templates = [
-             tr("You were amazing at {strength} today! {weakness}").format(
-                 strength=strength_text, weakness=weak_sentence),
-             tr("Wow! {strength} is your superpower. {weakness}").format(
-                 strength=strength_text, weakness=weak_sentence),
-             tr("Great session! You really know your {strength}. {weakness}").format(
-                 strength=strength_text, weakness=weak_sentence)
-        ]
-        return random.choice(templates)
-
-
+    @property
+    def digit_level(self):
+         return { "addition":self.level_index+1, "subtraction":self.level_index+1, "multiplication":self.level_index+1, "division":self.level_index+1 }
