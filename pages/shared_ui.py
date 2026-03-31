@@ -945,9 +945,8 @@ class GameReportWidget(QWidget):
 
         avg_skill = sum(session.skill_scores.values()) / max(len(session.skill_scores), 1)
         self.can_advance = (
-            avg_skill >= 65
-            and session.questions_answered >= 10
-            and session.difficulty_index < 4
+            (getattr(session, 'level_completed', False) or (avg_skill >= 65 and session.questions_answered >= 10))
+            and session.difficulty_index < getattr(session, 'max_level', 3)
         )
 
         self.breakdown_text = session.generate_breakdown()
