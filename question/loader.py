@@ -337,6 +337,7 @@ class LinearProgressionSession:
         self.skill_log = {}
         self.recent_performance = []
         self.speed_history = []
+        self.level_completed = False
         
         self._build_buckets()
         self.processors = {}
@@ -575,11 +576,10 @@ class LinearProgressionSession:
 
     def _check_level_transitions(self):
         if self.bucket_index >= len(self.buckets):
-            self.level_index = min(self.level_index + 1, self.max_level)
-            self.difficulty_index = self.level_index
-            self._build_buckets()
-            self._reset_streaks()
-            
+            self.game_active = False
+            self.level_completed = True
+            return
+
         elif self.bucket_index == 0 and self.wrong_streak >= 3 and self.speed_history and self.speed_history[-1] == "SLOW":
             if self.level_index > 0:
                 self.level_index -= 1
@@ -611,7 +611,9 @@ class LinearProgressionSession:
         mins = elapsed // 60
         secs = elapsed % 60
         time_str = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
-        if pct >= 80:
+        if getattr(self, 'level_completed', False):
+            mood = tr("Level Complete! Outstanding job!")
+        elif pct >= 80:
             mood = tr("Great job!")
         elif pct >= 60:
             mood = tr("Good effort!")
