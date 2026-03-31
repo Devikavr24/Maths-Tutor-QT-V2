@@ -994,26 +994,8 @@ class GameReportWidget(QWidget):
         summary_label.setAccessibleName(self.summary_text)
         layout.addWidget(summary_label)
 
-        # Digit progress note (what level each skill reached)
-        digit_parts = []
-        for skill, level in sorted(self.session.digit_level.items()):
-            if skill in self.session.skill_log:
-                digit_parts.append(f"{tr(skill.capitalize())}: {level}d")
-        if digit_parts:
-            digit_label = QLabel(tr("Digit levels reached") + ":  " + "  ·  ".join(digit_parts))
-            digit_label.setAlignment(Qt.AlignCenter)
-            digit_label.setWordWrap(True)
-            digit_label.setProperty("class", "subtitle")
-            layout.addWidget(digit_label)
-
-        # Divider 2
-        divider2 = QFrame()
-        divider2.setFrameShape(QFrame.HLine)
-        divider2.setFrameShadow(QFrame.Sunken)
-        layout.addWidget(divider2)
-
         # Session info
-        cur_level  = levels[self.session.difficulty_index] if self.session.difficulty_index < len(levels) else ""
+        cur_level  = levels[self.session.starting_difficulty] if self.session.starting_difficulty < len(levels) else ""
         info_label = QLabel(
             f"{self.session.questions_answered} {tr('questions answered')}  ·  "
             f"{tr('Level')}: {tr(cur_level)}"
@@ -1068,8 +1050,8 @@ class GameReportWidget(QWidget):
 
     def _go_next_level(self):
         self.tts.stop()
-        self.main_window.load_game_questions(self.session.difficulty_index + 1)
+        self.main_window.load_game_questions(self.session.starting_difficulty + 2)
 
     def _replay_level(self):
         self.tts.stop()
-        self.main_window.load_game_questions(self.session.difficulty_index)
+        self.main_window.load_game_questions(self.session.starting_difficulty + 1)

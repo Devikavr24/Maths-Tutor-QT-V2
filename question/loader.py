@@ -228,7 +228,8 @@ class QuestionProcessor:
                 return random.randint(a, b)
             elif ";" in inputRange:
                 a, b, c = map(int, inputRange.split(";"))
-                return a * random.randint(b, c)
+                result = a * random.randint(b, c)
+                return result if result != 0 else a
             return int(inputRange)
         except Exception:
             return 0
@@ -304,6 +305,10 @@ class LinearProgressionSession:
         self.max_level = 3
         self.level_index = max(0, min(difficulty_index - 1, self.max_level))
         self.difficulty_index = self.level_index
+        self.starting_difficulty = self.level_index
+        
+        import time as _time
+        self.session_start_time = _time.time()
         
         import os
         import pandas as pd
@@ -391,22 +396,37 @@ class LinearProgressionSession:
     def _get_tier2_processor(self, skill, difficulty):
         from question.loader import QuestionProcessor
         key = (skill, difficulty)
+        
+        def _get_filtered_df(diff):
+            skill_lower = skill.lower().strip()
+            df_slice = self.full_df[
+                (self.full_df['difficulty'] == diff) & 
+                (self.full_df['type'].astype(str).str.lower().str.strip() == skill_lower)
+            ].copy()
+            if df_slice.empty:
+                df_slice = self.full_df[
+                    (self.full_df['difficulty'].isin([0, 1, 2, 3])) & 
+                    (self.full_df['type'].astype(str).str.lower().str.strip() == skill_lower)
+                ].copy()
+            if "digits" in df_slice.columns and "_digit_int" not in df_slice.columns:
+                import re
+                df_slice["_digit_int"] = df_slice["digits"].apply(
+                    lambda raw: int(re.search(r'(\d+)', str(raw)).group(1)) if re.search(r'(\d+)', str(raw)) else 1
+                )
+            elif "_digit_int" not in df_slice.columns:
+                df_slice["_digit_int"] = 1
+            return df_slice.reset_index(drop=True)
+
         if key not in self.processors:
             p = QuestionProcessor(skill, difficulty, disable_dda=True, is_game_mode=True)
-            p.process_file()
-            if p.df is None or p.df.empty:
-                p.difficultyIndex = [0, 1, 2, 3] 
-                p.process_file()
+            p.df = _get_filtered_df(difficulty)
             p._skip_process_file = True
             self.processors[key] = p
         else:
             p = self.processors[key]
             if p.difficultyIndex != difficulty:
                 p.difficultyIndex = difficulty
-                p.process_file()
-                if p.df is None or p.df.empty:
-                    p.difficultyIndex = [0, 1, 2, 3]
-                    p.process_file()
+                p.df = _get_filtered_df(difficulty)
         return p
 
     def get_next_question(self):
@@ -490,6 +510,7 @@ class LinearProgressionSession:
             else:
                 self.skill_log[skill_type]['wrong'] += 1
                 self.recent_performance.append("incorrect")
+            self.speed_history.append("NORMAL")
             return
 
         ideal = self.get_ideal_time(getattr(self, 'current_skill', skill_type), getattr(self, 'current_digits', 1))
@@ -525,12 +546,8 @@ class LinearProgressionSession:
                  self.user_time_factor += 0.1
 
             if self.correct_streak >= 2:
-                 if len(self.speed_history) >= 2 and self.speed_history[-1] == "FAST" and self.speed_history[-2] == "FAST":
-                      self.bucket_index += 2
-                      self._reset_streaks()
-                 else:
-                      self.bucket_index += 1
-                      self._reset_streaks()
+                 self.bucket_index += 1
+                 self._reset_streaks()
 
         else:
             self.wrong_streak += 1
@@ -580,7 +597,22 @@ class LinearProgressionSession:
 
     def generate_summary(self):
         from language.language import tr
-        return tr("You completed the adaptive session!")
+        total = self.questions_answered
+        correct = sum(s['correct'] for s in self.skill_log.values())
+        if total == 0:
+            return tr("Session complete!")
+        pct = int((correct / total) * 100)
+        elapsed = int(__import__('time').time() - self.session_start_time)
+        mins = elapsed // 60
+        secs = elapsed % 60
+        time_str = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
+        if pct >= 80:
+            mood = tr("Great job!")
+        elif pct >= 60:
+            mood = tr("Good effort!")
+        else:
+            mood = tr("Keep practicing!")
+        return f"{mood} {correct}/{total} correct · {time_str}"
 
     def generate_report(self):
         return self.generate_breakdown() + ". " + self.generate_summary()
