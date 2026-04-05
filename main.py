@@ -215,6 +215,23 @@ class MainWindow(QMainWindow):
             del self._quickplay_question_widget
         if hasattr(self, 'quickplay_container'):
             del self.quickplay_container
+
+        # Clean up any active warmup widgets
+        for attr in ('_warmup_intro_widget', '_warmup_question_widget', '_warmup_ranking_widget'):
+            widget = getattr(self, attr, None)
+            if widget:
+                try: widget.cleanup()
+                except Exception: pass
+                delattr(self, attr)
+        if hasattr(self, '_warmup_session'): del self._warmup_session
+        # Clean up game mode widgets
+        for attr in ('_gamemode_intro', 'game_mode_widget'):
+            widget = getattr(self, attr, None)
+            if widget:
+                try: widget.cleanup()
+                except Exception: pass
+                delattr(self, attr)
+        if hasattr(self, '_game_session_new'): del self._game_session_new
         
         self.init_ui()
         
@@ -496,63 +513,221 @@ class MainWindow(QMainWindow):
         self.play_sound("click-button.wav")
 
     def start_game_mode(self):
-        if hasattr(self, "game_mode_container"):
-            self.stack.setCurrentWidget(self.game_mode_container)
-            self.main_footer.show()      
-            self.section_footer.hide()   
-            back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
-            if back_btn:
-                back_btn.show()
-            
-            # Bulletproof hide upload button in game mode starting phases
-            for btn in self.main_footer.findChildren(QPushButton):
-                 if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
-                     btn.hide()
-            return
+        """Entry point for Game Mode. Routes through warmup on first run."""
+        from question.warmup import has_completed_warmup
+        if not has_completed_warmup():
+            self._launch_warmup()
+        else:
+            self._launch_game_mode_intro()
 
-        self.game_mode_container = QWidget()
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignCenter)
-        self.game_mode_container.setLayout(layout)
+    # ── Warmup launch helpers ────────────────────────────────────────────────
 
-        title_label = QLabel(tr("Select Game Difficulty"))
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setProperty("class", "main-title")
-        layout.addWidget(title_label)
-        layout.addSpacing(10) #
-        difficulties = [(tr("Easy"), 1), (tr("Medium"), 2), (tr("Hard"), 3), (tr("Extra Hard"), 4)]
-        for text, index in difficulties:
-            btn = QPushButton(text)
-            btn.setMinimumSize(260, 70)
-            btn.setProperty("class", "menu-button")
-            btn.setProperty("theme", self.current_theme)
-            btn.clicked.connect(lambda _, idx=index: self.load_game_questions(idx))
-            btn.setAccessibleName(f"{text} difficulty")
-            btn.setAccessibleDescription(f"Start game at {text} difficulty level")
-            layout.addWidget(btn)
+    def _launch_warmup(self):
+        """Show the warmup intro screen (first-time Game Mode)."""
+        from pages.warmup_ui import WarmupIntroWidget
+        from pages.shared_ui import apply_theme
+        if hasattr(self, 'tts'):
+            self.tts.stop()
 
-        mole_label = QLabel()
-        mole_label.setPixmap(QPixmap("assets/mole.png").scaled(120, 120, Qt.KeepAspectRatio, Qt.SmoothTransformation))
-        mole_label.setAlignment(Qt.AlignCenter)
-        mole_label.setAccessibleName("")
-        mole_label.setAccessibleDescription("")
-        layout.addWidget(mole_label)
-
-        self.stack.addWidget(self.game_mode_container)
-        self.stack.setCurrentWidget(self.game_mode_container)
+        self._warmup_intro_widget = WarmupIntroWidget(
+            on_begin=self._begin_warmup_questions,
+            window=self,
+            tts=self.tts,
+        )
+        apply_theme(self._warmup_intro_widget, self.current_theme)
+        self.stack.addWidget(self._warmup_intro_widget)
+        self.stack.setCurrentWidget(self._warmup_intro_widget)
 
         self.main_footer.show()
-        self.section_footer.hide()   
+        self.section_footer.hide()
         back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
-
-        # Bulletproof hide upload button in game mode starting phases
         for btn in self.main_footer.findChildren(QPushButton):
-             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
-                 btn.hide()
+            if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                btn.hide()
 
-        apply_theme(self.game_mode_container, self.current_theme)
+    def _begin_warmup_questions(self):
+        """Transition from intro screen to the question widget."""
+        from question.warmup import WarmupSession
+        from pages.warmup_ui import WarmupQuestionWidget
+        from pages.shared_ui import apply_theme
+
+        self._warmup_session = WarmupSession()
+        self._warmup_question_widget = WarmupQuestionWidget(
+            session=self._warmup_session,
+            window=self,
+            tts=self.tts,
+            on_complete=self._show_warmup_ranking,
+        )
+        apply_theme(self._warmup_question_widget, self.current_theme)
+        self.stack.addWidget(self._warmup_question_widget)
+        self.stack.setCurrentWidget(self._warmup_question_widget)
+
+        # Hide footer during active questioning
+        self.main_footer.hide()
+        self.section_footer.hide()
+
+    def _show_warmup_ranking(self):
+        """Save profile and show the ranked results screen."""
+        from pages.warmup_ui import WarmupRankingWidget
+        from pages.shared_ui import apply_theme
+        from question.warmup import save_warmup_profile
+
+        if hasattr(self, '_warmup_question_widget'):
+            self._warmup_question_widget.cleanup()
+
+        ranked = self._warmup_session.get_ranked_results()
+        save_warmup_profile(ranked)
+        print(f"[WARMUP] Profile saved. Top skill: {ranked[0]['label'] if ranked else 'N/A'}")
+
+        self._warmup_ranking_widget = WarmupRankingWidget(
+            session=self._warmup_session,
+            window=self,
+            tts=self.tts,
+            on_continue=self._on_warmup_complete,
+        )
+        apply_theme(self._warmup_ranking_widget, self.current_theme)
+        self.stack.addWidget(self._warmup_ranking_widget)
+        self.stack.setCurrentWidget(self._warmup_ranking_widget)
+
+        self.main_footer.show()
+        self.section_footer.hide()
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn:
+            back_btn.show()
+        for btn in self.main_footer.findChildren(QPushButton):
+            if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                btn.hide()
+
+    def _on_warmup_complete(self):
+        """Called when user presses Continue on the ranking screen."""
+        if hasattr(self, '_warmup_ranking_widget'):
+            self._warmup_ranking_widget.cleanup()
+        self._launch_game_mode_intro()
+
+    # ── Game Mode (adaptive) ────────────────────────────────────────────────
+
+    def _launch_game_mode_intro(self):
+        """Show the brief intro screen before starting a game session."""
+        from pages.warmup_ui import GameModeIntroWidget
+        from pages.shared_ui import apply_theme
+        from question.warmup import load_warmup_profile, load_game_session
+        if hasattr(self, 'tts'): self.tts.stop()
+
+        ranked      = load_warmup_profile()
+        saved_state = load_game_session()
+
+        self._gamemode_intro = GameModeIntroWidget(
+            ranked=ranked, saved_state=saved_state,
+            on_start=self._start_game_session,
+            window=self, tts=self.tts,
+        )
+        apply_theme(self._gamemode_intro, self.current_theme)
+        self.stack.addWidget(self._gamemode_intro)
+        self.stack.setCurrentWidget(self._gamemode_intro)
+
+        self.main_footer.show(); self.section_footer.hide()
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn: back_btn.show()
+        for btn in self.main_footer.findChildren(QPushButton):
+            if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                btn.hide()
+
+    def _start_game_session(self):
+        """Create GameModeSession + GameModeWidget, start 90s timer."""
+        from question.warmup import GameModeSession, load_warmup_profile, load_game_session
+        from pages.warmup_ui import GameModeWidget
+        from pages.shared_ui import apply_theme
+        if hasattr(self, 'tts'): self.tts.stop()
+
+        ranked      = load_warmup_profile() or []
+        saved_state = load_game_session()
+
+        self._game_session_new = GameModeSession(ranked, saved_state)
+        self.time_remaining    = self._game_session_new.session_time
+        self.game_active       = True
+
+        # Reuse or create game page container
+        if not hasattr(self, 'game_page_container'):
+            self.game_page_container = QWidget()
+            self.game_page_layout    = QVBoxLayout(self.game_page_container)
+            self.game_page_layout.setContentsMargins(0, 0, 0, 0)
+            self.stack.addWidget(self.game_page_container)
+        for i in reversed(range(self.game_page_layout.count())):
+            w = self.game_page_layout.itemAt(i).widget()
+            if w: w.setParent(None)
+
+        self.game_mode_widget = GameModeWidget(
+            session=self._game_session_new,
+            window=self, tts=self.tts,
+            on_session_end=self._on_game_mode_end,
+        )
+        apply_theme(self.game_mode_widget, self.current_theme)
+        self.game_page_layout.addWidget(self.game_mode_widget)
+        self.stack.setCurrentWidget(self.game_page_container)
+
+        self.main_footer.hide(); self.section_footer.show()
+        back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
+        if back_ops: back_ops.hide()
+        back_learn = self.section_footer.findChild(QPushButton, "back_to_learn")
+        if back_learn: back_learn.hide()
+        for btn in self.section_footer.findChildren(QPushButton):
+            if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
+                btn.hide()
+
+        self._original_back_to_home = self.back_to_home
+        def safe_back():
+            if hasattr(self, 'game_timer') and self.game_timer.isActive(): self.game_timer.stop()
+            self.game_active = False
+            if hasattr(self, 'tts'): self.tts.stop()
+            if hasattr(self, 'game_mode_widget'): self.game_mode_widget.cleanup()
+            if hasattr(self, '_original_back_to_home'): self.back_to_home = self._original_back_to_home
+            self.back_to_main_menu()
+        self.back_to_home = safe_back
+
+        if hasattr(self, 'tts') and not self.is_muted:
+            QTimer.singleShot(300, lambda: self.tts.speak(tr("Game mode! Let's go!")))
+
+        self.game_timer.start()
+
+    def _on_game_mode_end(self):
+        """Called by GameModeWidget when session finishes (timer or no more questions)."""
+        if not self.game_active: return
+        self.game_active = False
+        self.game_timer.stop()
+        if hasattr(self, 'tts'): self.tts.stop()
+        if hasattr(self, '_original_back_to_home'): self.back_to_home = self._original_back_to_home
+
+        from question.warmup import save_warmup_profile, clear_game_session
+        # Update and persist ranking
+        updated = self._game_session_new.get_ranked_results_updated()
+        save_warmup_profile(updated)
+        clear_game_session()
+        print(f"[GAME] Session ended. Q={self._game_session_new.question_count} Acc={self._game_session_new.accuracy_pct()}%")
+
+        QTimer.singleShot(500, lambda: self.tts.speak(tr("Time's up! Amazing effort.")))
+        QTimer.singleShot(2200, self._show_game_report)
+
+    def _show_game_report(self):
+        from pages.warmup_ui import GameModeReportWidget
+        from pages.shared_ui import apply_theme
+        report = GameModeReportWidget(
+            session=self._game_session_new, window=self, tts=self.tts,
+            on_play_again=self._on_game_play_again,
+        )
+        apply_theme(report, self.current_theme)
+        self.stack.addWidget(report)
+        self.stack.setCurrentWidget(report)
+        self.section_footer.hide(); self.main_footer.show()
+        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        if back_btn: back_btn.show()
+        for btn in self.main_footer.findChildren(QPushButton):
+            if "upload" in btn.objectName().lower() or "upload" in btn.text().lower(): btn.hide()
+
+    def _on_game_play_again(self):
+        """Play Again from report: start a fresh session."""
+        self._launch_game_mode_intro()
 
     def load_game_questions(self, difficulty_index):
         from question.loader import LinearProgressionSession, QuestionProcessor
@@ -701,25 +876,6 @@ class MainWindow(QMainWindow):
             self._back_to_diff_btn.setParent(None)
             self._back_to_diff_btn = None
 
-    def _back_to_difficulty(self):
-        if hasattr(self, 'game_timer') and self.game_timer.isActive():
-            self.game_timer.stop()
-        if hasattr(self, 'game_active'):
-            self.game_active = False
-        if hasattr(self, 'tts'):
-            self.tts.stop()
-        if hasattr(self, 'question_widget'):
-            self.question_widget.stop_all_activity()
-        if hasattr(self, '_original_back_to_home'):
-            self.back_to_home = self._original_back_to_home
-        self._cleanup_game_footer()
-        
-        self.stack.setCurrentWidget(self.game_mode_container)
-        self.main_footer.hide()
-        self.section_footer.show()
-        back_ops = self.section_footer.findChild(QPushButton, "back_operations")
-        if back_ops: back_ops.hide()
-
     def _update_timer_bar(self):
         self.timer_bar.setValue(self.time_remaining)
         if self.time_remaining > 30:
@@ -746,17 +902,23 @@ class MainWindow(QMainWindow):
 
     def _on_game_tick(self):
         self.time_remaining -= 1
-        self._update_timer_bar()
-        
-        from language.language import tr
+        # Delegate timer display to the active game widget
+        if hasattr(self, 'game_mode_widget') and self.game_mode_widget:
+            try: self.game_mode_widget.update_timer(self.time_remaining)
+            except Exception: pass
+        elif hasattr(self, 'timer_bar'):
+            self._update_timer_bar()
 
+        from language.language import tr
         if self.time_remaining == 15:
-            self.game_session.set_finale()
             self.tts.speak(tr("Keep going!"))
         elif self.time_remaining == 5:
             self.tts.speak(tr("One more!"))
         elif self.time_remaining <= 0:
-            self._end_game_session()
+            if hasattr(self, 'game_mode_widget') and self.game_mode_widget:
+                self._on_game_mode_end()
+            else:
+                self._end_game_session()
 
     def _end_game_session(self):
         if not self.game_active:
@@ -1010,7 +1172,17 @@ class MainWindow(QMainWindow):
         self.update_back_to_operations_visibility(name)
     
     def back_to_main_menu(self):
-        self.top_bar.show()  
+        self.top_bar.show()
+
+        # Stop any active warmup activity (timers / TTS inside warmup widgets)
+        for attr in ('_warmup_question_widget', '_warmup_intro_widget', '_warmup_ranking_widget'):
+            widget = getattr(self, attr, None)
+            if widget:
+                try:
+                    widget.cleanup()
+                except Exception:
+                    pass
+
         current_page = self.stack.currentWidget()
         if current_page:
             question_widget = current_page.findChild(QuestionWidget)
@@ -1021,7 +1193,7 @@ class MainWindow(QMainWindow):
             self.tts.stop()
             self.tts.reset()
         self.play_sound("home_button_sound.wav")
-        self.stack.setCurrentWidget(self.startup_widget)  
+        self.stack.setCurrentWidget(self.startup_widget)
         self.section_footer.hide()
         self.main_footer.show()
         
