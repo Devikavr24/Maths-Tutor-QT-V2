@@ -1,0 +1,61 @@
+{
+  "completed": true,
+  "ranked": [
+    {
+      "label": "1-digit Multiplication",
+      "score": 8.7,
+      "q_type": "multiplication",
+      "digits": "1d",
+      "gained": 7.7,
+      "original_score": 1.0
+    },
+    {
+      "label": "1-digit Addition",
+      "score": 5.5,
+      "q_type": "addition",
+      "digits": "1d",
+      "gained": 4.5,
+      "original_score": 1.0
+    },
+    {
+      "label": "2-digit Addition",
+      "score": 2.4,
+      "q_type": "addition",
+      "digits": "2d",
+      "gained": 1.9,
+      "original_score": 0.5
+    },
+    {
+      "label": "2-digit Subtraction",
+      "score": 2.0,
+      "q_type": "subtraction",
+      "digits": "2d",
+      "gained": 1.5,
+      "original_score": 0.5
+    },
+    {
+      "label": "1-digit Subtraction",
+      "score": 1.0,
+      "q_type": "subtraction",
+      "digits": "1d",
+      "gained": 0.0,
+      "original_score": 1.0
+    },
+    {
+      "label": "2×1-digit Multiplication",
+      "score": 0.0,
+      "q_type": "multiplication",
+      "digits": "2d",
+      "gained": 0.0,
+      "original_score": 0.0
+    },
+    {
+      "label": "2×2-digit Multiplication",
+      "score": 0.0,
+      "q_type": "multiplication",
+      "digits": "3d",
+      "gained": 0.0,
+      "original_score": 0.0
+    }
+  ]
+}
