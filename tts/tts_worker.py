@@ -19,7 +19,6 @@ class TTSWorker(QObject):
         self.process = None  # Used for espeak-ng on Linux AND as fallback on Windows
         if self.system == "Windows":
             self.engine = None
-            self.timer = None
             self.iterating_lock = QMutex()
             self.sapi = None  # Dedicated engine for Windows Modern (OneCore) voices
             
@@ -109,7 +108,6 @@ class TTSWorker(QObject):
         self.cleanup()
         if self.system == "Windows":
             self.engine = None
-            self.timer = None
             self.sapi = None
 
     # --- Windows Methods ---
@@ -117,9 +115,6 @@ class TTSWorker(QObject):
         if not self.engine:
             self.engine = pyttsx3.init()
             self.engine.setProperty('rate', self.speech_rate)
-            self.timer = QTimer(self)
-            self.timer.timeout.connect(self._iterate_windows_loop)
-            self.timer.start(100)
 
     def _speak_windows(self, text, current_lang):
         self._stop_windows() # Stop any previous speech
@@ -236,8 +231,6 @@ class TTSWorker(QObject):
             self.process = None
 
     def _cleanup_windows(self):
-        if self.timer:
-            self.timer.stop()
         if self.engine and self.engine._inLoop:
             try:
                 self.engine.endLoop()
@@ -287,6 +280,11 @@ class TextToSpeech(QObject):
         self.worker = TTSWorker()
         self.worker.moveToThread(self.thread)
         
+        # Safe main-thread timer initialization
+        self.iterate_timer = QTimer()
+        self.iterate_timer.timeout.connect(self.worker._iterate_windows_loop)
+        self.iterate_timer.start(100)
+        
         self.speak_signal.connect(self.worker.speak)
         self.worker.play_custom_sound.connect(self.play_custom_sound_signal.emit) # 👈 Connect forward
         self.stop_signal.connect(self.worker.stop)
@@ -307,6 +305,10 @@ class TextToSpeech(QObject):
         self.reset_signal.emit()
 
     def cleanup(self):
+        if hasattr(self, 'iterate_timer'):
+            self.iterate_timer.stop()
+            self.iterate_timer.deleteLater()
+            
         self.cleanup_signal.emit()
         self.thread.quit()
         self.thread.wait()

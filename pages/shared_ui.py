@@ -427,10 +427,15 @@ class QuestionWidget(QWidget):
         self._active = False
         for attr in ("bell_timer", "bell_seq_timer", "seq_timer"):
             t = getattr(self, attr, None)
-            if t and t.isActive():
-                t.stop()
-        if self.bell_pause_timer and self.bell_pause_timer.isActive():
-            self.bell_pause_timer.stop()
+            if t:
+                if t.isActive():
+                    t.stop()
+                t.deleteLater()
+                setattr(self, attr, None)
+                
+        if hasattr(self, "bell_pause_timer") and self.bell_pause_timer:
+            if self.bell_pause_timer.isActive():
+                self.bell_pause_timer.stop()
 
     def do_ring(self):
         if self.current_ring < self.total_rings:
