@@ -66,7 +66,7 @@ class WarmupIntroWidget(QWidget):
         desc = QLabel(
             "Welcome! Before we begin the real game, let's do a quick "
             "Warmup Match so we can understand your strengths.\n\n"
-            "You will answer one question from each of the 13 question types, "
+            "You will answer one question from each of the different question types, "
             "starting from the easiest. Your speed and accuracy are measured "
             "after the question is read aloud.\n\n"
             "The warmup ends early only if you miss or skip too many questions."
@@ -83,7 +83,7 @@ class WarmupIntroWidget(QWidget):
         info_row = QHBoxLayout()
         info_row.setAlignment(Qt.AlignCenter)
         info_row.setSpacing(30)
-        for icon, label_text in [("⏱️", "Speed matters"), ("🎯", "13 question types"), ("📊", "Ranked results")]:
+        for icon, label_text in [("⏱️", "Speed matters"), ("🎯", "14 question types"), ("📊", "Ranked results")]:
             col = QVBoxLayout()
             col.setAlignment(Qt.AlignCenter)
             ico = QLabel(icon)

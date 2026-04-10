@@ -191,6 +191,12 @@ class QuestionProcessor:
             if not gated.empty:
                 working_df = gated
 
+        # Apply strict strict_label filtering if explicitly set
+        if getattr(self, "strict_label", None):
+            strict_filtered = working_df[working_df["label"].astype(str).str.strip() == self.strict_label]
+            if not strict_filtered.empty:
+                working_df = strict_filtered.reset_index(drop=True)
+
         all_rows = list(range(len(working_df)))
 
         if self.is_game_mode:
@@ -206,6 +212,15 @@ class QuestionProcessor:
         # FIX: use iloc (positional) so stale rowIndex doesn't cause KeyError
         row = working_df.iloc[local_idx]
         self.rowIndex = local_idx   # store positional for extractAnswer
+
+        selected_question_label = str(row.get("label", "")).strip()
+
+        # VALIDATION (MANDATORY LOGGING AND ASSERTION IF STRICT)
+        if getattr(self, "strict_label", None):
+            print(f"[QuestionProcessor Validation] current_label (strict): {self.strict_label} | selected_question_label: {selected_question_label}")
+            if selected_question_label != self.strict_label:
+                print(f"[ERROR] Label mismatch! strict_label={self.strict_label}, but selected={selected_question_label}")
+            assert selected_question_label == self.strict_label, f"Label mismatch constraint violated. Expected: {self.strict_label}, Got: {selected_question_label}"
 
         variable_string = str(row["operands"])
         input_string    = ''.join(c for c in variable_string if not c.isalpha())
@@ -427,6 +442,11 @@ class LinearProgressionSession:
         self.question_count  = 0
         self.questions_answered = 0
 
+        # --- New progression state variables ---
+        self.last_answers = []        # Queue of last 4 results (1=correct, 0=wrong/skip)
+        self.cooldown_counter = 0     # Cooldown to prevent rapid consecutive movements
+        self.last_label = None        # Tracks the label we moved from to prevent ping-pong
+
         self._recently_interleaved        = False
         self.questions_in_current_concept = 0
         self._current_concept_tracked     = None
@@ -448,13 +468,12 @@ class LinearProgressionSession:
         self._build_buckets()
         self.processors = {}
 
-    # ── Bucket construction ───────────────────────────────────────────────────
+    # ── Bucket construction (Label-Based) ─────────────────────────────────────
 
     def _build_buckets(self):
-        # FIX: filter by self.level_index which is correctly 0-based Excel difficulty
+        # Filter by 0-based Excel difficulty
         level_df = self.full_df[self.full_df["difficulty"] == self.level_index].copy()
         if level_df.empty:
-            # fallback: try difficulty 0
             level_df = self.full_df[self.full_df["difficulty"] == 0].copy()
         if level_df.empty:
             level_df = self.full_df.copy()
@@ -466,29 +485,50 @@ class LinearProgressionSession:
             return int(m.group(1)) if m else 1
 
         main_df["_digit_int"] = main_df["digits"].apply(extract_digit)
+        main_df["label"] = main_df["label"].astype(str).str.strip()
         self.main_df = main_df
 
         self.buckets        = []
         self.bucket_to_rows = {}
 
-        for (b_type, b_digits), group in main_df.groupby(["type", "_digit_int"]):
-            bucket_tuple = (b_type, int(b_digits))
-            if bucket_tuple not in self.buckets:
-                self.buckets.append(bucket_tuple)
-                self.bucket_to_rows[bucket_tuple] = list(group.index)
-
+        unique_labels = main_df["label"].unique()
+        
+        # Sort labels to preserve original game logic (op_order, then digits)
         op_order = {"addition": 0, "subtraction": 1, "multiplication": 2, "division": 3}
-        self.buckets.sort(key=lambda b: (op_order.get(b[0], 99), b[1]))
-        print(f"[BUCKET ORDER] difficulty={self.level_index}: {self.buckets}")
+        label_sort_keys = {}
+        for lbl in unique_labels:
+            if not lbl or lbl == "nan" or lbl == "None":
+                continue
+            lbl_df = main_df[main_df["label"] == lbl]
+            first_type = str(lbl_df["type"].iloc[0]).strip().lower()
+            first_digit = int(lbl_df["_digit_int"].iloc[0])
+            label_sort_keys[lbl] = (op_order.get(first_type, 99), first_digit)
+
+        valid_labels = [lbl for lbl in unique_labels if lbl and lbl != "nan" and lbl != "None"]
+        valid_labels.sort(key=lambda lbl: label_sort_keys[lbl])
+
+        for lbl in valid_labels:
+            if lbl not in self.buckets:
+                self.buckets.append(lbl)
+                self.bucket_to_rows[lbl] = list(main_df[main_df["label"] == lbl].index)
+
+        print(f"[BUCKET ORDER] difficulty={self.level_index}, labels: {self.buckets}")
 
         if not self.buckets:
             # Absolute fallback
-            self.buckets = [("addition", 1)]
-            self.bucket_to_rows = {("addition", 1): list(self.full_df.index)[:10]}
+            self.buckets = ["fallback"]
+            self.bucket_to_rows = {"fallback": list(self.full_df.index)[:10]}
 
         self.bucket_index    = 0
         self.used_questions  = {b: set() for b in self.buckets}
         self.recent_patterns = []
+
+    # ── Helper Methods ────────────────────────────────────────────────────────
+
+    def _get_bucket_label(self, b_idx: int) -> str:
+        """Helper to get the string label of the target bucket to prevent ping-pong."""
+        b_idx = max(0, min(b_idx, len(self.buckets) - 1))
+        return str(self.buckets[b_idx])
 
     # ── Timing helpers ────────────────────────────────────────────────────────
 
@@ -570,16 +610,17 @@ class LinearProgressionSession:
 
         self._is_tier2_interleave = False
 
-        # ── Guard bucket_index ────────────────────────────────────────────────
-        # FIX: clamp so we never go out of bounds mid-question
+        # ── Guard bucket_index (Now strictly matches label) ───────────────────
         self.bucket_index = max(0, min(self.bucket_index, len(self.buckets) - 1))
-        bucket = self.buckets[self.bucket_index]
+        # Ensure current_label is securely set to EXACTLY the progression state
+        self.current_label = str(self.buckets[self.bucket_index])
 
-        available_rows = [r for r in self.bucket_to_rows[bucket]
-                          if r not in self.used_questions[bucket]]
+        # Strictly limit to rows matching EXACTLY the current_label
+        available_rows = [r for r in self.bucket_to_rows[self.current_label]
+                          if r not in self.used_questions[self.current_label]]
         if not available_rows:
-            self.used_questions[bucket].clear()
-            available_rows = list(self.bucket_to_rows[bucket])
+            self.used_questions[self.current_label].clear()
+            available_rows = list(self.bucket_to_rows[self.current_label])
 
         valid_rows = []
         for r in available_rows:
@@ -592,24 +633,19 @@ class LinearProgressionSession:
         if not valid_rows:
             valid_rows = available_rows
 
-        chosen_row_index = random.choice(valid_rows) if valid_rows else self.main_df.index[0]
-        self.used_questions[bucket].add(chosen_row_index)
+        chosen_row_index = random.choice(valid_rows) if valid_rows else self.bucket_to_rows[self.current_label][0]
+        self.used_questions[self.current_label].add(chosen_row_index)
 
         try:
             self.recent_patterns.append(str(self.main_df.loc[chosen_row_index, "operands"]).strip())
         except KeyError:
             self.recent_patterns.append("N/A")
 
-        self.current_skill  = bucket[0]
-        self.current_digits = bucket[1]
-
-        try:
-            row_data = self.main_df.loc[chosen_row_index]
-            self.current_concept = get_concept_for_row(row_data)
-            self.current_label   = str(row_data.get("label", "")).strip()
-        except Exception:
-            self.current_concept = "addition_no_carry"
-            self.current_label   = ""
+        # Extract context from the chosen row
+        row_data = self.main_df.loc[chosen_row_index]
+        self.current_skill  = str(row_data.get("type", "addition")).strip().lower()
+        self.current_digits = int(row_data.get("_digit_int", 1))
+        self.current_concept = get_concept_for_row(row_data)
 
         # Track concept run-length for interleave logic
         if self._current_concept_tracked != self.current_concept:
@@ -619,29 +655,19 @@ class LinearProgressionSession:
         else:
             self.questions_in_current_concept += 1
 
-        print(f"[BUCKET] `{self.current_skill}` {self.current_digits}d | "
+        print(f"[BUCKET] label=`{self.current_label}` | {self.current_skill} {self.current_digits}d | "
               f"bucket {self.bucket_index + 1}/{len(self.buckets)} | concept={self.current_concept}")
-
-        # Build processor from the exact label rows
+              
+        # ── Strict Label Filtering for QuestionProcessor ──────────────────────
+        df_filtered = self.main_df[self.main_df["label"].str.strip() == self.current_label]
+        
+        # Build processor enforcing strict label
         p = QuestionProcessor(self.current_skill, self.level_index,
                               disable_dda=True, is_game_mode=True)
-
-        # FIX: robust label match — use str comparison after normalising
-        if "label" in self.main_df.columns and self.current_label:
-            label_df = self.main_df[self.main_df["label"].str.strip() == self.current_label]
-            if not label_df.empty:
-                p.df = label_df.copy().reset_index(drop=True)
-            else:
-                # bucket fallback
-                bucket_df = self.main_df[
-                    (self.main_df["type"] == self.current_skill)
-                ]
-                p.df = (bucket_df if not bucket_df.empty else self.main_df).copy().reset_index(drop=True)
-        else:
-            try:
-                p.df = self.main_df.loc[[chosen_row_index]].reset_index(drop=True)
-            except Exception:
-                p.df = self.main_df.iloc[[0]].reset_index(drop=True) if not self.main_df.empty else pd.DataFrame()
+                              
+        # The ultimate safeguard
+        p.df = df_filtered.copy().reset_index(drop=True)
+        p.strict_label = self.current_label # For assert in QuestionProcessor
 
         p.rowIndex           = 0
         p._used_rows         = set()
@@ -688,43 +714,118 @@ class LinearProgressionSession:
         self.speed_history.append(speed)
         delta = 0
 
+        # === PROGRESSION UPDATE LOGIC ===
+
+        # 1. Update streaks and history
         if is_correct:
+            # Correct answer -> inc correct streak, break wrong streak
             self.correct_streak += 1
-            self.wrong_streak    = 0
+            self.wrong_streak = 0
             self.skill_log[skill_type]["correct"] += 1
             self.skill_log[skill_type]["times"].append(time_taken)
             self.recent_performance.append(perf)
             delta = 5
             if speed == "SLOW":
                 self.user_time_factor += 0.1
-            # FIX: guard advancement so bucket_index can't exceed last valid index
-            if self.correct_streak >= 2:
-                next_idx = self.bucket_index + 1
-                if next_idx < len(self.buckets):
-                    self.bucket_index = next_idx
-                else:
-                    # All buckets done → session ends naturally via is_session_complete
-                    self.game_active = False
-                self._reset_streaks()
+            
+            # Append result to history
+            self.last_answers.append(1)
         else:
-            self.wrong_streak   += 1
-            self.correct_streak  = 0
+            # Wrong OR skip -> inc wrong streak, break correct streak
+            self.wrong_streak += 1
+            self.correct_streak = 0
             self._recently_interleaved = False
             self.skill_log[skill_type]["wrong"] += 1
             self.recent_performance.append("incorrect")
             delta = -5
 
-            if self.wrong_streak >= 2:
-                concept = getattr(self, "current_concept", None)
-                if concept:
-                    bridge_qs = generate_bridge_questions(concept)
-                    for bq in bridge_qs:
-                        bq["is_bridge"] = True
-                    if bridge_qs:
-                        self._bridge_queue = bridge_qs
-                        print(f"[BRIDGE] Queued {len(bridge_qs)} bridge Qs for '{concept}'")
+            # Append result to history (skip contributes 0)
+            self.last_answers.append(0)
 
-                self.bucket_index = max(0, self.bucket_index - 1)
+        # Maintain rolling window of last 4 results
+        if len(self.last_answers) > 4:
+            self.last_answers.pop(0)
+
+        # 2. Compute accuracy
+        accuracy = sum(self.last_answers) / len(self.last_answers) if self.last_answers else 0.0
+        
+        # Current active label for tracking
+        current_label = getattr(self, "current_label", "")
+
+        action = "stay"
+        reason = "conditions not met"
+
+        # === MOVEMENT LOGIC ===
+        
+        # Priority 1: Cooldown Check
+        # Prevents rapid movements right after a transition
+        if self.cooldown_counter > 0:
+            self.cooldown_counter -= 1
+            action = "stay"
+            reason = "cooldown active"
+            
+        else:
+            # Priority 2: Forward Check
+            # Move forward ONLY IF: correct_streak >= 2 AND accuracy >= 0.75
+            if self.correct_streak >= 2 and accuracy >= 0.75:
+                action = "forward"
+                reason = "streak and accuracy met"
+                self.cooldown_counter = 2
+                self.last_label = current_label
+                self.correct_streak = 0
+                self.wrong_streak = 0
+                
+                next_idx = self.bucket_index + 1
+                if next_idx < len(self.buckets):
+                    self.bucket_index = next_idx
+                else:
+                    self.game_active = False # Session ends
+
+            # Priority 3: Backward Check
+            # Move backward ONLY IF: wrong_streak >= 2 AND accuracy <= 0.5
+            elif self.wrong_streak >= 2 and accuracy <= 0.5:
+                target_idx = max(0, self.bucket_index - 1)
+                target_label = self._get_bucket_label(target_idx)
+                
+                allow_backward = True
+                
+                # Prevent ping-pong checking target label against previous label
+                if target_label == self.last_label:
+                    if self.wrong_streak >= 3:
+                        allow_backward = True
+                        reason = "ping-pong overridden by 3 wrongs"
+                    else:
+                        allow_backward = False
+                        action = "stay"
+                        reason = "prevent ping-pong (needs 3 wrongs)"
+                        
+                if allow_backward:
+                    action = "backward"
+                    if reason == "conditions not met":
+                        reason = "streak and accuracy met"
+                    self.cooldown_counter = 2
+                    self.last_label = current_label
+                    self.correct_streak = 0
+                    self.wrong_streak = 0
+                    self.bucket_index = target_idx
+                    
+                    # Queue bridge questions on moving backward
+                    concept = getattr(self, "current_concept", None)
+                    if concept:
+                        bridge_qs = generate_bridge_questions(concept)
+                        for bq in bridge_qs:
+                            bq["is_bridge"] = True
+                        if bridge_qs:
+                            self._bridge_queue = bridge_qs
+                            print(f"[BRIDGE] Queued {len(bridge_qs)} bridge Qs for '{concept}'")
+
+        # Priority 4: Default (already set to "stay")
+        
+        # MANDATORY LOGGING
+        print(f"[PROGRESSION] Label: {current_label} | "
+              f"Correct: {self.correct_streak} | Wrong: {self.wrong_streak} | "
+              f"History: {self.last_answers} | Acc: {accuracy:.2f} | "
+              f"Cooldown: {self.cooldown_counter} | Action: {action} | Reason: {reason}")
 
         if skill_type in self.skill_scores:
             self.skill_scores[skill_type] = max(0, min(100, self.skill_scores[skill_type] + delta))
