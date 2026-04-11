@@ -560,7 +560,13 @@ class MainWindow(QMainWindow):
             self._switch_to_page(self._warmup_question_widget)
 
             self.main_footer.hide()
-            self.section_footer.hide()
+            for btn in self.section_footer.findChildren(QPushButton):
+                btn.show()
+            back_ops = self.section_footer.findChild(QPushButton, "back_to_operations")
+            if back_ops: back_ops.hide()
+            back_learn = self.section_footer.findChild(QPushButton, "back_to_learn")
+            if back_learn: back_learn.hide()
+            self.section_footer.show()
         except Exception as e:
             import traceback
             print(f"[CRASH] Exception in _begin_warmup_questions: {e}")
@@ -1069,7 +1075,7 @@ class MainWindow(QMainWindow):
         callbacks = {
             tr("Back to Operations"): lambda: self.load_section("Operations"),
             tr("Back to Learn"): self.back_to_learn_menu,
-            tr("Back to Home"): self.back_to_home,
+            tr("Back to Home"): lambda: self.back_to_home(),
             tr("Settings"): self.handle_settings
         }
 
