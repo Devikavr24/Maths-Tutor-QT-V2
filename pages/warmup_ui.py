@@ -66,7 +66,7 @@ class WarmupIntroWidget(QWidget):
         desc = QLabel(
             "Welcome! Before we begin the real game, let's do a quick "
             "Warmup Match so we can understand your strengths.\n\n"
-            "You will answer one question from each of the 13 question types, "
+            "You will answer one question from each of the different question types, "
             "starting from the easiest. Your speed and accuracy are measured "
             "after the question is read aloud.\n\n"
             "The warmup ends early only if you miss or skip too many questions."
@@ -83,7 +83,7 @@ class WarmupIntroWidget(QWidget):
         info_row = QHBoxLayout()
         info_row.setAlignment(Qt.AlignCenter)
         info_row.setSpacing(30)
-        for icon, label_text in [("⏱️", "Speed matters"), ("🎯", "13 question types"), ("📊", "Ranked results")]:
+        for icon, label_text in [("⏱️", "Speed matters"), ("🎯", "14 question types"), ("📊", "Ranked results")]:
             col = QVBoxLayout()
             col.setAlignment(Qt.AlignCenter)
             ico = QLabel(icon)
@@ -631,16 +631,17 @@ class GameModeIntroWidget(QWidget):
         title = QLabel("🎮 Game Mode"); title.setAlignment(Qt.AlignCenter)
         title.setProperty("class","main-title"); root.addWidget(title)
         if self.saved_state:
-            li = self.saved_state.get("current_level_index",0)
+            lbl = self.saved_state.get("current_label", "Start")
+            lbl_name = " ".join([p.capitalize() for p in lbl.split("_")])
             sd_name = {0:"Easy",1:"Medium",2:"Hard"}.get(self.saved_state.get("current_sub_difficulty",0),"Easy")
-            status = QLabel(f"🔄  Resuming at Level {li+1} · {sd_name}")
+            status = QLabel(f"🔄  Resuming at {lbl_name} · {sd_name}")
             status.setStyleSheet("color:#27AE60;font-weight:bold;")
         else:
-            status = QLabel("Starting fresh — Level 1 · Easy")
+            status = QLabel("Starting fresh")
         status.setAlignment(Qt.AlignCenter); status.setProperty("class","subtitle"); root.addWidget(status)
         rules = QLabel("How it works:\n• 2 correct in a row → harder sub-difficulty\n"
-                       "• Complete Hard → promotion test for next level\n"
-                       "• 3 wrong/skips → step down a level\n"
+                       "• Complete Hard → move forward to next skill\n"
+                       "• 3 wrong/skips → decrease difficulty or move backward\n"
                        "• 90 seconds · correct answers add 3s · wrong cost 1s")
         rules.setWordWrap(True); rules.setProperty("class","subtitle"); rules.setMaximumWidth(500)
         root.addWidget(rules, alignment=Qt.AlignCenter); root.addSpacing(16)
@@ -652,7 +653,7 @@ class GameModeIntroWidget(QWidget):
 
     def _speak_intro(self):
         if self.window and not self.window.is_muted and self.tts:
-            pfx = f"Resuming at Level {self.saved_state.get('current_level_index',0)+1}. " if self.saved_state else ""
+            pfx = f"Resuming game. " if self.saved_state else ""
             QTimer.singleShot(400, lambda: self.tts.speak(pfx + "Game Mode ready. Press Start Game."))
 
     def _on_start(self):
@@ -730,8 +731,7 @@ class GameModeWidget(QWidget):
             self.session.skip_question(self._current_config); QTimer.singleShot(0, self._load_next_question); return
         sd = {0:"Easy",1:"Medium",2:"Hard"}.get(self.session.current_sub_difficulty,"Easy")
         self.level_lbl.setText(f"🎮 {self.session.level_name()} · {sd}")
-        ph = self._current_config.get("phase","normal")
-        self.phase_lbl.setText("🔝 Promotion Test" if ph=="promotion_test" else "")
+        self.phase_lbl.setText("")
         self.qcount_lbl.setText(f"Q{self.session.question_count+1}")
         self.type_lbl.setText(self._current_config["label"])
         ln = len(question_text)
@@ -818,8 +818,8 @@ class GameModeReportWidget(QWidget):
         root = QVBoxLayout(); root.setContentsMargins(40,16,40,16); root.setSpacing(10); self.setLayout(root)
         title = QLabel("🏆 Session Complete!"); title.setAlignment(Qt.AlignCenter)
         title.setProperty("class","main-title"); root.addWidget(title)
-        acc = self.session.accuracy_pct(); lvl = self.session.highest_level_reached+1
-        stats = QLabel(f"Questions: {self.session.question_count}   ·   Accuracy: {acc}%   ·   Highest Level: {lvl}")
+        acc = self.session.accuracy_pct(); lvl = self.session.level_name()
+        stats = QLabel(f"Questions: {self.session.question_count}   ·   Accuracy: {acc}%   ·   Final Skill: {lvl}")
         stats.setAlignment(Qt.AlignCenter); stats.setProperty("class","subtitle"); root.addWidget(stats)
         div = QFrame(); div.setFrameShape(QFrame.HLine); root.addWidget(div)
         updated = self.session.get_ranked_results_updated()
@@ -845,7 +845,7 @@ class GameModeReportWidget(QWidget):
 
     def _speak_summary(self):
         if not (self.window and not self.window.is_muted and self.tts): return
-        msg = f"Session complete! {self.session.accuracy_pct()} percent accuracy. You reached Level {self.session.highest_level_reached+1}. Great effort!"
+        msg = f"Session complete! {self.session.accuracy_pct()} percent accuracy. Great effort!"
         QTimer.singleShot(600, lambda: self.tts.speak(msg))
 
     def _on_play_again(self):

@@ -1,122 +1,166 @@
-"""question/warmup.py — Warmup session + adaptive Game Mode session logic."""
+import os
+import random
+import pandas as pd
 
-import os, json, pandas as pd
+def save_game_session(state):
+    """Stub for saving game state. Implement disk writing here if needed later."""
+    pass
+
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-WARMUP_PROFILE_FILE  = "warmup_profile.json"
-GAME_SESSION_FILE    = "game_session.json"
-
-WARMUP_SEQUENCE = [
-    {"label": "1-digit Addition",          "q_type": "addition",       "digits": "1d",       "difficulty": 0},
-    {"label": "2-digit Addition",          "q_type": "addition",       "digits": "2d",       "difficulty": 1},
-    {"label": "1-digit Subtraction",       "q_type": "subtraction",    "digits": "1d",       "difficulty": 0},
-    {"label": "2-digit Subtraction",       "q_type": "subtraction",    "digits": "2d",       "difficulty": 1},
-    {"label": "1-digit Multiplication",    "q_type": "multiplication", "digits": "1d",       "difficulty": 0},
-    {"label": "2×1-digit Multiplication",  "q_type": "multiplication", "digits": "2d",       "difficulty": 1},
-    {"label": "2×2-digit Multiplication",  "q_type": "multiplication", "digits": "3d",       "difficulty": 2},
-    {"label": "1-digit Division",          "q_type": "division",       "digits": "1d",       "difficulty": 0},
-    {"label": "2÷1-digit Division",        "q_type": "division",       "digits": "2d+1d",    "difficulty": 1},
-    {"label": "Word Problem",              "q_type": "story",          "digits": "1d",       "difficulty": 0},
-    {"label": "Time Problem",              "q_type": "time",           "digits": "2d",       "difficulty": 1},
-    {"label": "Currency Problem",          "q_type": "currency",       "digits": "2d",       "difficulty": 1},
-    {"label": "Mixed Operations",          "q_type": "mixed",          "digits": "2d+2d+1d", "difficulty": 3},
-]
-
 MAX_WRONG = MAX_SKIPS = 2
 AUTO_SKIP_SECONDS      = 30
 SCORE_FAST_THRESHOLD   = 4.0
 SCORE_MEDIUM_THRESHOLD = 12.0
-SCORE_INFO = {1.0: ("🌟","Very Fast"), 0.5: ("👍","Good"), 0.2: ("🐢","Slow"), 0.0: ("✗","Missed")}
-SCORE_COLOURS = {1.0:"#27AE60", 0.5:"#D4AC0D", 0.2:"#E67E22", 0.0:"#95A5A6"}
+SCORE_INFO  = {1.0: ("🌟", "Very Fast"), 0.5: ("👍", "Good"),
+               0.2: ("🐢", "Slow"),      0.0: ("✗",  "Missed")}
+SCORE_COLOURS = {1.0: "#27AE60", 0.5: "#D4AC0D",
+                 0.2: "#E67E22", 0.0: "#95A5A6"}
 
-# ── Warmup persistence ────────────────────────────────────────────────────────
+# ── Excel helper ──────────────────────────────────────────────────────────────
 
-def has_completed_warmup():
-    if not os.path.exists(WARMUP_PROFILE_FILE): return False
-    try:
-        with open(WARMUP_PROFILE_FILE, "r", encoding="utf-8") as f:
-            return bool(json.load(f).get("completed", False))
-    except Exception: return False
+def _load_game_df() -> pd.DataFrame:
+    """Load and normalise game_ques.xlsx. Always lower-cases 'type'."""
+    fp = os.path.join(os.getcwd(), "question", "game_ques.xlsx")
+    df = pd.read_excel(fp)
+    df["type"]       = df["type"].astype(str).str.strip().str.lower()
+    df["digits"]     = df["digits"].astype(str).str.strip().str.lower()
+    df["label"]      = df["label"].astype(str).str.strip()
+    df["forward"]    = df["forward"].astype(str).str.strip()
+    df["backward"]   = df["backward"].astype(str).str.strip()
+    df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce").fillna(0).astype(int)
+    return df
 
-def save_warmup_profile(ranked):
-    with open(WARMUP_PROFILE_FILE, "w", encoding="utf-8") as f:
-        json.dump({"completed": True, "ranked": ranked}, f, indent=2, ensure_ascii=False)
 
-def load_warmup_profile():
-    if not os.path.exists(WARMUP_PROFILE_FILE): return None
-    try:
-        with open(WARMUP_PROFILE_FILE, "r", encoding="utf-8") as f:
-            return json.load(f).get("ranked")
-    except Exception: return None
+# ── Warmup sequence builder ───────────────────────────────────────────────────
+def get_warmup_sequence(full_df):
+    # STEP 1: group by LABEL (this is your real unit)
+    grouped = full_df.groupby("label").first().reset_index()
 
-# ── Game session persistence ──────────────────────────────────────────────────
+    steps = []
+    for _, row in grouped.iterrows():
+        try:
+            order = int(row.get("warmup_order", 999))
+        except:
+            order = 999
 
-def save_game_session(state):
-    with open(GAME_SESSION_FILE, "w", encoding="utf-8") as f:
-        json.dump(state, f, indent=2, ensure_ascii=False)
+        # 🚫 skip junk (story/time/etc unless explicitly ordered)
+        if order == 999:
+            continue
 
-def load_game_session():
-    if not os.path.exists(GAME_SESSION_FILE): return None
-    try:
-        with open(GAME_SESSION_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception: return None
+        steps.append({
+            "label": row["label"],
+            "q_type": row["type"],
+            "digits": row["digits"],
+            "difficulty": 0,
+            "warmup_order": order
+        })
 
-def clear_game_session():
-    if os.path.exists(GAME_SESSION_FILE):
-        os.remove(GAME_SESSION_FILE)
+    # STEP 2: sort properly
+    steps.sort(key=lambda x: x["warmup_order"])
+
+    print("[FINAL WARMUP]:", [(s["label"], s["warmup_order"]) for s in steps])
+
+    return steps
+
 
 # ── WarmupSession ─────────────────────────────────────────────────────────────
 
 class WarmupSession:
+    """
+    Drives the pre-game skill-assessment warmup.
+
+    One question is drawn from each difficulty-0 label's pool in the Excel
+    file. Labels are the atomic unit — no label appears twice, no cross-label
+    overlap. Results live in memory only; nothing is written to disk.
+    """
+
     def __init__(self):
         self.step_index  = 0
         self.wrong_count = 0
         self.skip_count  = 0
-        self.scores      = {}
-        self._full_df    = None
-        self._load_full_df()
+        self.consecutive_wrong = 0
+        self.consecutive_skips = 0
+        self.scores: dict[str, float] = {}
+        self._full_df    = _load_game_df()
 
-    def _load_full_df(self):
-        fp = os.path.join(os.getcwd(), "question", "game_ques.xlsx")
-        df = pd.read_excel(fp)
-        df["type_lower"] = df["type"].astype(str).str.lower().str.strip()
-        df["digits_str"] = df["digits"].astype(str).str.lower().str.strip()
-        df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce")
-        self._full_df = df
+        self.warmup_sequence = get_warmup_sequence(self._full_df)
+        print(f"[WARMUP] {len(self.warmup_sequence)} steps: "
+              f"{[s['label'] for s in self.warmup_sequence]}")
 
-    def _build_processor(self, step):
+    # ── Processor factory ─────────────────────────────────────────────────────
+
+    def _build_processor(self, step: dict):
         from question.loader import QuestionProcessor
-        q, d, diff = step["q_type"].lower(), step["digits"].lower(), step["difficulty"]
-        mask = (self._full_df["type_lower"]==q)&(self._full_df["digits_str"]==d)&(self._full_df["difficulty"]==diff)
+
+        q_type = step["q_type"].lower()
+        lbl    = step["label"]
+        diff   = step["difficulty"]
+
+        # Primary: exact label + difficulty
+        mask = (
+            (self._full_df["label"] == lbl)
+            & (self._full_df["difficulty"] == diff)
+        )
         filtered = self._full_df[mask].copy().reset_index(drop=True)
+
+        # Fallback: same label (ignore difficulty)
         if filtered.empty:
-            mask2 = (self._full_df["type_lower"]==q)&(self._full_df["difficulty"]==diff)
+            mask2 = (self._full_df["label"] == lbl)
             filtered = self._full_df[mask2].copy().reset_index(drop=True)
-        if filtered.empty:
-            filtered = self._full_df[self._full_df["type_lower"]==q].copy().reset_index(drop=True)
-        p = QuestionProcessor(q, diff, disable_dda=True, is_game_mode=True)
-        p.df = filtered; p._skip_process_file = True
+
+        p = QuestionProcessor(q_type, diff, disable_dda=True, is_game_mode=True)
+        p.df                 = filtered
+        p._skip_process_file = True
         return p
 
-    def total_steps(self): return len(WARMUP_SEQUENCE)
-    def current_step(self): return WARMUP_SEQUENCE[self.step_index] if self.step_index < len(WARMUP_SEQUENCE) else None
+    # ── Session interface ─────────────────────────────────────────────────────
+
+    def total_steps(self) -> int:
+        return len(self.warmup_sequence)
+
+    def current_step(self) -> dict | None:
+        if self.step_index < len(self.warmup_sequence):
+            return self.warmup_sequence[self.step_index]
+        return None
+
     def get_current_processor(self):
-        s = self.current_step(); return self._build_processor(s) if s else None
+        s = self.current_step()
+        return self._build_processor(s) if s else None
 
-    def is_complete(self):
-        return self.step_index >= len(WARMUP_SEQUENCE) or self.wrong_count >= MAX_WRONG or self.skip_count >= MAX_SKIPS
+    def is_complete(self) -> bool:
+        return (
+            self.step_index >= len(self.warmup_sequence)
+            or self.consecutive_wrong >= MAX_WRONG
+            or self.consecutive_skips >= MAX_SKIPS
+        )
 
-    def completion_reason(self):
-        if self.wrong_count >= MAX_WRONG: return "wrong"
-        if self.skip_count >= MAX_SKIPS:  return "skipped"
+    def completion_reason(self) -> str:
+        if self.consecutive_wrong >= MAX_WRONG: return "wrong"
+        if self.consecutive_skips >= MAX_SKIPS: return "skipped"
         return "complete"
 
-    def submit_answer(self, is_correct, elapsed):
+    def submit_answer(self, is_correct: bool, elapsed: float) -> float:
         step = self.current_step()
-        if step is None: return 0.0
-        score = 0.0 if not is_correct else (1.0 if elapsed<=SCORE_FAST_THRESHOLD else (0.5 if elapsed<=SCORE_MEDIUM_THRESHOLD else 0.2))
-        if not is_correct: self.wrong_count += 1
+        if step is None:
+            return 0.0
+        if not is_correct:
+            score = 0.0
+            self.wrong_count += 1
+            self.consecutive_wrong += 1
+            self.consecutive_skips = 0
+        elif elapsed <= SCORE_FAST_THRESHOLD:
+            score = 1.0
+            self.consecutive_wrong = 0
+            self.consecutive_skips = 0
+        elif elapsed <= SCORE_MEDIUM_THRESHOLD:
+            score = 0.5
+            self.consecutive_wrong = 0
+            self.consecutive_skips = 0
+        else:
+            score = 0.2
+            self.consecutive_wrong = 0
+            self.consecutive_skips = 0
         self.scores[step["label"]] = score
         self.step_index += 1
         return score
@@ -125,234 +169,233 @@ class WarmupSession:
         step = self.current_step()
         if step:
             self.scores[step["label"]] = 0.0
-            self.skip_count += 1; self.step_index += 1
+            self.skip_count += 1
+            self.consecutive_skips += 1
+            self.consecutive_wrong = 0
+            self.step_index += 1
 
-    def get_ranked_results(self):
-        seq = {s["label"]: s for s in WARMUP_SEQUENCE}
+    def get_ranked_results(self) -> list[dict]:
+        seq_map = {s["label"]: s for s in self.warmup_sequence}
         result = []
         for label, score in self.scores.items():
-            s = seq.get(label, {})
-            result.append({"label": label, "score": score,
-                           "q_type": s.get("q_type","addition"), "digits": s.get("digits","1d")})
+            s = seq_map.get(label, {})
+            result.append({
+                "label":  label,
+                "score":  score,
+                "q_type": s.get("q_type", "addition"),
+                "digits": s.get("digits", "1d"),
+            })
         return sorted(result, key=lambda x: x["score"], reverse=True)
 
-    def correct_count(self): return sum(1 for s in self.scores.values() if s > 0)
+    def correct_count(self) -> int:
+        return sum(1 for v in self.scores.values() if v > 0)
 
 
 # ── GameModeSession ───────────────────────────────────────────────────────────
 
 class GameModeSession:
     SUB_DIFF_NAMES = {0: "Easy", 1: "Medium", 2: "Hard"}
-    session_time = 90
+    session_time   = 90
 
-    def __init__(self, ranked_list, saved_state=None):
-        self.ranked  = ranked_list or []
-        # Build label→WARMUP_SEQUENCE lookup for backward-compat (old profiles lack q_type)
-        self._seq_lookup = {s["label"]: s for s in WARMUP_SEQUENCE}
-        # Back-fill missing q_type / digits from WARMUP_SEQUENCE
-        for entry in self.ranked:
-            if not entry.get("q_type"):
-                seq = self._seq_lookup.get(entry["label"], {})
-                entry["q_type"] = seq.get("q_type", "addition")
-                entry["digits"] = seq.get("digits", "1d")
-        self.levels  = [self.ranked[i:i+2] for i in range(0, len(self.ranked), 2)]
+    def __init__(self, ranked_list: list | None, saved_state: dict | None = None):
+        self._full_df        = _load_game_df()
+        self.warmup_sequence = get_warmup_sequence(self._full_df)
+        self._seq_lookup     = {s["label"]: s for s in self.warmup_sequence}
+
+        # Build node map from dataframe for safe lookups
+        self.node_map = {}
+        grouped = self._full_df.groupby("label").first().reset_index()
+        for _, row in grouped.iterrows():
+            lbl = str(row["label"]).strip()
+            self.node_map[lbl] = {
+                "forward": str(row.get("forward", "")).strip(),
+                "backward": str(row.get("backward", "")).strip(),
+            }
+
+        # Keep ranked list around for stats
+        ranked_scores = {e["label"]: e.get("score", 0.0) for e in (ranked_list or [])}
+        self.ranked = []
+        for seq in self.warmup_sequence:
+            lbl = seq["label"]
+            score = ranked_scores.get(lbl, 0.3)
+            self.ranked.append({
+                "label": lbl,
+                "score": score,
+                "q_type": seq.get("q_type", "addition"),
+                "digits": seq.get("digits", "1d")
+            })
+
+        if saved_state and "current_label" in saved_state:
+            self.current_label = saved_state["current_label"]
+            self.current_sub_difficulty = saved_state.get("current_sub_difficulty", 0)
+            self.questions_in_current_label = saved_state.get("questions_in_current_label", 0)
+        else:
+            # Setup based on warmup results
+            last_success = None
+            for s in self.warmup_sequence:
+                lbl = s["label"]
+                score = ranked_scores.get(lbl, 0.0)
+                if score < 0.5:
+                    if not last_success:
+                        last_success = lbl
+                    break
+                last_success = lbl
+            
+            self.current_label = last_success or (self.warmup_sequence[0]["label"] if self.warmup_sequence else "")
+            self.current_sub_difficulty = 0
+
         self.game_active = True
-
-        # Progressive state
-        self.current_level_index   = 0
-        self.current_sub_difficulty = 0
-        self.type_rotation          = 0
-        self.phase                  = "normal"   # "normal" | "promotion_test"
-        self.promotion_correct      = 0
-        self.promotion_wrong        = 0
-        self.consecutive_correct    = 0
-        self.consecutive_wrong      = 0
-        self.questions_at_sub_diff  = 0
+        self.consecutive_correct        = 0
+        self.consecutive_wrong          = 0
+        self.questions_in_current_label = getattr(self, "questions_in_current_label", 0)
 
         # Scoring
-        self.accumulated_points  = {e["label"]: 0.0 for e in self.ranked}
-        self.question_count      = 0
-        self.correct_count       = 0
-        self.highest_level_reached = 0
+        self.accumulated_points    = {lbl: 0.0 for lbl in self.node_map.keys()}
+        self.question_count        = 0
+        self.correct_count         = 0
+        self._last_question_text   = None
 
-        # Shared DataFrame (loaded once, reused per question)
-        self._full_df = None
-        self._load_df()
-
-        if saved_state:
-            self._restore_state(saved_state)
-
-    def _load_df(self):
-        fp = os.path.join(os.getcwd(), "question", "game_ques.xlsx")
-        df = pd.read_excel(fp)
-        df["type_lower"] = df["type"].astype(str).str.lower().str.strip()
-        df["digits_str"] = df["digits"].astype(str).str.lower().str.strip()
-        df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce")
-        self._full_df = df
-
-    # ── Question config ───────────────────────────────────────────────────────
-
-    def _current_types(self):
-        idx = min(self.current_level_index, len(self.levels)-1)
-        return self.levels[idx] if self.levels else []
-
-    def _next_level_types(self):
-        idx = self.current_level_index + 1
-        return self.levels[idx] if idx < len(self.levels) else []
-
-    def get_next_question_config(self):
-        if self.phase == "promotion_test":
-            next_idx = self.current_level_index + 1
-            if next_idx < len(self.levels):
-                types = self.levels[next_idx]
-                if types:
-                    entry = types[self.type_rotation % len(types)]
-                    q_type = entry.get("q_type") or self._seq_lookup.get(entry["label"],{}).get("q_type","addition")
-                    digits = entry.get("digits") or self._seq_lookup.get(entry["label"],{}).get("digits","1d")
-                    return {"q_type": q_type, "digits": digits, "difficulty": 0,
-                            "label": entry["label"], "phase": self.phase}
+    def get_next_question_config(self) -> dict | None:
+        if not self.current_label:
             return None
-        types = self._current_types()
-        if not types: return None
-        entry  = types[self.type_rotation % len(types)]
-        q_type = entry.get("q_type") or self._seq_lookup.get(entry["label"],{}).get("q_type","addition")
-        digits = entry.get("digits") or self._seq_lookup.get(entry["label"],{}).get("digits","1d")
-        return {"q_type": q_type, "digits": digits,
-                "difficulty": self.current_sub_difficulty,
-                "label": entry["label"], "phase": self.phase}
+        return {
+            "label": self.current_label,
+            "difficulty": self.current_sub_difficulty
+        }
 
-    def build_processor(self, config):
+    def build_processor(self, config: dict):
         from question.loader import QuestionProcessor
-        q_type = config["q_type"].lower()
-        digits = config.get("digits", "").lower().strip()
-        diff   = config["difficulty"]
-        
-        # Match EXACTLY by q_type and digits so "1-digit addition" never asks 2-digit questions
-        mask = (self._full_df["type_lower"]==q_type) & (self._full_df["digits_str"]==digits)
+        lbl  = config.get("label", "").strip()
+        diff = int(config.get("difficulty", 0))
+
+        # Primary filter
+        mask = (self._full_df["label"] == lbl) & (self._full_df["difficulty"] == diff)
         filtered = self._full_df[mask].copy().reset_index(drop=True)
+
+        # Fallback 1: same label
         if filtered.empty:
-            mask2 = (self._full_df["type_lower"]==q_type) & (self._full_df["difficulty"]==diff)
-            filtered = self._full_df[mask2].copy().reset_index(drop=True)
-            if filtered.empty:
-                filtered = self._full_df[self._full_df["type_lower"]==q_type].copy().reset_index(drop=True)
-                
+            filtered = self._full_df[self._full_df["label"] == lbl].copy().reset_index(drop=True)
+
+        if not filtered.empty:
+            valid_rows = filtered
+            if len(filtered) > 1 and self._last_question_text is not None and "question" in filtered.columns:
+                valid_rows = filtered[filtered["question"] != self._last_question_text]
+                if valid_rows.empty:
+                    valid_rows = filtered
+                    
+            selected_row = valid_rows.sample(n=1)
+            if "question" in selected_row.columns:
+                self._last_question_text = selected_row.iloc[0]["question"]
+            filtered = selected_row.copy().reset_index(drop=True)
+
+        q_type = self._seq_lookup.get(lbl, {}).get("q_type", "addition")
         p = QuestionProcessor(q_type, diff, disable_dda=True, is_game_mode=True)
-        p.df = filtered; p._skip_process_file = True
+        p.df = filtered
+        p._skip_process_file = True
         return p
 
-    # ── Scoring ───────────────────────────────────────────────────────────────
-
     @staticmethod
-    def calc_score(is_correct, elapsed):
-        if not is_correct: return 0.0
+    def calc_score(is_correct: bool, elapsed: float) -> float:
+        if not is_correct:                    return 0.0
         if elapsed <= SCORE_FAST_THRESHOLD:   return 1.0
         if elapsed <= SCORE_MEDIUM_THRESHOLD: return 0.5
         return 0.2
 
-    def _advance_rotation(self, types):
-        if types: self.type_rotation = (self.type_rotation + 1) % len(types)
-
-    def submit_answer(self, config, is_correct, elapsed):
+    def submit_answer(self, config: dict, is_correct: bool, elapsed: float) -> float:
         score = self.calc_score(is_correct, elapsed)
-        label = config.get("label","")
-        if label in self.accumulated_points: self.accumulated_points[label] += score
+        label = config.get("label", "")
+        if label in self.accumulated_points:
+            self.accumulated_points[label] += score
         self.question_count += 1
-        if is_correct: self.correct_count += 1
-        types = self._next_level_types() if self.phase=="promotion_test" else self._current_types()
-        self._advance_rotation(types)
-        self.questions_at_sub_diff += 1
+        if is_correct:
+            self.correct_count += 1
+        
         self._apply_progression(is_correct)
         return score
 
-    def skip_question(self, config):
-        label = config.get("label","")
-        # skip = 0 pts (no accumulation)
+    def skip_question(self, config: dict):
         self.question_count += 1
-        self._advance_rotation(self._current_types())
-        self.questions_at_sub_diff += 1
         self._apply_progression(False)
 
-    # ── Progression ───────────────────────────────────────────────────────────
+    def _apply_progression(self, is_correct: bool):
+        self.questions_in_current_label += 1
 
-    def _apply_progression(self, is_correct):
-        if self.phase == "promotion_test":
-            self._handle_promotion(is_correct); return
         if is_correct:
-            self.consecutive_correct += 1; self.consecutive_wrong = 0
-            if self.consecutive_correct >= 2 and self.questions_at_sub_diff >= 3:
-                self._advance_sub_diff()
+            self.consecutive_correct += 1
+            self.consecutive_wrong = 0
+            if self.consecutive_correct >= 2:
+                self.consecutive_correct = 0
+                if self.current_sub_difficulty < 2:
+                    self.current_sub_difficulty += 1
+                else:
+                    self._move_forward()
         else:
-            self.consecutive_wrong += 1; self.consecutive_correct = 0
-            if self.consecutive_wrong >= 3: self._demote()
+            self.consecutive_wrong += 1
+            self.consecutive_correct = 0
+            if self.consecutive_wrong >= 3:
+                self.consecutive_wrong = 0
+                if self.current_sub_difficulty > 0:
+                    self.current_sub_difficulty -= 1
+                else:
+                    self._move_backward()
 
-    def _advance_sub_diff(self):
-        self.consecutive_correct = 0; self.questions_at_sub_diff = 0
-        if self.current_sub_difficulty < 2:
-            self.current_sub_difficulty += 1
-        else:
-            if self._next_level_types():
-                self.phase = "promotion_test"
-                self.promotion_correct = self.promotion_wrong = 0
-                self.type_rotation = 0
+        # Hard limit: force movement after 2 questions in same label
+        if self.questions_in_current_label >= 2:
+            moved = self._move_forward(force=True)
+            if not moved:
+                self._move_backward(force=True)
+            self.questions_in_current_label = 0
 
-    def _handle_promotion(self, is_correct):
-        if is_correct: self.promotion_correct += 1
-        else:          self.promotion_wrong   += 1
-        total = self.promotion_correct + self.promotion_wrong
-        if self.promotion_correct >= 2:  self._promote()
-        elif self.promotion_wrong >= 2:   self._fail_promotion()
-        elif total >= 3:                  self._fail_promotion()
-
-    def _promote(self):
-        self.current_level_index   += 1
-        self.current_sub_difficulty = 0
-        self.phase = "normal"
-        self.promotion_correct = self.promotion_wrong = 0
-        self.consecutive_correct = self.consecutive_wrong = 0
-        self.questions_at_sub_diff = self.type_rotation = 0
-        if self.current_level_index > self.highest_level_reached:
-            self.highest_level_reached = self.current_level_index
-
-    def _fail_promotion(self):
-        self.current_sub_difficulty = 2; self.phase = "normal"
-        self.promotion_correct = self.promotion_wrong = 0
-        self.consecutive_correct = self.questions_at_sub_diff = self.type_rotation = 0
-
-    def _demote(self):
-        self.consecutive_wrong = self.consecutive_correct = 0
-        self.questions_at_sub_diff = self.type_rotation = 0; self.phase = "normal"
-        if self.current_level_index > 0:
-            self.current_level_index  -= 1; self.current_sub_difficulty = 2
-        else:
+    def _move_forward(self, force=False):
+        node = self.node_map.get(self.current_label)
+        if not node: return False
+        nxt = node.get("forward", "")
+        if nxt and str(nxt).lower() != "nan" and nxt in self.node_map:
+            self.current_label = nxt
             self.current_sub_difficulty = 0
+            self.questions_in_current_label = 0
+            return True
+        return False
 
-    # ── Results ───────────────────────────────────────────────────────────────
+    def _move_backward(self, force=False):
+        node = self.node_map.get(self.current_label)
+        if not node: return False
+        prv = node.get("backward", "")
+        if prv and str(prv).lower() != "nan" and prv in self.node_map:
+            self.current_label = prv
+            self.current_sub_difficulty = 2 if not force else 0
+            self.questions_in_current_label = 0
+            return True
+        return False
 
-    def get_ranked_results_updated(self):
+    # ── Results & Formatters ──────────────────────────────────────────────────
+
+    def get_ranked_results_updated(self) -> list[dict]:
         result = []
         for entry in self.ranked:
             lbl    = entry["label"]
             gained = self.accumulated_points.get(lbl, 0.0)
-            result.append({**entry, "score": entry.get("score",0.0)+gained, "gained": gained,
-                           "original_score": entry.get("score",0.0)})
+            result.append({
+                **entry,
+                "score":          entry.get("score", 0.0) + gained,
+                "gained":         gained,
+                "original_score": entry.get("score", 0.0),
+            })
         return sorted(result, key=lambda x: x["score"], reverse=True)
 
-    def accuracy_pct(self):
-        return int((self.correct_count / max(self.question_count,1)) * 100)
+    def accuracy_pct(self) -> int:
+        return int((self.correct_count / max(self.question_count, 1)) * 100)
 
-    def level_name(self): return f"Level {self.current_level_index + 1}"
-    def sub_diff_name(self): return self.SUB_DIFF_NAMES.get(self.current_sub_difficulty, "Easy")
+    def level_name(self) -> str:
+        parts = self.current_label.split("_")
+        return " ".join([p.capitalize() for p in parts])
 
-    # ── State persistence ─────────────────────────────────────────────────────
+    def sub_diff_name(self) -> str:
+        return self.SUB_DIFF_NAMES.get(self.current_sub_difficulty, "Easy")
 
-    def save_state(self):
-        return {k: getattr(self,k) for k in (
-            "current_level_index","current_sub_difficulty","type_rotation",
-            "phase","promotion_correct","promotion_wrong",
-            "consecutive_correct","consecutive_wrong","questions_at_sub_diff",
-            "accumulated_points","question_count","correct_count","highest_level_reached"
-        )}
-
-    def _restore_state(self, state):
-        for k, v in state.items():
-            if hasattr(self, k): setattr(self, k, v)
+    def save_state(self) -> dict:
+        return {
+            "current_label": self.current_label,
+            "current_sub_difficulty": self.current_sub_difficulty,
+            "questions_in_current_label": getattr(self, "questions_in_current_label", 0)
+        }
