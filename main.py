@@ -188,13 +188,13 @@ class MainWindow(QMainWindow):
         self.game_timer = QTimer(self)
         self.game_timer.setInterval(1000)
         self.game_timer.timeout.connect(self._on_game_tick)
-
+        #Ctrl+; shortcut to decrease speed
         self._slower_shortcut = QShortcut(QKeySequence("Ctrl+;"), self)
         self._slower_shortcut.activated.connect(self._on_slower)
-
+        #Alt+; shortcut to increase speed
         self._faster_shortcut = QShortcut(QKeySequence("Alt+;"), self)
         self._faster_shortcut.activated.connect(self._on_faster)
-
+        # Ctrl+R shortcut to repeat question
         self._repeat_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
         self._repeat_shortcut.activated.connect(self._on_repeat_question)
 
@@ -615,7 +615,7 @@ class MainWindow(QMainWindow):
         from pages.shared_ui import apply_theme
         if hasattr(self, 'tts'): self.tts.stop()
 
-        # Pull ranked from the live warmup session — no disk reads
+        # Pull ranked from the live warmup session
         ranked = self._warmup_session.get_ranked_results() if hasattr(self, '_warmup_session') else []
 
         self._gamemode_intro = GameModeIntroWidget(
