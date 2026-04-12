@@ -1,166 +1,156 @@
-<div style="font-family: Arial, sans-serif; font-size: 11pt; text-align: justify;">
+# Maths-Tutor User Guide
 
-<br><br><br><br><br>
-<h1 align="center">Maths-Tutor User Guide</h1>
-<h3 align="center">Version 2.0</h3>
-<br><br><br><br><br>
-
-<div style="page-break-after: always;"></div>
+Maths-Tutor is a free, open-source educational tool designed to make mathematics engaging and accessible for children aged 5–16. Built with a focus on inclusion, this audio-first application provides a distraction-free environment where students can build confidence and speed in mental arithmetic through spoken feedback and interactive challenges.
 
 ## Table of Contents
-1. [Introduction to Maths-Tutor](#1-introduction-to-maths-tutor)
-2. [System Requirements & Installation](#2-system-requirements--installation)
-3. [Getting Started](#3-getting-started)
-4. [Practice Mode](#4-practice-mode)
-5. [Selecting Operator and Difficulty](#5-selecting-operator-and-difficulty)
-6. [Answering Questions](#6-answering-questions)
-7. [Scoring & Appreciation](#7-scoring--appreciation)
-8. [Settings (Alt + S)](#8-settings-alt--s)
-9. [Loading a Custom Question File](#9-loading-a-custom-question-file)
-10. [Accessibility Features](#10-accessibility-features)
-11. [Keyboard Shortcuts](#11-keyboard-shortcuts)
-12. [Troubleshooting](#12-troubleshooting)
+1. [Quick Start](#quick-start)
+2. [Installation and Setup](#installation-and-setup)
+3. [First Launch](#first-launch)
+4. [Choosing a Mode](#choosing-a-mode)
+5. [Difficulty Levels](#difficulty-levels)
+6. [Answering Questions](#answering-questions)
+7. [Scoring and Feedback](#scoring-and-feedback)
+8. [Keyboard Shortcuts](#keyboard-shortcuts)
+9. [Settings](#settings)
+10. [Loading Custom Questions](#loading-custom-questions)
+11. [Accessibility Features](#accessibility-features)
+12. [Troubleshooting](#troubleshooting)
+13. [About](#about)
 
-<div style="page-break-after: always;"></div>
+## Quick Start
+1. Open the application on your computer.
+2. Select your preferred language and press the Continue button.
+3. Choose a game mode from the main menu using your mouse or the Tab and Enter keys.
+4. Listen to the question, type your answer using the number keys, and press Enter to submit.
+5. If you need to hear the question again, press the Control and R keys together.
 
-## 1. Introduction to Maths-Tutor
-Welcome to Maths-Tutor, a free and open-source educational application designed to make learning mathematics engaging and accessible. Maths-Tutor is specifically developed for children aged 5 to 16, with a strong focus on accessibility for visually impaired users.
+## Installation and Setup
+[For Parents and Teachers]
+Follow these simple steps to get Maths-Tutor running on your Linux computer:
+1. Install Python 3 using your system's software manager.
+2. Install the PyQt5 or PyQt6 library.
+3. Install a text-to-speech engine; espeak-ng is recommended for the best experience.
+4. Open your computer's terminal window inside the folder where the app is located.
+5. Type the command python main.py and press Enter.
 
-Built from the ground up to be an audio-first experience, the application seamlessly integrates with standard systems and provides spoken feedback for every action. Whether used at home by parents, or in schools by teachers, Maths-Tutor ensures that every student has an equal opportunity to thrive and build confidence in their mathematical skills.
+## First Launch
+When you open the app for the first time, a language selection window will appear. You can choose from several languages for both the text and the spoken voice. If you check the box to remember your selection, the app will skip this window next time and take you straight to the main screen.
 
-## 2. System Requirements & Installation
-Maths-Tutor is a lightweight application designed to run smoothly on modern systems.
+## Choosing a Mode
+Maths-Tutor features three distinct ways to learn and play:
 
-**Primary Platform:** Linux
-**Framework:** Python with PyQt
+**Learn Mode**
+Suited for beginners and younger children. This mode is untimed, allowing kids to focus entirely on accuracy without any pressure. It is the perfect place to build foundational confidence.
 
-> **Note:** While the application is Python-based and cross-platform in nature, it has been primarily designed and tested on Linux environments, particularly those configured for accessibility.
+**Quick Play Mode**
+Designed for kids who have mastered the basics and are ready to work on their speed. This mode is timed and rewards quick thinking with high-energy feedback.
 
-**Dependencies:**
-- Python 3.x
-- PyQt5 or PyQt6
-- A supported Text-to-Speech (TTS) engine: `espeak-ng`, `flite`, or `rh-voice`
+**Game Mode**
+Built for confident kids who want a real challenge. When you start, the app asks several warmup questions to find out exactly how good you are. It then uses those results to set a perfectly calibrated difficulty level. There is a live score on the screen, a ticking clock, and no answers are revealed if you miss—it is a true test of skill!
 
-**Installation & Launching:**
-Ensure you have the required dependencies installed on your Operating System. To launch the application, open a terminal window in the application folder and run:
-`python main.py`
+## Difficulty Levels
+The app moves in a linear fashion through five levels: **Simple**, **Easy**, **Medium**, **Hard**, and **Challenging**. As you move up, the questions use more digits and the mathematical operations become more complex, ensuring that the challenge keeps pace with your child's growth.
 
-## 3. Getting Started
-When you launch Maths-Tutor for the first time, you will be greeted with a **Language Selection** dialog. This allows you to choose the preferred language for the application's interface and spoken feedback. You can check the "Remember Selection" option so that the application automatically loads your preferred language on future launches without asking again.
+## Answering Questions
+To provide an answer, type the numbers on your keyboard and press the **Enter** key. You are given 3 attempts for every question. In Learning and Practice modes, the correct answer will be revealed if the third attempt is wrong. If you missed what the narrator said, simply press **Ctrl + R** to repeat the current question as many times as you need.
 
-Once the language is selected, you are taken to the main game page. This clean, distraction-free environment is where the mathematical challenges take place. 
+## Scoring and Feedback
+[For Kids]
 
-To begin a session, simply press the **Enter** key.
+**Practice Mode**
+In this mode, the faster you answer, the better your reward!
+| Performance | Points |
+| :--- | :--- |
+| Very Fast 🌟 | 50 points |
+| Good 👍 | 30 points |
+| Slow 🐢 | 10 points |
+| Wrong attempt | -10 points |
+| Missed ✗ | 0 points |
 
-## 4. Practice Mode
-Maths-Tutor provides a structured Practice Mode, strictly designed for step-by-step learning.
+**Learning Mode**
+Because there is no timer, your score is based on how many tries you take to get it right.
+| Performance | Points |
+| :--- | :--- |
+| Excellent | 50 points |
+| Very Good | 40 points |
+| Good | 30 points |
+| Not Bad | 20 points |
+| Okay | 10 points |
+| Wrong attempt | -10 points |
 
-Difficulty progresses in a linear fashion through four distinct tiers: Easy, Medium, Champion, and Legend. The available mathematical operations you can practice include Addition, Subtraction, Multiplication, and Division. As the child masters one tier and becomes comfortable with the current speed and complexity, the number of digits in the questions progressively increases, ensuring a gentle but firm learning curve.
+**Final Grade**
+At the end of your session, the app gives you a percentage grade. It is calculated by taking your total score and dividing it by the maximum possible points you could have earned.
 
-## 5. Selecting Operator and Difficulty
-By default, the application will select starting values for you, but you can tailor the experience to your specific needs.
-- **Available Operators:** Addition, Subtraction, Multiplication, Division.
-- **Difficulty Levels:** You can specify the digit-level of the questions, such as Simple (1-digit), Medium (2-digit), Hard (3-digit), and so forth.
+## Keyboard Shortcuts
+| Key | What It Does |
+| :--- | :--- |
+| Enter | Submit your answer or move to the next screen |
+| Ctrl + R | Repeat the current question out loud |
+| Ctrl + ; | Slow down the speed of the narrator's voice |
+| Alt + ; | Speed up the speed of the narrator's voice |
+| Ctrl + Q | Exit the application completely |
+| Alt + S | Open the Settings menu |
 
-The application conveniently remembers your last selected operator and difficulty settings, meaning you can easily pick up right where you left off on your next session.
+## Settings
+[For Parents and Teachers]
 
-## 6. Answering Questions
-Maths-Tutor aims to make the input process as intuitive as possible:
-- **Submitting Answers:** Simply type the answer using your keyboard and press **Enter** to submit.
-- **Attempts:** You are allowed up to 3 attempts per question. If the correct answer is not found after the 3rd attempt, the application will gently provide the correct answer before moving you to the next question.
-- **Speed Feedback:** To encourage fluency, feedback is given based on response time. You may hear varying levels of praise such as Excellent, Very Good, Good, Fair, or Okay.
-- **Verbose Mode (Shift Key):** If you are unsure of the number being spoken, pressing **Shift** will announce the digits individually (e.g., "one, two, three" instead of "one hundred and twenty-three").
-- **Repeat Question (Space Key):** Missed the question? Just press **Space** to hear it repeated aloud.
+**Operator**
+Choose which type of math to practice: Addition, Subtraction, Multiplication, or Division.
 
-## 7. Scoring & Appreciation
-The scoring system is designed to reward both accuracy and speed, fostering quick mental recall.
+**Difficulty**
+Move the slider to set the complexity level from Simple to Challenging manually.
 
-**Score Table per Question:**
-- Excellent = 50 points
-- Very Good = 40 points
-- Good = 30 points
-- Fair = 20 points
-- Okay = 10 points
-- Wrong attempt = -10 points
+**Language and Voice**
+Select the interface language and choose from available narrator voices.
 
-**Appreciation Time Thresholds:**
-The application scales the expected response time based on the complexity of the question. Your speed relative to this expected time determines your appreciation level:
-- ≤ 50% time = **Excellent**
-- ≤ 75% time = **Very Good**
-- ≤ 100% time = **Good**
-- ≤ 125% time = **Fair**
-- \> 125% time = **Okay**
+**Speech Synthesizer**
+Choose between different text-to-speech engines like espeak-ng, flite, or rh-voice based on what is installed on your system.
 
-**Final Grade Formula:**
-At the end of a session, a final percentage grade is calculated using the following formula:
-`(Total Score × 100) / (50 × Number of Questions Attempted)`
+**Upload Custom File**
+Use this to select an Excel file from your computer that contains your own custom-made questions.
 
-## 8. Settings (Alt + S)
-You can configure the application at any time by pressing **Alt + S** to open the Settings menu. The interface is fully accessible via keyboard navigation.
+**Reset to Defaults**
+A one-click option to clear all changes and return the app to its original factory settings.
 
-From the Settings menu, you can configure:
-- **Operator & Difficulty:** Adjust the mathematical operation and the number of digits.
-- **Speech Synthesizer:** Choose your preferred TTS engine (`espeak-ng`, `flite`, or `rh-voice`).
-- **Language & Voice:** Select the target language and the specific voice persona for the narrator.
-- **Load Question File:** Import your own tailored list of questions.
-- **Reset Defaults:** A quick option to reset your language, operator, difficulty, and TTS settings back to factory defaults.
+## Loading Custom Questions
+[For Teachers]
+You can create your own lessons by saving an Excel (.xlsx) file with a column titled **operands**. Use the following symbols to tell the app how to generate numbers:
 
-Once your preferences are configured, simply press the **Start** button to restart the game with your new settings engaged.
+| Syntax | Meaning | Example |
+| :--- | :--- | :--- |
+| * | Any random number from the default set | * |
+| , | Pick one specific number from your list | 2,4,6,8 |
+| : | Random number between two values | 10:20 |
+| ; | Multiply a base number by a random range | 2;10:20 |
 
-## 9. Loading a Custom Question File
-Teachers and parents can create personalized lesson plans by loading a custom text file. Maths-Tutor includes several built-in lessons, which you can find at: [Built-in Lessons](https://github.com/zendalona/maths-tutor/tree/main/lessons)
+You can find pre-made lesson files to use as templates at the official GitHub lessons page: https://github.com/zendalona/maths-tutor/tree/main/lessons
 
-**File Constraints:**
-- Must be a standard `.txt` file.
-- Strict format of one question per line.
-- **No blank lines** are permitted anywhere in the document.
+## Accessibility Features
+Maths-Tutor is designed from the ground up to be inclusive:
+*   **Built-in TTS**: Integrated speech engines ensure audio feedback is always available.
+*   **Screen Reader Friendly**: Built using standard components that work seamlessly with environmental screen readers.
+*   **Audio-First Design**: Every button, error, and success is spoken aloud, making a screen almost unnecessary.
+*   **Verbose Reading**: For ultimate clarity, users can hear numbers read as individual digits.
+*   **Visual Display**: High contrast and font sizes are inherited directly from your operating system settings.
 
-**Question Format:**
-Each line must follow this precise structure:
-`expression===time_in_seconds===bell_toggle`
-*(Where `bell_toggle` is `1` to play a bell sound upon completion or `0` for none).*
+## Troubleshooting
+Problem: There is no audio or speech.
+Likely Cause: A speech engine is not installed or your system volume is muted.
+Fix: Ensure espeak-ng or flite is installed and check your computer's audio settings.
 
-**Operand Methods:**
-You have deep flexibility in determining the operands for your custom equations:
-- **Fixed number:** e.g., `4`
-- **Comma-separated list:** e.g., `2,4,6,8`
-- **Colon range:** e.g., `10:20` (a random number systematically picked between 10 and 20)
-- **Semicolon multiplier range:** e.g., `2;10:20` (a random output from multiplying 2 by random numbers from 10 to 20, creating even responses)
+Problem: A custom question file will not load.
+Likely Cause: The file is not in the correct Excel (.xlsx) format or is missing the operands column.
+Fix: Check the file type and ensure the table headers are spelled correctly.
 
-> **Example:**
-> `random(2;10:20)*random(2,4,6,8)===30===1`
-> *This will ask a multiplication question where the first number is an even number from 10-20, the second number is chosen from 2, 4, 6, 8, the timer allows 30 seconds for the answer, and a bell will chime when the question is completed.*
+Problem: The app theme looks wrong or is hard to see.
+Likely Cause: Your operating system theme is not configured for high contrast.
+Fix: Adjust your system's visual or accessibility settings to increase contrast.
 
-## 10. Accessibility Features
-Maths-Tutor is fundamentally an accessibility-first tool. Rather than bolting accessibility onto a visual UI interface, the application was built with the auditory experience given utmost priority.
+Problem: The app will not start when running the launch command.
+Likely Cause: Python or the PyQt library is missing.
+Fix: Reinstall Python 3 and the PyQt5 or PyQt6 packages.
 
-- **Built-in TTS:** Integrated natively with robust speech synthesizers (`espeak-ng`, `flite`, `rh-voice`) to ensure the application never goes mute, even if external screen readers fail.
-- **Screen Reader Compatibility:** The UI relies on standard components seamlessly designed to communicate with OS-level screen readers.
-- **Audio-first Feedback Design:** Every action, validation, and transition is effectively telegraphed via clear, concise spoken audio and sound cues.
-- **Verbose Number Reading:** Long, complex numbers can be broken down digit-by-digit for ultimate clarity.
-- **High Contrast Support:** Inherits theming natively from OS-level system settings, ensuring visual ease when needed.
+## About
+Maths-Tutor is a free and open-source project dedicated to making math accessible for everyone.
 
-## 11. Keyboard Shortcuts
-For maximum efficiency and screen reader compatibility, Maths-Tutor can be completely operated via the keyboard.
-
-| Key / Combination | Action |
-| --- | --- |
-| **Enter** | Start session / Submit answer |
-| **Space** | Repeat the current question loudly and clearly |
-| **Shift** | Verbose mode (read previous number digit-by-digit) |
-| **Alt + S** | Open the Settings menu |
-| **Apostrophe (')** | Increase speech synthesizer voice rate |
-| **Semicolon (;)**| Decrease speech synthesizer voice rate |
-
-## 12. Troubleshooting
-
-> **Note:** Troubleshooting steps involving environmental configurations may vary slightly depending on your specific Linux distribution or Operating System architecture.
-
-- **No audio/speech output:**
-  Check that your selected TTS engine (`espeak-ng`, `flite`, or `rh-voice`) is correctly installed on your operating system. If you are using Linux, ensure your primary audio hardware sink is unmuted and the volume is up.
-- **Question file not loading:**
-  Double-check your custom `.txt` formatting. Ensure each line adhering to the `expression===time===bell` syntax contains no extra spaces around equality markers, and heavily scrutinize the document to verify **no blank lines** are present at the beginning, middle, or end of the file.
-- **Visual Theme not applying correctly:**
-  Maths-Tutor inherits its look and styling from system accessibility parameters. Check your OS-level appearance settings in Linux (such as GTK/Qt UI themes and high-contrast toggles) to ensure they are configured correctly.
-
-</div>
+GitHub: https://github.com/zendalona/maths-tutor
