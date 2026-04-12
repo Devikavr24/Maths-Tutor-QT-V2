@@ -1,7 +1,7 @@
 # Maths-Tutor User Guide
 
-Maths-Tutor is a free, open-source educational application designed for children aged 5–16, with a primary focus on accessibility for blind and visually impaired students. The application is built from the ground up to be audio-first, meaning it is fully operable using only a keyboard and your ears. Every button, question, and result is announced aloud, ensuring that every student has an equal opportunity to build confidence and mastery in mathematics.
-
+Maths-Tutor is a free, open-source mathematics learning application designed for blind and visually impaired children. 
+Built entirely around keyboard and voice, it requires no mouse or screen to operate. Every question, result, and menu option is spoken aloud through a built-in text-to-speech engine, making independent learning possible for every child.
 ## Table of Contents
 1. [Quick Start](#quick-start)
 2. [Installation and Setup](#installation-and-setup)
@@ -26,16 +26,11 @@ Maths-Tutor is a free, open-source educational application designed for children
 
 ## Installation and Setup
 [For Parents and Teachers]
-Setting up Maths-Tutor on Linux takes just a few steps. The specific command to install the necessary screen reading components depends on your version of Linux:
+Setting up Maths-Tutor takes just a few steps:
 
-*   **Debian, Ubuntu, or Linux Mint**: Use the command **sudo apt install python3 python3-pip espeak-ng python3-pyqt5**
-*   **Fedora or Red Hat**: Use the command **sudo dnf install python3 python3-pip espeak-ng python3-qt5**
-*   **Arch Linux**: Use the command **sudo pacman -S python python-pip espeak-ng python-pyqt5**
-*   **openSUSE**: Use the command **sudo zypper install python3 python3-pip espeak-ng python3-qt5**
-
-Once the system components are ready, finish the setup with these two steps:
-1. Open your terminal in the application folder and type **pip install -r requirements.txt** then press **Enter**. This automatically installs the remaining Python libraries.
-2. Start the application by typing **python main.py** and pressing **Enter**.
+1. Run: pip install -r requirements.txt
+2. Install espeak-ng via your system software manager
+3. Run: python main.py
 
 ## First Launch
 When you start the application for the first time, a language selection window will appear. 
@@ -89,31 +84,9 @@ There are five levels of challenge: **Simple**, **Easy**, **Medium**, **Hard**, 
 7. After the third failure, the correct answer is read aloud (except in Game Mode), and then the application moves automatically to the next challenge.
 
 ## Scoring and Feedback
-[For Kids]
+Only Game Mode has a scoring system (the exact scoring logic requires confirmation from the code before documenting).
 
-**Quickplay**
-The faster you answer, the more points you earn!
-| Performance | Points |
-| :--- | :--- |
-| Very Fast 🌟 (4 seconds or less) | 50 points |
-| Good 👍 (4 to 12 seconds) | 30 points |
-| Slow 🐢 (More than 12 seconds) | 10 points |
-| Wrong attempt | -10 points |
-| Missed ✗ (3 failures) | 0 points and correct answer read aloud |
-
-**Learning Mode**
-In this mode, your score depends on how many tries you take to find the answer.
-| Performance | Points |
-| :--- | :--- |
-| Excellent | 50 points |
-| Very Good | 40 points |
-| Good | 30 points |
-| Not Bad | 20 points |
-| Okay | 10 points |
-| Wrong attempt | -10 points |
-
-**Your Grade**
-At the end of your session, the app announced your final percentage. This is calculated by taking your total score and comparing it to the total points possible.
+There is no point system, score table, grade, or percentage calculation at the end of Quickplay or Learning Mode sessions.
 
 ## Keyboard Shortcuts
 | Key | What You Hear / What Happens |
