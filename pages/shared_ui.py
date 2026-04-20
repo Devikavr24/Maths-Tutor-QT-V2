@@ -14,7 +14,7 @@ import random
 from tts.tts_worker import TextToSpeech
 from PyQt5.QtMultimedia import QSound
 
-from language.language import set_language, clear_remember_language, tr
+from language.language import tr
 from PyQt5.QtGui import QMovie
 
 DIFFICULTY_LEVELS = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
@@ -121,7 +121,7 @@ def create_vertical_layout(widgets: list) -> QVBoxLayout:
     return layout
 
 
-def create_footer_buttons(names, callbacks=None, size=(90, 30)) -> QWidget:
+def create_footer_buttons(names, callbacks=None) -> QWidget:
     footer = QWidget()
     layout = QHBoxLayout()
     layout.setSpacing(10)
@@ -770,7 +770,7 @@ class QuestionWidget(QWidget):
 # ---------------------------------------------------------------------------
 
 def create_dynamic_question_ui(section_name, difficulty_index, back_callback,
-                                main_window=None, back_to_operations_callback=None, tts=None):
+                                main_window=None, tts=None):
     container = QWidget()
     container.setAccessibleName("")
     container.setAccessibleDescription("")

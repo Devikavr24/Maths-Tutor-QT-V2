@@ -578,9 +578,9 @@ class LinearProgressionSession:
         ideal    = self.get_ideal_time(getattr(self, "current_skill", skill_type),
                                        getattr(self, "current_digits", 1))
         adjusted = ideal * self.user_time_factor
-        if time_taken <= 0.8 * adjusted:  speed, perf = "FAST",   "excellent"
-        elif time_taken <= 1.5 * adjusted: speed, perf = "NORMAL", "good"
-        else:                              speed, perf = "SLOW",   "slow"
+        if time_taken <= 0.8 * adjusted:  speed = "FAST"
+        elif time_taken <= 1.5 * adjusted: speed = "NORMAL"
+        else:                              speed = "SLOW"
 
         if replay_count >= 1 and speed == "FAST": speed = "NORMAL"
         if replay_count >= 2:                      speed = "NORMAL"

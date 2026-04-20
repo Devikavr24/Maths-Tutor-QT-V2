@@ -24,7 +24,7 @@ if sys.platform.startswith("linux"):
 from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QLabel, QDialog, QVBoxLayout,
     QPushButton, QComboBox, QHBoxLayout, QCheckBox, QFrame,
-    QWidget, QGridLayout, QStackedWidget, QSizePolicy, QShortcut, QMessageBox,
+    QWidget, QGridLayout, QStackedWidget, QSizePolicy, QShortcut,
     QBoxLayout
 )
 from PyQt5.QtCore import Qt, QUrl, QSize, QTimer
@@ -37,7 +37,7 @@ from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
 from language.language import get_saved_language, save_selected_language_to_file, tr, set_language
 
-from PyQt5.QtGui import QMovie, QKeySequence, QPixmap, QFont, QIcon
+from PyQt5.QtGui import QMovie, QKeySequence, QFont
 from PyQt5.QtCore import Qt
 
 def clear_layout(layout):
@@ -501,9 +501,15 @@ class MainWindow(QMainWindow):
         self.play_sound("click-button.wav")
 
     def start_game_mode(self):
-        """Entry point for Game Mode. Always runs warmup fresh — no persistence."""
-        print("[DEBUG] Entered start_game_mode() — launching warmup")
-        self._launch_warmup()
+        """Entry point for Game Mode. Conditionally runs warmup if logic is missing."""
+        from question.warmup import _load_logic_df
+        logic_df = _load_logic_df()
+        if logic_df is None or logic_df.empty:
+            print("[DEBUG] gamemode_logic.xlsx is empty — launching warmup")
+            self._launch_warmup()
+        else:
+            print("[DEBUG] gamemode_logic.xlsx is populated — entering game mode directly")
+            self._launch_game_mode_intro()
 
     # ── Warmup launch helpers ────────────────────────────────────────────────
 
@@ -582,6 +588,11 @@ class MainWindow(QMainWindow):
 
         ranked = self._warmup_session.get_ranked_results()
         print(f"[WARMUP] Complete. Top skill: {ranked[0]['label'] if ranked else 'N/A'}")
+
+        # Generate the permanent progression logic file dynamically immediately
+        if ranked:
+            from question.warmup import generate_logic_from_warmup
+            generate_logic_from_warmup(ranked)
 
         self._warmup_ranking_widget = WarmupRankingWidget(
             session=self._warmup_session,
@@ -722,9 +733,9 @@ class MainWindow(QMainWindow):
         self._launch_warmup()
 
     def load_game_questions(self, difficulty_index):
-        from question.loader import LinearProgressionSession, QuestionProcessor
-        from PyQt5.QtWidgets import QVBoxLayout, QHBoxLayout, QLabel, QProgressBar, QWidget, QPushButton
-        from PyQt5.QtCore import QTimer, Qt
+        from question.loader import LinearProgressionSession
+        from PyQt5.QtWidgets import QVBoxLayout, QProgressBar, QWidget, QPushButton
+        from language.language import tr
         from language.language import tr
 
         if hasattr(self, 'tts'):
@@ -1060,7 +1071,7 @@ class MainWindow(QMainWindow):
             button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
             button.setProperty("class", "menu-button")
             button.setAccessibleName(translated_name)
-            button.clicked.connect(lambda checked, n=name: self.load_section(n))
+            button.clicked.connect(lambda _, n=name: self.load_section(n))
 
             self.menu_buttons.append(button)
             row, col = divmod(i, 2)

@@ -633,15 +633,13 @@ class GameModeIntroWidget(QWidget):
         if self.saved_state:
             lbl = self.saved_state.get("current_label", "Start")
             lbl_name = " ".join([p.capitalize() for p in lbl.split("_")])
-            sd_name = {0:"Easy",1:"Medium",2:"Hard"}.get(self.saved_state.get("current_sub_difficulty",0),"Easy")
-            status = QLabel(f"🔄  Resuming at {lbl_name} · {sd_name}")
+            status = QLabel(f"🔄  Resuming at {lbl_name}")
             status.setStyleSheet("color:#27AE60;font-weight:bold;")
         else:
             status = QLabel("Starting fresh")
         status.setAlignment(Qt.AlignCenter); status.setProperty("class","subtitle"); root.addWidget(status)
-        rules = QLabel("How it works:\n• 2 correct in a row → harder sub-difficulty\n"
-                       "• Complete Hard → move forward to next skill\n"
-                       "• 3 wrong/skips → decrease difficulty or move backward\n"
+        rules = QLabel("How it works:\n• Reach correct threshold → promote to next skill\n"
+                       "• Too many wrong/skips → demote to easier skill\n"
                        "• 90 seconds · correct answers add 3s · wrong cost 1s")
         rules.setWordWrap(True); rules.setProperty("class","subtitle"); rules.setMaximumWidth(500)
         root.addWidget(rules, alignment=Qt.AlignCenter); root.addSpacing(16)
@@ -729,8 +727,7 @@ class GameModeWidget(QWidget):
         question_text, self._current_answer = processor.get_questions()
         if question_text == "No questions found." or self._current_answer is None:
             self.session.skip_question(self._current_config); QTimer.singleShot(0, self._load_next_question); return
-        sd = {0:"Easy",1:"Medium",2:"Hard"}.get(self.session.current_sub_difficulty,"Easy")
-        self.level_lbl.setText(f"🎮 {self.session.level_name()} · {sd}")
+        self.level_lbl.setText(f"🎮 {self.session.level_name()}")
         self.phase_lbl.setText("")
         self.qcount_lbl.setText(f"Q{self.session.question_count+1}")
         self.type_lbl.setText(self._current_config["label"])

@@ -1,8 +1,7 @@
-import os, shutil
 import pandas as pd
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import (
-    QFileDialog, QMessageBox, QInputDialog, QHBoxLayout, QWidget,
+    QFileDialog, QMessageBox, QHBoxLayout, QWidget,
     QVBoxLayout, QGridLayout, QPushButton, QLabel, QSizePolicy
 )
 from question.loader import QuestionProcessor
@@ -12,7 +11,6 @@ from pages.shared_ui import (
     create_colored_widget,
     create_label,
     create_menu_button,
-    create_vertical_layout,
     create_dynamic_question_ui,
     create_entry_ui, apply_theme,
     QuestionWidget
@@ -25,8 +23,6 @@ def load_pages(section_name, back_callback, difficulty_index,
                main_window=None, tts=None):
 
     page = create_colored_widget("#e0f7fa")
- 
-    widgets = []
  
     # 👉 Custom logic for "Operations"
     if section_name.lower() == "operations":
