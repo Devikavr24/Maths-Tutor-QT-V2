@@ -41,13 +41,13 @@ from PyQt5.QtGui import QMovie, QKeySequence, QFont
 from PyQt5.QtCore import Qt
 
 def clear_layout(layout):
-    if layout is None:
+    if layout is None or sip.isdeleted(layout):
         return
     while layout.count():
         item = layout.takeAt(0)
         widget = item.widget()
         if widget:
-            widget.setParent(None)
+            # widget.setParent(None)
             widget.deleteLater()
 
 
@@ -124,11 +124,15 @@ class RootWindow(QDialog):
         self.cancel_button.clicked.connect(self.reject)
         self.ok_button.clicked.connect(self.handle_continue)
 
-        QWidget.setTabOrder(self.language_combo, self.ok_button)
         if not self.minimal:
+            print(f"Enter taborder for self.minimal - {self.minimal}")
             QWidget.setTabOrder(self.language_combo, self.remember_check)
             QWidget.setTabOrder(self.remember_check, self.ok_button)
-        QWidget.setTabOrder(self.ok_button, self.cancel_button)
+            QWidget.setTabOrder(self.ok_button, self.cancel_button)
+        else:
+            print(f"Enter taborder for self.minimal - {self.minimal}")
+            QWidget.setTabOrder(self.language_combo, self.ok_button)
+            QWidget.setTabOrder(self.ok_button, self.cancel_button)
 
     def handle_continue(self):
         selected = self.language_combo.currentText()
@@ -168,10 +172,10 @@ class MainWindow(QMainWindow):
         self.section_pages = {}
         self.is_muted = False
 
-        setup_exit_handling(self, require_confirmation=True)
+        setup_exit_handling(self, require_confirmation=True)    #From QuestionWidget
         self.init_ui()
 
-        self.tts = TextToSpeech()
+        self.tts = TextToSpeech()   #from tts_worker
         self.tts.play_custom_sound_signal.connect(self.play_sound)
         self.base_qss = ""
         self.load_style("main_window.qss")
@@ -186,7 +190,7 @@ class MainWindow(QMainWindow):
         self.difficulty_index = 1
 
         self.game_timer = QTimer(self)
-        self.game_timer.setInterval(1000)
+        self.game_timer.setInterval(1000)   
         self.game_timer.timeout.connect(self._on_game_tick)
         #Ctrl+; shortcut to decrease speed
         self._slower_shortcut = QShortcut(QKeySequence("Ctrl+;"), self)
@@ -208,28 +212,28 @@ class MainWindow(QMainWindow):
             self.tts.stop()
 
         self.section_pages = {}
-        if hasattr(self, 'game_mode_container'):
-            del self.game_mode_container
-        if hasattr(self, '_quickplay_question_widget'):
-            del self._quickplay_question_widget
-        if hasattr(self, 'quickplay_container'):
-            del self.quickplay_container
+        # if hasattr(self, 'game_mode_container'):
+        #     del self.game_mode_container
+        # if hasattr(self, '_quickplay_question_widget'):
+        #     del self._quickplay_question_widget
+        # if hasattr(self, 'quickplay_container'):
+        #     del self.quickplay_container
 
-        for attr in ('_warmup_intro_widget', '_warmup_question_widget', '_warmup_ranking_widget'):
+        for attr in ('game_mode_container','_quickplay_question_widget','quickplay_container','_warmup_intro_widget', '_warmup_question_widget', '_warmup_ranking_widget', '_warmup_session', '_gamemode_intro', 'game_mode_widget', '_game_session_new'):
             widget = getattr(self, attr, None)
             if widget:
                 try: widget.cleanup()
                 except Exception: pass
                 delattr(self, attr)
-        if hasattr(self, '_warmup_session'): del self._warmup_session
+        # if hasattr(self, '_warmup_session'): del self._warmup_session
 
-        for attr in ('_gamemode_intro', 'game_mode_widget'):
-            widget = getattr(self, attr, None)
-            if widget:
-                try: widget.cleanup()
-                except Exception: pass
-                delattr(self, attr)
-        if hasattr(self, '_game_session_new'): del self._game_session_new
+        # for attr in ('_gamemode_intro', 'game_mode_widget'):
+        #     widget = getattr(self, attr, None)
+        #     if widget:
+        #         try: widget.cleanup()
+        #         except Exception: pass
+        #         delattr(self, attr)
+        # if hasattr(self, '_game_session_new'): del self._game_session_new
 
         self.init_ui()
         apply_theme(self.central_widget, self.current_theme)
@@ -387,13 +391,14 @@ class MainWindow(QMainWindow):
         step = self.tts.RATE_STEP
         default = self.tts.DEFAULT_RATE
         current_rate = self.tts.speech_rate
+        max_idle_rate = default + step
         if self.tts.is_speaking:
-            new_rate = min(300, current_rate + step)
+            new_rate = min(max_idle_rate, current_rate + step)
             if new_rate != current_rate:
                 self.tts.set_rate(new_rate)
                 print(f"[Alt+;] Speed increased: {new_rate} WPM")
         else:
-            max_idle_rate = default + step
+            # max_idle_rate = default + step
             new_rate = min(max_idle_rate, current_rate + step)
             if new_rate != current_rate:
                 self.tts.set_rate(new_rate)
@@ -659,7 +664,7 @@ class MainWindow(QMainWindow):
         self.time_remaining    = self._game_session_new.session_time
         self.game_active       = True
 
-        if not hasattr(self, 'game_page_container'):
+        if not hasattr(self, 'game_page_container') or sip.isdeleted(self.game_page_container):
             self.game_page_container = QWidget()
             self.game_page_layout    = QVBoxLayout(self.game_page_container)
             self.game_page_layout.setContentsMargins(0, 0, 0, 0)
@@ -730,12 +735,11 @@ class MainWindow(QMainWindow):
 
     def _on_game_play_again(self):
         """Play Again: go back to warmup for a fresh session."""
-        self._launch_warmup()
+        self._launch_game_mode_intro()
 
     def load_game_questions(self, difficulty_index):
         from question.loader import LinearProgressionSession
         from PyQt5.QtWidgets import QVBoxLayout, QProgressBar, QWidget, QPushButton
-        from language.language import tr
         from language.language import tr
 
         if hasattr(self, 'tts'):

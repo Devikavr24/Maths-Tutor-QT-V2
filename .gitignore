@@ -45,3 +45,6 @@ changes.patch
 
 # TTS Audio Caches
 sounds/tts_cache_*.mp3
+
+# Internal documentation
+question/document/

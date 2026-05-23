@@ -145,8 +145,10 @@ class TTSWorker(QObject):
                 if voice_found and target_voice:
                     self.sapi.Voice = target_voice
                     # Map WPM to SAPI's -10 to 10 scale
-                    sapi_rate = int((self.speech_rate - 150) / 15)
-                    self.sapi.Rate = max(-10, min(10, sapi_rate))
+                    # sapi_rate = int((self.speech_rate - 150) / 15)
+                    # self.sapi.Rate = max(-10, min(10, sapi_rate))
+                    
+                    self.set_rate(self.speech_rate)
                     self.sapi.Speak(text, 1) # 1 = Speak Asynchronously
                     return  # Success! Skip the rest.
             except Exception as e:
