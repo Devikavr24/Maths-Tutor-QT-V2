@@ -19,9 +19,8 @@ class TTSWorker(QObject):
         self.process = None  # Used for espeak-ng on Linux AND as fallback on Windows
         if self.system == "Windows":
             self.engine = None
-            self.iterating_lock = QMutex()
             self.sapi = None  # Dedicated engine for Windows Modern (OneCore) voices
-            
+        self.iterating_lock = QMutex()
         self.speech_rate = 150  # Default WPM
         self.DEFAULT_RATE = 150
         self.RATE_STEP = 25
@@ -255,6 +254,18 @@ class TTSWorker(QObject):
             print("espeak-ng not found. Please install it.")
         except Exception as e:
             print(f"An unexpected TTS Error occurred (Linux): {e}")
+        
+    def _iterate_linux_loop(self):
+        if self.iterating_lock.tryLock():
+            try:
+                if self.process:
+                    status = self.process.poll()
+                    if status is not None:
+                        self.process = None
+            except (RuntimeError, TypeError):
+                pass
+            finally:
+                self.iterating_lock.unlock()
 
     def _stop_linux(self):
         if self.process and self.process.poll() is None:
@@ -284,7 +295,8 @@ class TextToSpeech(QObject):
         
         # Safe main-thread timer initialization
         self.iterate_timer = QTimer()
-        self.iterate_timer.timeout.connect(self.worker._iterate_windows_loop)
+        if self.worker.system == "Windows" : self.iterate_timer.timeout.connect(self.worker._iterate_windows_loop)
+        elif self.worker.system == "Linux" : self.iterate_timer.timeout.connect(self.worker._iterate_linux_loop)
         self.iterate_timer.start(100)
         
         self.speak_signal.connect(self.worker.speak)
