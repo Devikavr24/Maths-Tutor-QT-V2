@@ -960,7 +960,7 @@ class MainWindow(QMainWindow):
         if back_btn:
             back_btn.show()
 
-        if not hasattr(self, "quickplay_container"):
+        if not hasattr(self, "quickplay_container") or sip.isdeleted(self.quickplay_container):
             self.quickplay_container = QWidget()
             self.quickplay_container.setAccessibleName("")
             self.quickplay_container.setAccessibleDescription("")
@@ -972,7 +972,7 @@ class MainWindow(QMainWindow):
             processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
             self._quickplay_question_widget.processor = processor
             self._quickplay_question_widget.load_new_question()
-            self.stack.setCurrentWidget(self.quickplay_container)
+            self._switch_to_page(self.quickplay_container)
             return
 
         processor = QuestionProcessor("Story", difficultyIndex=[0, 1])
@@ -984,7 +984,8 @@ class MainWindow(QMainWindow):
 
         self._quickplay_question_widget = QuestionWidget(processor, window=self, next_question_callback=load_next_question, tts=self.tts)
         self.quickplay_container.layout().addWidget(self._quickplay_question_widget)
-        self.stack.setCurrentWidget(self.quickplay_container)
+        # self.stack.setCurrentWidget(self.quickplay_container)
+        self._switch_to_page(self.quickplay_container)
         apply_theme(self.quickplay_container, self.current_theme)
 
     def play_sound(self, filename):
