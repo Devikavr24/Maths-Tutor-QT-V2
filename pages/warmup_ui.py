@@ -45,7 +45,7 @@ class WarmupIntroWidget(QWidget):
         self.tts        = tts
         self.setAccessibleName(tr("Warmup Match Introduction"))
         self._init_ui()
-        self._speak_intro()
+        # self._speak_intro()
 
     def _init_ui(self):
         layout = QVBoxLayout()
@@ -86,6 +86,7 @@ class WarmupIntroWidget(QWidget):
         desc.setWordWrap(True)
         desc.setProperty("class", "subtitle")
         desc.setMaximumWidth(560)
+        # desc.setAccessibleDescription("")
         layout.addWidget(desc, alignment=Qt.AlignCenter)
 
         layout.addSpacing(20)
@@ -118,7 +119,8 @@ class WarmupIntroWidget(QWidget):
         self.begin_btn.setProperty("class", "menu-button")
         self.begin_btn.setAccessibleName(tr("Begin Warmup"))
         self.begin_btn.setAccessibleDescription(
-            tr("Start the warmup match. You will answer 13 questions.")
+            "Welcome! Before we begin the real game, let's do a quick Warmup Match so we can understand your strengths"
+            "You will answer one question from each of the different question types starting from the easiest. Press Sapce key to Start"
         )
         self.begin_btn.clicked.connect(self._on_begin)
         layout.addWidget(self.begin_btn, alignment=Qt.AlignCenter)
@@ -177,9 +179,15 @@ class WarmupQuestionWidget(QWidget):
         self._current_answer      = None
         self._current_question_text = ""
 
-        self.setAccessibleName(tr("Warmup Question"))
+        # self.setAccessibleName("Warmup Question")
         self._init_ui()
         self._load_current_step()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Force focus to the silent feedback label the exact moment the screen appears
+        if hasattr(self, 'feedback_lbl'):
+            self.feedback_lbl.setFocus()
 
     # ── UI setup ─────────────────────────────────────────────────────────────
 
@@ -201,7 +209,8 @@ class WarmupQuestionWidget(QWidget):
         self.step_counter_lbl.setAlignment(Qt.AlignRight)
         header.addWidget(self.step_counter_lbl, alignment=Qt.AlignRight)
         root.addLayout(header)
-
+        if hasattr(self.window, "theme_button"):
+            self.window.theme_button.hide()
         # Progress bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setMinimum(0)
@@ -255,7 +264,7 @@ class WarmupQuestionWidget(QWidget):
         self.input_box.setPlaceholderText(tr("Enter your answer"))
         self.input_box.setFont(QFont("Arial", 16))
         self.input_box.setProperty("class", "answer-input")
-        self.input_box.setAccessibleName(tr("Answer input"))
+        # self.input_box.setAccessibleName(tr("Answer input"))
         validator = QRegExpValidator(QRegExp(r"-?\d*\.?\d*"))
         self.input_box.setValidator(validator)
         self.input_box.returnPressed.connect(self._check_answer)
@@ -289,6 +298,9 @@ class WarmupQuestionWidget(QWidget):
         self.feedback_lbl.setAlignment(Qt.AlignCenter)
         self.feedback_lbl.setFont(QFont("Arial", 22, QFont.Bold))
         self.feedback_lbl.setFixedHeight(50)
+        self.feedback_lbl.setFocusPolicy(Qt.StrongFocus)
+        self.feedback_lbl.setAccessibleName(" ")
+        self.feedback_lbl.setFocus()
         root.addWidget(self.feedback_lbl)
 
         root.addStretch(1)
@@ -337,8 +349,9 @@ class WarmupQuestionWidget(QWidget):
             translated_lbl = tr(lbl_text)
         self.type_lbl.setText(translated_lbl)
         self.feedback_lbl.setText("")
+        self.feedback_lbl.setFocus()   
         self.input_box.clear()
-        self.input_box.setEnabled(True)
+        self.input_box.setEnabled(False)
         self.submit_btn.setEnabled(True)
         self.skip_btn.setEnabled(True)
 
@@ -387,7 +400,7 @@ class WarmupQuestionWidget(QWidget):
         else:
             self._on_tts_done()
 
-        QTimer.singleShot(100, self.input_box.setFocus)
+        
 
     def _on_tts_done(self):
         if not self._active:
@@ -398,6 +411,8 @@ class WarmupQuestionWidget(QWidget):
         self.autoskip_bar.setVisible(True)
         self.autoskip_timer.start()
         self.autoskip_tick_timer.start()
+        self.input_box.setEnabled(True)
+        QTimer.singleShot(100, self.input_box.setFocus)
 
     def _on_autoskip_tick(self):
         self._autoskip_remaining = max(0, self._autoskip_remaining - 1)
@@ -426,7 +441,7 @@ class WarmupQuestionWidget(QWidget):
 
         elapsed = (time() - self._question_start_time) if self._question_start_time else 0.0
         score   = self.session.submit_answer(is_correct, elapsed)
-
+        self.feedback_lbl.setFocus()
         self.input_box.setEnabled(False)
         self.submit_btn.setEnabled(False)
         self.skip_btn.setEnabled(False)
@@ -461,6 +476,7 @@ class WarmupQuestionWidget(QWidget):
             self.feedback_lbl.setText(
                 f'<span style="color:#E74C3C; font-size:22pt;">✗ {tr("Wrong — moving on")}</span>'
             )
+            self.feedback_lbl.setFocus()
             if self.window and not self.window.is_muted:
                 import random
                 self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3")
@@ -510,6 +526,8 @@ class WarmupQuestionWidget(QWidget):
     def _finish(self):
         self._active = False
         self._stop_timers()
+        if hasattr(self.window, "theme_button"):
+            self.window.theme_button.show()
         self.on_complete()
 
     # ── Utilities ────────────────────────────────────────────────────────────
@@ -522,6 +540,8 @@ class WarmupQuestionWidget(QWidget):
     def cleanup(self):
         self._active = False
         self._stop_timers()
+        if hasattr(self.window, "theme_button"):
+            self.window.theme_button.show()
         if self.tts:
             self.tts.stop()
 
@@ -717,7 +737,7 @@ class GameModeIntroWidget(QWidget):
         super().__init__()
         self.ranked = ranked or []; self.saved_state = saved_state
         self.on_start = on_start; self.window = window; self.tts = tts
-        self.setAccessibleName(tr("Game Mode Introduction"))
+        # self.setAccessibleName("Game Mode Introduction")
         self._init_ui(); self._speak_intro()
 
     def _init_ui(self):
@@ -811,7 +831,14 @@ class GameModeWidget(QWidget):
         self.on_session_end = on_session_end
         self._active = True; self._question_start_time = None
         self._current_answer = None; self._current_config = None
-        self.setAccessibleName(tr("Game Mode Active")); self._init_ui(); self._load_next_question()
+        # self.setAccessibleName("Game Mode Active"); 
+        self._init_ui(); self._load_next_question()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        # Force focus to the silent feedback label the exact moment the screen appears
+        if hasattr(self, 'feedback_lbl'):
+            self.feedback_lbl.setFocus()
 
     def _init_ui(self):
         root = QVBoxLayout(); root.setContentsMargins(20,8,20,8); root.setSpacing(6); self.setLayout(root)
@@ -851,6 +878,9 @@ class GameModeWidget(QWidget):
         root.addWidget(self.skip_btn, alignment=Qt.AlignCenter)
         self.feedback_lbl = QLabel(""); self.feedback_lbl.setAlignment(Qt.AlignCenter)
         self.feedback_lbl.setFont(QFont("Arial",20,QFont.Bold)); self.feedback_lbl.setFixedHeight(46)
+        self.feedback_lbl.setFocusPolicy(Qt.StrongFocus)
+        self.feedback_lbl.setAccessibleName(" ")
+        self.feedback_lbl.setFocus()
         root.addWidget(self.feedback_lbl); root.addStretch(1)
 
     def _load_next_question(self):
@@ -899,10 +929,13 @@ class GameModeWidget(QWidget):
             QTimer.singleShot(len(tts_text)*70+1500, self._on_tts_done); self.tts.speak(tts_text)
         else:
             self._on_tts_done()
-        QTimer.singleShot(100, self.input_box.setFocus)
+        
 
     def _on_tts_done(self):
-        if self._active: self._question_start_time = time()
+        if not self._active:
+            return
+        self._question_start_time = time()
+        QTimer.singleShot(100, self.input_box.setFocus)
 
     def _check_answer(self):
         if not self._active: return
