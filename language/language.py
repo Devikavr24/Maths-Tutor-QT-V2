@@ -1,3 +1,4 @@
+# language/language.py
 import os
 
 selected_language = "English"
@@ -833,7 +834,7 @@ translations = {   'English': {   'About': 'About',
                   'Select Game Difficulty': 'ഗെയിം '
                                             'കാഠിന്യം '
                                             'തിരഞ്ഞെടുക്കുക',
-                  'Session Complete': 'സെഷൻ '
+                  'Session Complete': 'സெഷൻ '
                                       'പൂർത്തിയായി',
                   'Session Complete!': 'സെഷൻ '
                                        'പൂർത്തിയായി!',
@@ -944,136 +945,7 @@ translations = {   'English': {   'About': 'About',
                                      'മോഡ്',
                   '🎮 Game Mode': '🎮 '
                                  'ഗെയിം '
-                                 'മോഡ്'},
-    'मराठी': {   'About': 'बद्दल',
-                 'Addition': 'बेरीज',
-                 'Answer': 'उत्तर',
-                 'Answer input': 'उत्तर '
-                                 'इनपुट',
-                 'Are you sure you want to exit?': 'तुम्हाला '
-                                                   'नक्की '
-                                                   'बाहेर '
-                                                   'पडायचे '
-                                                   'आहे '
-                                                   'का?',
-                 'Back to Home': 'होम '
-                                 'वर '
-                                 'परत '
-                                 'जा',
-                 'Back to Menu': 'मेनू '
-                                 'वर '
-                                 'परत '
-                                 'जा',
-                 'Back to Operations': 'ऑपरेशन्स '
-                                       'वर '
-                                       'परत '
-                                       'जा',
-                 'Bellring': 'घंटा',
-                 'Cancel': 'रद्द '
-                           'करा',
-                 'Choose Mode': 'मोड '
-                                'निवडा',
-                 'Choose an Operation': 'एक '
-                                        'गणितीय '
-                                        'क्रिया '
-                                        'निवडा',
-                 'Click below to start the quiz': 'क्विझ '
-                                                  'सुरू '
-                                                  'करण्यासाठी '
-                                                  'खाली '
-                                                  'क्लिक '
-                                                  'करा',
-                 'Currency': 'चलन',
-                 'Distance': 'अंतर',
-                 'Division': 'भागाकार',
-                 'Easy': 'सोपे',
-                 'Enter your answer': 'तुमचे '
-                                      'उत्तर '
-                                      'प्रविष्ट '
-                                      'करा',
-                 'Exit Application': 'अॅप '
-                                     'बंद '
-                                     'करा',
-                 'Extra Hard': 'खूप '
-                               'कठीण',
-                 "Game mode! Let's go!": 'गेम '
-                                         'मोड! '
-                                         'चला '
-                                         'सुरू '
-                                         'करूया!',
-                 'Hard': 'कठीण',
-                 'Help': 'मदत',
-                 'Level': 'पातळी',
-                 'Medium': 'मध्यम',
-                 'Multiplication': 'गुणाकार',
-                 'No': 'नाही',
-                 'Operations': 'गणितीय '
-                               'क्रिया',
-                 'Percentage': 'टक्केवारी',
-                 'Play Again': 'पुन्हा '
-                               'खेळा',
-                 'Question': 'प्रश्न',
-                 'Remainder': 'बाकी',
-                 'Reset Language': 'भाषा '
-                                   'रीसेट '
-                                   'करा',
-                 'Select Difficulty:': 'कठिण '
-                                       'पातळी '
-                                       'निवडा:',
-                 'Select Game Difficulty': 'गेम '
-                                           'ची '
-                                           'कठिण '
-                                           'पातळी '
-                                           'निवडा',
-                 'Settings': 'सेटिंग्ज',
-                 'Start Quiz': 'क्विझ '
-                               'सुरू '
-                               'करा',
-                 'Story': 'गोष्ट',
-                 'Subtraction': 'वजाबाकी',
-                 'Time': 'वेळ',
-                 'Type your answer': 'तुमचे '
-                                     'उत्तर '
-                                     'टाइप '
-                                     'करा',
-                 'Type your answer as a number and press Enter.': 'तुमचे '
-                                                                  'उत्तर '
-                                                                  'अंकात '
-                                                                  'टाइप '
-                                                                  'करा '
-                                                                  'आणि '
-                                                                  'Enter '
-                                                                  'दाबा.',
-                 'Upload': 'अपलोड '
-                           'करा',
-                 'Yes': 'होय',
-                 'cancel': 'रद्द '
-                           'करा',
-                 'continue': 'सुरू '
-                             'ठेवा',
-                 'remember': 'माझी '
-                             'निवड '
-                             'लक्षात '
-                             'ठेवा',
-                 'select_language': 'तुमची '
-                                    'आवडती '
-                                    'भाषा '
-                                    'निवडा:',
-                 'welcome': 'मॅथ्स '
-                            'ट्यूटर '
-                            'मध्ये '
-                            'तुमचे '
-                            'स्वागत '
-                            'आहे!',
-                 '⚡Quickplay': '⚡क्विक '
-                               'प्ले',
-                 '🎓 Learning Mode': '🎓 '
-                                    'लर्निंग '
-                                    'मोड',
-                 '🎮 Game Mode': '🎮 '
-                                'गेम '
-                                'मोड'}
-}
+                                 'മോഡ്'}}
 
 def tr(key):
     return translations.get(selected_language, translations["English"]).get(key, key)
