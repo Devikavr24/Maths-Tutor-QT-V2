@@ -251,7 +251,15 @@ class TTSWorker(QObject):
             
             self.process = subprocess.Popen(['espeak-ng', '-v', voice_arg, '-s', str(self.speech_rate), text])
         except FileNotFoundError:
-            print("espeak-ng not found. Please install it.")
+            try:
+                # Fallback to spd-say if espeak-ng is not found
+                speed = int((self.speech_rate - 150) / 1.5) # spd-say rate is -100 to 100
+                speed = max(-100, min(100, speed))
+                self.process = subprocess.Popen(['spd-say', '-l', voice_arg, '-r', str(speed), text])
+            except FileNotFoundError:
+                print("espeak-ng and spd-say not found. Please install one of them.")
+            except Exception as e:
+                print(f"An unexpected TTS Error occurred (Linux Fallback): {e}")
         except Exception as e:
             print(f"An unexpected TTS Error occurred (Linux): {e}")
         
