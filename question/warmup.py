@@ -1,9 +1,36 @@
 import pandas as pd
 import os
 
+import json
+
+STATE_FILE = os.path.join(os.getcwd(), "question", "saved_gamemode_state.json")
+
 def save_game_session(state):
-    """Stub for saving game state. Implement disk writing here if needed later."""
-    pass
+    try:
+        with open(STATE_FILE, "w", encoding="utf-8") as f:
+            json.dump(state, f, indent=4)
+        print(f"[DEBUG] Saved game session state to {STATE_FILE}")
+    except Exception as e:
+        print(f"[ERROR] Failed to save game session: {e}")
+
+def get_saved_game_session():
+    if os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                state = json.load(f)
+                print(f"[DEBUG] Loaded saved game session from {STATE_FILE}")
+                return state
+        except Exception as e:
+            print(f"[ERROR] Failed to load saved game session: {e}")
+    return None
+
+def clear_saved_game_session():
+    if os.path.exists(STATE_FILE):
+        try:
+            os.remove(STATE_FILE)
+            print(f"[DEBUG] Cleared saved game session at {STATE_FILE}")
+        except Exception as e:
+            print(f"[ERROR] Failed to clear game session: {e}")
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -123,8 +150,14 @@ def get_warmup_sequence(full_df):
 def generate_logic_from_warmup(ranked_results):
     try:
         logic_rows = []
-        # Ensure all missing master labels are securely appended at the bottom
-        ladder = list(ranked_results)
+        # Filter out those skills the user excelled at (score >= 1.0)
+        ladder = [item for item in ranked_results if item.get("score", 0.0) < 1.0]
+        
+        # Fallback if they excelled at absolutely everything
+        if not ladder:
+            print("[WARMUP] User excelled at everything! Keeping all skills for practice.")
+            ladder = list(ranked_results)
+
         existing = {item["label"] for item in ladder}
         
         # Sort internal built-in keys by their explicit order to maintain safe appended sequences
@@ -184,6 +217,7 @@ class WarmupSession:
         self.consecutive_wrong = 0
         self.consecutive_skips = 0
         self.scores: dict[str, float] = {}
+        self.used_question_ids = set()
         self._full_df    = _load_game_df()
         self.warmup_sequence = get_warmup_sequence(self._full_df)
         print(f"[WARMUP] {len(self.warmup_sequence)} steps: "
@@ -297,7 +331,7 @@ class WarmupSession:
 class GameModeSession:
     session_time   = 90
 
-    def __init__(self, ranked_list: list | None, saved_state: dict | None = None):
+    def __init__(self, ranked_list: list | None, saved_state: dict | None = None, warmup_used_ids: list | set | None = None):
         self._full_df        = _load_game_df()
         self._logic_df       = _load_logic_df()
         self.warmup_sequence = get_warmup_sequence(self._full_df)
@@ -315,39 +349,45 @@ class GameModeSession:
             }
 
         # Keep ranked list around for stats
-        ranked_scores = {e["label"]: e.get("score", 0.0) for e in (ranked_list or [])}
-        self.ranked = []
-        for seq in self.warmup_sequence:
-            lbl = seq["label"]
-            score = ranked_scores.get(lbl, 0.3)
-            self.ranked.append({
-                "label": lbl,
-                "score": score,
-                "q_type": seq.get("q_type", "addition"),
-                "digits": seq.get("digits", "1d")
-            })
+        if saved_state and "ranked" in saved_state:
+            self.ranked = saved_state["ranked"]
+        else:
+            ranked_scores = {e["label"]: e.get("score", 0.0) for e in (ranked_list or [])}
+            self.ranked = []
+            for seq in self.warmup_sequence:
+                lbl = seq["label"]
+                score = ranked_scores.get(lbl, 0.3)
+                self.ranked.append({
+                    "label": lbl,
+                    "score": score,
+                    "q_type": seq.get("q_type", "addition"),
+                    "digits": seq.get("digits", "1d")
+                })
 
         if saved_state and "current_label" in saved_state:
             self.current_label = saved_state["current_label"]
             self.questions_in_current_label = saved_state.get("questions_in_current_label", 0)
             self.used_question_ids = set(saved_state.get("used_question_ids", []))
+            self.accumulated_points = saved_state.get("accumulated_points", {lbl: 0.0 for lbl in self.node_map.keys()})
+            self.question_count = saved_state.get("question_count", 0)
+            self.correct_count = saved_state.get("correct_count", 0)
+            self.consecutive_correct = saved_state.get("consecutive_correct", 0)
+            self.consecutive_wrong = saved_state.get("consecutive_wrong", 0)
         else:
             # Setup based directly on the first skill loaded in gamemode_logic.xlsx
             if not self._logic_df.empty:
                 self.current_label = str(self._logic_df.iloc[0]["label"]).strip()
             else:
                 self.current_label = self.warmup_sequence[0]["label"] if self.warmup_sequence else ""
-            self.used_question_ids = set()
+            self.used_question_ids = set(warmup_used_ids) if warmup_used_ids else set()
+            self.accumulated_points    = {lbl: 0.0 for lbl in self.node_map.keys()}
+            self.question_count        = 0
+            self.correct_count         = 0
+            self.consecutive_correct   = 0
+            self.consecutive_wrong     = 0
 
         self.game_active = True
-        self.consecutive_correct        = 0
-        self.consecutive_wrong          = 0
         self.questions_in_current_label = getattr(self, "questions_in_current_label", 0)
-
-        # Scoring
-        self.accumulated_points    = {lbl: 0.0 for lbl in self.node_map.keys()}
-        self.question_count        = 0
-        self.correct_count         = 0
         self._last_question_text   = None
 
     def get_next_question_config(self) -> dict | None:
@@ -487,9 +527,16 @@ class GameModeSession:
         parts = self.current_label.split("_")
         return " ".join([p.capitalize() for p in parts])
 
-    def save_state(self) -> dict:
+    def save_state(self, time_remaining: int = 90) -> dict:
         return {
             "current_label": self.current_label,
             "questions_in_current_label": getattr(self, "questions_in_current_label", 0),
-            "used_question_ids": list(self.used_question_ids)
+            "used_question_ids": list(self.used_question_ids),
+            "ranked": self.ranked,
+            "accumulated_points": self.accumulated_points,
+            "question_count": self.question_count,
+            "correct_count": self.correct_count,
+            "consecutive_correct": self.consecutive_correct,
+            "consecutive_wrong": self.consecutive_wrong,
+            "time_remaining": time_remaining
         }

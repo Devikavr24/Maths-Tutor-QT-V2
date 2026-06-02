@@ -1040,6 +1040,9 @@ class GameReportWidget(QWidget):
         layout.addLayout(btn_row)
 
     def _speak_report(self):
+        if self.main_window and not self.main_window.is_muted:
+            import random
+            self.main_window.play_sound(f"finished-{random.randint(1, 3)}.mp3")
         from language.language import tr
         speak_text   = f"{self.breakdown_text}. {self.summary_text}"
         est_ms       = len(speak_text) * 65
