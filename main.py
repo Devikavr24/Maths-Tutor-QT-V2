@@ -75,7 +75,7 @@ class RootWindow(QDialog):
         language_label = QLabel("Select your preferred language:")
         language_label.setProperty("class", "subtitle")
 
-        languages = ["English", "हिंदी", "മലയാളം", "தமிழ்", "عربي", "संस्कृत", "मराठी"]
+        languages = ["English", "हिंदी", "മലയാളം", "தமிழ்", "عربي", "संस्कृत"]
         self.language_combo = QComboBox()
         self.language_combo.addItems(languages)
         self.language_combo.setProperty("class", "combo-box")

@@ -27,25 +27,25 @@ TIER2_SKILLS = ["story", "time", "currency"]
 class QuestionProcessor:
     def __init__(self, questionType, difficultyIndex, disable_dda=False,
                  is_game_mode=False, preloaded_df=None):
-        self.questionType           = questionType
-        self.widget                 = None
-        self.difficultyIndex        = difficultyIndex
-        self.df                     = None
-        self.variables              = []
-        self.oprands                = []
-        self.rowIndex               = 0
-        self.retry_count            = 0
-        self.total_attempts         = 0
-        self.correct_answers        = 0
-        self.correct_streak         = 0
-        self.incorrect_streak       = 0
+        self.questionType             = questionType
+        self.widget                   = None
+        self.difficultyIndex          = difficultyIndex
+        self.df                       = None
+        self.variables                = []
+        self.oprands                  = []
+        self.rowIndex                 = 0
+        self.retry_count              = 0
+        self.total_attempts           = 0
+        self.correct_answers          = 0
+        self.correct_streak           = 0
+        self.incorrect_streak         = 0
         self.current_performance_rate = 0
-        self.current_difficulty     = difficultyIndex
-        self._used_rows             = set()
-        self.disable_dda            = disable_dda
-        self.is_game_mode           = is_game_mode
-        self.max_digit_level        = None
-        self._skip_process_file     = False
+        self.current_difficulty       = difficultyIndex
+        self._used_rows               = set()
+        self.disable_dda              = disable_dda
+        self.is_game_mode             = is_game_mode
+        self.max_digit_level          = None
+        self._skip_process_file       = False
 
         if preloaded_df is not None:
             self.df                 = preloaded_df.reset_index(drop=True)
@@ -191,6 +191,9 @@ class QuestionProcessor:
         selected_question_label = str(row.get("label", "")).strip()
 
         if getattr(self, "strict_label", None):
+            print(f"[QuestionProcessor Validation] strict: {self.strict_label} | selected: {selected_question_label}")
+            if selected_question_label != self.strict_label:
+                print(f"[ERROR] Label mismatch! strict_label={self.strict_label}, but selected={selected_question_label}")
             assert selected_question_label == self.strict_label, \
                 f"Label mismatch constraint violated. Expected: {self.strict_label}, Got: {selected_question_label}"
 
@@ -214,16 +217,11 @@ class QuestionProcessor:
         self.variables  = [c for c in variable_string if c.isalpha()]
         self.oprands    = self.parseInputRange(input_string)
 
-        # ── Marathi Integration (Handles both Learning & Game Mode) ──
         current_lang = getattr(lang_config, 'selected_language', 'English')
-        
-        # We check working_df.columns to see if the translation exists in the current file
         if current_lang == "हिंदी" and "question_hi" in working_df.columns:
             question_template = str(row["question_hi"])
         elif current_lang == "മലയാളം" and "question_mal" in working_df.columns:
             question_template = str(row["question_mal"])
-        elif current_lang == "मराठी" and "question_marathi" in working_df.columns:
-            question_template = str(row["question_marathi"])
         else:
             question_template = str(row.get("question", row.get("question_", "")))
 
@@ -233,7 +231,6 @@ class QuestionProcessor:
         for i, var in enumerate(self.variables):
             if i < len(self.oprands):
                 question_template = question_template.replace(f"{{{var}}}", str(self.oprands[i]))
-        # ─────────────────────────────────────────────────────────────
 
         self._working_df = working_df
         self.extractAnswer()
@@ -511,6 +508,7 @@ class LinearProgressionSession:
             bridge_q        = self._bridge_queue.pop(0)
             self._is_bridge = True
             self.question_count += 1
+            print(f"[BRIDGE] Serving: {bridge_q['question']} (concept={bridge_q['concept']})")
             return bridge_q
 
         self._is_bridge = False
@@ -558,11 +556,11 @@ class LinearProgressionSession:
         self.used_questions[self.current_label].add(chosen_row_index)
 
         try:
-             self.recent_patterns.append(str(self.main_df.loc[chosen_row_index, "operands"]).strip())
+            self.recent_patterns.append(str(self.main_df.loc[chosen_row_index, "operands"]).strip())
         except KeyError:
-             self.recent_patterns.append("N/A")
+            self.recent_patterns.append("N/A")
 
-        row_data          = self.main_df.loc[chosen_row_index]
+        row_data            = self.main_df.loc[chosen_row_index]
         self.current_skill  = str(row_data.get("type", "addition")).strip().lower()
         self.current_digits = int(row_data.get("_digit_int", 1))
         self.current_concept = get_concept_for_row(row_data)
@@ -574,14 +572,17 @@ class LinearProgressionSession:
         else:
             self.questions_in_current_concept += 1
 
+        print(f"[BUCKET] label=`{self.current_label}` | {self.current_skill} {self.current_digits}d | "
+              f"bucket {self.bucket_index + 1}/{len(self.buckets)} | concept={self.current_concept}")
+
         df_filtered = self.main_df[self.main_df["label"].str.strip() == self.current_label]
 
         p = QuestionProcessor(self.current_skill, self.level_index,
                               disable_dda=True, is_game_mode=True)
-        p.df               = df_filtered.copy().reset_index(drop=True)
-        p.strict_label     = self.current_label
-        p.rowIndex         = 0
-        p._used_rows       = set()
+        p.df                 = df_filtered.copy().reset_index(drop=True)
+        p.strict_label       = self.current_label
+        p.rowIndex           = 0
+        p._used_rows         = set()
         p._skip_process_file = True
         self.current_processor = p
         return p
@@ -608,15 +609,15 @@ class LinearProgressionSession:
             return
 
         #Speed classification
-        ideal     = self.get_ideal_time(getattr(self, "current_skill", skill_type),
-                                        getattr(self, "current_digits", 1))
+        ideal    = self.get_ideal_time(getattr(self, "current_skill", skill_type),
+                                       getattr(self, "current_digits", 1))
         adjusted = ideal * self.user_time_factor
         if time_taken <= 0.8 * adjusted:  speed = "FAST"
         elif time_taken <= 1.5 * adjusted: speed = "NORMAL"
-        else:                                speed = "SLOW"
+        else:                              speed = "SLOW"
 
         if replay_count >= 1 and speed == "FAST": speed = "NORMAL"
-        if replay_count >= 2:                     speed = "NORMAL"
+        if replay_count >= 2:                      speed = "NORMAL"
 
         self.speed_history.append(speed)
         delta = 0
@@ -628,7 +629,7 @@ class LinearProgressionSession:
             self.skill_log[skill_type]["times"].append(time_taken)
             delta = 5
             if speed == "SLOW":
-                 self.user_time_factor += 0.1
+                self.user_time_factor += 0.1
             self.last_answers.append(1)
         else:
             self.wrong_streak   += 1
@@ -644,13 +645,16 @@ class LinearProgressionSession:
         accuracy      = sum(self.last_answers) / len(self.last_answers) if self.last_answers else 0.0
         current_label = getattr(self, "current_label", "")
         action        = "stay"
+        reason        = "conditions not met"
 
         if self.cooldown_counter > 0:
             self.cooldown_counter -= 1
             action = "stay"
+            reason = "cooldown active"
         else:
             if self.correct_streak >= 2 and accuracy >= 0.75:
                 action                = "forward"
+                reason                = "streak and accuracy met"
                 self.cooldown_counter = 2
                 self.last_label       = current_label
                 self.correct_streak   = 0
@@ -669,12 +673,16 @@ class LinearProgressionSession:
                 if target_label == self.last_label:
                     if self.wrong_streak >= 3:
                         allow_backward = True
+                        reason = "ping-pong overridden by 3 wrongs"
                     else:
                         allow_backward = False
                         action = "stay"
+                        reason = "prevent ping-pong (needs 3 wrongs)"
 
                 if allow_backward:
                     action                = "backward"
+                    if reason == "conditions not met":
+                        reason = "streak and accuracy met"
                     self.cooldown_counter = 2
                     self.last_label       = current_label
                     self.correct_streak   = 0
@@ -684,8 +692,16 @@ class LinearProgressionSession:
                     concept = getattr(self, "current_concept", None)
                     if concept:
                         bridge_qs = generate_bridge_questions(concept)
+                        for bq in bridge_qs:
+                            bq["is_bridge"] = True
                         if bridge_qs:
                             self._bridge_queue = bridge_qs
+                            print(f"[BRIDGE] Queued {len(bridge_qs)} bridge Qs for '{concept}'")
+
+        print(f"[PROGRESSION] Label: {current_label} | "
+              f"Correct: {self.correct_streak} | Wrong: {self.wrong_streak} | "
+              f"History: {self.last_answers} | Acc: {accuracy:.2f} | "
+              f"Cooldown: {self.cooldown_counter} | Action: {action} | Reason: {reason}")
 
         if skill_type in self.skill_scores:
             self.skill_scores[skill_type] = max(0, min(100, self.skill_scores[skill_type] + delta))
@@ -694,8 +710,8 @@ class LinearProgressionSession:
 
     #Progression helpers
     def _reset_streaks(self):
-         self.correct_streak = 0
-         self.wrong_streak   = 0
+        self.correct_streak = 0
+        self.wrong_streak   = 0
 
     def _check_level_transitions(self):
         if not self.game_active:
@@ -748,7 +764,3 @@ class LinearProgressionSession:
 
     def generate_report(self) -> str:
         return self.generate_breakdown() + ". " + self.generate_summary()
-
-    @property
-    def digit_level(self):
-         return { "addition":self.level_index+1, "subtraction":self.level_index+1, "multiplication":self.level_index+1, "division":self.level_index+1 }
