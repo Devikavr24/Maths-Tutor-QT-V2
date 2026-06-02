@@ -943,9 +943,61 @@ translations = {   'English': {   'About': 'About',
                   '🎓 Learning Mode': '🎓 '
                                      'പഠന '
                                      'മോഡ്',
-                  '🎮 Game Mode': '🎮 '
-                                 'ഗെയിം '
-                                 'മോഡ്'}}
+                  '🎮 Game Mode': '🎮 ഗെയിം മോഡ്',
+                  'Warmup Match': 'വാംഅപ്പ് മത്സരം',
+                  'Warmup Match Introduction': 'വാംഅപ്പ് മത്സരം ആമുഖം',
+                  'Speed matters': 'വേഗത പ്രധാനമാണ്',
+                  '14 question types': '14 ചോദ്യ തരങ്ങൾ',
+                  'Ranked results': 'റാങ്ക് ചെയ്ത ഫലങ്ങൾ',
+                  'Begin Warmup': 'വാംഅപ്പ് ആരംഭിക്കുക',
+                  'Start the warmup match. You will answer 13 questions.': 'വാംഅപ്പ് മത്സരം ആരംഭിക്കുക. നിങ്ങൾ 13 ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകും.',
+                  'Warmup Question': 'വാംഅപ്പ് ചോദ്യം',
+                  'Auto-skip in %vs': '%vs സെക്കൻഡിൽ ഓട്ടോ-സ്കിപ്പ് ആകും',
+                  'Submit': 'സമർപ്പിക്കുക',
+                  'Submit answer': 'ഉത്തരം സമർപ്പിക്കുക',
+                  'Skip this question': 'ഈ ചോദ്യം ഒഴിവാക്കുക',
+                  'Skip the current question. Skipped questions score zero.': 'നിലവിലെ ചോദ്യം ഒഴിവാക്കുക. ഒഴിവാക്കിയ ചോദ്യങ്ങൾക്ക് പൂജ്യം സ്കോർ ആയിരിക്കും ലഭിക്കുക.',
+                  'Invalid — try again': 'തെറ്റായ ഇൻപുട്ട് — വീണ്ടും ശ്രമിക്കുക',
+                  'Wrong — moving on': 'തെറ്റാണ് — അടുത്ത ചോദ്യത്തിലേക്ക് പോകുന്നു',
+                  'Skipped': 'ഒഴിവാക്കി',
+                  'Time out — auto-skipped': 'സമയം കഴിഞ്ഞു — ഓട്ടോ-സ്കിപ്പ് ചെയ്തു',
+                  'Warmup Complete!': 'വാംഅപ്പ് പൂർത്തിയായി!',
+                  'Continue to Game Mode': 'ഗെയിം മോഡിലേക്ക് തുടരുക',
+                  'Proceed to the Game Mode difficulty selector.': 'ഗെയിം മോഡ് കാഠിന്യം തിരഞ്ഞെടുക്കുന്നതിലേക്ക് പോകുക.',
+                  'Starting fresh': 'ആദ്യം മുതൽ ആരംഭിക്കുന്നു',
+                  'Resuming at {lbl_name}': '{lbl_name} എന്നതിൽ പുനരാരംഭിക്കുന്നു',
+                  'Start Game': 'ഗെയിം ആരംഭിക്കുക',
+                  'Start Game Mode': 'ഗെയിം മോഡ് ആരംഭിക്കുക',
+                  'Skip': 'ഒഴിവാക്കുക',
+                  'Warmup completed early wrong': 'നിങ്ങൾ {correct}/{total} ചോദ്യങ്ങൾക്ക് ശരിയായി ഉത്തരം നൽകി. വാംഅപ്പ് നേരത്തെ അവസാനിച്ചു — സാരമില്ല!',
+                  'Warmup completed early skipped': 'നിങ്ങൾ {correct}/{total} ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകി. കൂടുതൽ ചോദ്യങ്ങൾ ഒഴിവാക്കിയതിനാൽ വാംഅപ്പ് അവസാനിച്ചു — സാരമില്ല!',
+                  'Warmup completed success': 'എല്ലാ {total} ചോദ്യങ്ങളും പൂർത്തിയാക്കിയതിൽ അഭിനന്ദനങ്ങൾ! നിങ്ങൾക്ക് {correct} ശരിയുത്തരങ്ങൾ ലഭിച്ചു.',
+                  'Very Fast': 'വളരെ വേഗതയേറിയത്',
+                  'Slow': 'പതുക്കെ',
+                  'Missed': 'നഷ്ടമായി',
+                  'Unknown': 'അജ്ഞാതം',
+                  'Questions': 'ചോദ്യങ്ങൾ',
+                  'Accuracy': 'കൃത്യത',
+                  'Final Skill': 'അവസാന ഘട്ടം'}}
+
+# Session Resume Translations
+translations['English']['A saved session was found. Do you want to resume?'] = 'A saved session was found. Do you want to resume?'
+translations['English']['Resume Session'] = 'Resume Session'
+
+translations['عربي']['A saved session was found. Do you want to resume?'] = 'تم العثور على جلسة محفوظة. هل تريد الاستئناف؟'
+translations['عربي']['Resume Session'] = 'استئناف الجلسة'
+
+translations['संस्कृत']['A saved session was found. Do you want to resume?'] = 'एकः सुरक्षितः सङ्क्रमഃ प्राप्तः। किं भवान् अनुवर्तितुम् इच्छति?'
+translations['संस्कृत']['Resume Session'] = 'सङ्क्रमं अनुवर्तस्व'
+
+translations['हिंदी']['A saved session was found. Do you want to resume?'] = 'एक सहेजा गया सत्र मिला। क्या आप इसे फिर से शुरू करना चाहते हैं?'
+translations['हिंदी']['Resume Session'] = 'सत्र फिर से शुरू करें'
+
+translations['தமிழ்']['A saved session was found. Do you want to resume?'] = 'சேமிக்கப்பட்ட அமர்வு கண்டறியப்பட்டது. அதை மீண்டும் தொடங்க விரும்புகிறீர்களா?'
+translations['தமிழ்']['Resume Session'] = 'அமர்வை மீண்டும் தொடங்கு'
+
+translations['മലയാളം']['A saved session was found. Do you want to resume?'] = 'ഒരു സേവ് ചെയ്ത സെഷൻ കണ്ടെത്തി. നിങ്ങൾക്ക് ഇത് പുനരാരംഭിക്കണമെന്നുണ്ടോ?'
+translations['മലയാളം']['Resume Session'] = 'സെഷൻ പുനരാരംഭിക്കുക'
 
 def tr(key):
     return translations.get(selected_language, translations["English"]).get(key, key)
