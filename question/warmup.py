@@ -39,13 +39,32 @@ def _load_logic_df() -> pd.DataFrame:
     return df
 
 def _load_game_df() -> pd.DataFrame:
-    """Load and normalise game_ques.xlsx. Always lower-cases 'type'."""
+    """Load and normalise game_ques.xlsx. Infers 'type' if missing."""
     fp = os.path.join(os.getcwd(), "question", "game_ques.xlsx")
     df = pd.read_excel(fp)
+    
+    # Safely handle missing columns by inferring from 'label' if possible
+    if "type" not in df.columns or "digits" not in df.columns:
+        def infer_cols(row):
+            label = str(row.get("label", "")).lower()
+            t, d = "addition", "1d"
+            if "_" in label:
+                parts = label.split("_")
+                d = parts[0]
+                t = parts[1]
+            return pd.Series([t, d])
+
+        if "type" not in df.columns and "digits" not in df.columns:
+            df[["type", "digits"]] = df.apply(infer_cols, axis=1)
+        elif "type" not in df.columns:
+            df["type"] = df.apply(lambda r: infer_cols(r)[0], axis=1)
+        elif "digits" not in df.columns:
+            df["digits"] = df.apply(lambda r: infer_cols(r)[1], axis=1)
+
     df["type"]       = df["type"].astype(str).str.strip().str.lower()
     df["digits"]     = df["digits"].astype(str).str.strip().str.lower()
-    df["label"]      = df["label"].astype(str).str.strip()
-    df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce").fillna(0).astype(int)
+    df["label"]      = df.get("label", "unknown").astype(str).str.strip()
+    df["difficulty"] = pd.to_numeric(df.get("difficulty", 0), errors="coerce").fillna(0).astype(int)
     return df
 
 

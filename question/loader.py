@@ -63,10 +63,29 @@ class QuestionProcessor:
             print(f"[Processor] Game file: {file_path}")
 
             df = pd.read_excel(file_path)
+            
+            # Safely handle missing columns
+            if "type" not in df.columns or "digits" not in df.columns:
+                def infer_cols(row):
+                    label = str(row.get("label", "")).lower()
+                    t, d = "addition", "1d"
+                    if "_" in label:
+                        parts = label.split("_")
+                        d = parts[0]
+                        t = parts[1]
+                    return pd.Series([t, d])
+
+                if "type" not in df.columns and "digits" not in df.columns:
+                    df[["type", "digits"]] = df.apply(infer_cols, axis=1)
+                elif "type" not in df.columns:
+                    df["type"] = df.apply(lambda r: infer_cols(r)[0], axis=1)
+                elif "digits" not in df.columns:
+                    df["digits"] = df.apply(lambda r: infer_cols(r)[1], axis=1)
+
             df["type"]       = df["type"].astype(str).str.strip().str.lower()
             df["digits"]     = df["digits"].astype(str).str.strip().str.lower()
-            df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce").fillna(0).astype(int)
-            df["label"]      = df["label"].astype(str).str.strip()
+            df["difficulty"] = pd.to_numeric(df.get("difficulty", 0), errors="coerce").fillna(0).astype(int)
+            df["label"]      = df.get("label", "unknown").astype(str).str.strip()
 
             if "digits" in df.columns:
                 df["_digit_int"] = (
@@ -104,8 +123,8 @@ class QuestionProcessor:
             self.df = df
             return
 
-        df["difficulty"] = pd.to_numeric(df["difficulty"], errors="coerce")
-        df["type"]       = df["type"].astype(str).str.strip().str.lower()
+        df["difficulty"] = pd.to_numeric(df.get("difficulty", 0), errors="coerce").fillna(0).astype(int)
+        df["type"]       = df.get("type", "addition").astype(str).str.strip().str.lower()
 
         valid_difficulties = (
             self.difficultyIndex if isinstance(self.difficultyIndex, list)
@@ -175,7 +194,22 @@ class QuestionProcessor:
             assert selected_question_label == self.strict_label, \
                 f"Label mismatch constraint violated. Expected: {self.strict_label}, Got: {selected_question_label}"
 
-        variable_string = str(row["operands"])
+        variable_string = str(row.get("operands", ""))
+        
+        # If operands is missing, infer a realistic range based on label
+        if not variable_string or variable_string.lower() == "nan":
+            lbl = str(row.get("label", "1D_addition")).lower()
+            digit_match = re.search(r'(\d+)', lbl)
+            d = int(digit_match.group(1)) if digit_match else 1
+            
+            if d == 1:   r = "1:9"
+            elif d == 2: r = "10:99"
+            elif d == 3: r = "100:999"
+            else:        r = "1000:9999"
+            
+            # Simple a+b pattern for now
+            variable_string = f"a{r}*b{r}*"
+
         input_string    = ''.join(c for c in variable_string if not c.isalpha())
         self.variables  = [c for c in variable_string if c.isalpha()]
         self.oprands    = self.parseInputRange(input_string)
@@ -191,10 +225,10 @@ class QuestionProcessor:
         elif current_lang == "मराठी" and "question_marathi" in working_df.columns:
             question_template = str(row["question_marathi"])
         else:
-            question_template = str(row["question"])
+            question_template = str(row.get("question", row.get("question_", "")))
 
         if question_template in ("nan", "None", ""):
-            question_template = str(row["question"])
+            question_template = str(row.get("question", row.get("question_", "")))
 
         for i, var in enumerate(self.variables):
             if i < len(self.oprands):

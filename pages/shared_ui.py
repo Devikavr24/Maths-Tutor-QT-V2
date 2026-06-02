@@ -546,8 +546,9 @@ class QuestionWidget(QWidget):
                 return
             else:
                 if self.processor.retry_count >= 2:
+                    msg = tr("Let's try another one!")
                     self.result_label.setText(
-                        f'<span style="font-size:16pt;">{tr("Let\'s try another one!")}</span>'
+                        f'<span style="font-size:16pt;">{msg}</span>'
                     )
                     QTimer.singleShot(2000, self.call_next_question)
                     return
@@ -740,8 +741,9 @@ class QuestionWidget(QWidget):
                 return
             else:
                 if getattr(self.processor, 'retry_count', 0) >= 2:
+                    msg = tr("Let's try another one!")
                     self.result_label.setText(
-                        f'<span style="font-size:16pt;">{tr("Let\'s try another one!")}</span>'
+                        f'<span style="font-size:16pt;">{msg}</span>'
                     )
                     QTimer.singleShot(2000, self.call_next_question)
                     return
