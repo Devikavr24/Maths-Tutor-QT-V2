@@ -48,3 +48,7 @@ sounds/tts_cache_*.mp3
 
 # Internal documentation
 question/document/
+
+# Game Mode dynamic logic & state
+question/gamemode_logic.xlsx
+question/saved_gamemode_state.json

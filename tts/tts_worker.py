@@ -62,8 +62,22 @@ class TTSWorker(QObject):
         
         # Malayalam support
         if current_lang == "മലയാളം":
-            import asyncio, edge_tts, os, uuid
+            # Pronounce math symbols correctly in Malayalam
+            replacements = {
+                '+': ' കൂട്ടണം ',
+                '-': ' കുറയ്ക്കണം ',
+                '*': ' ഗുണിക്കണം ',
+                'x': ' ഗുണിക്കണം ',
+                '/': ' ഹരിക്കണം ',
+                '÷': ' ഹരിക്കണം ',
+                '=': ' സമം ',
+                '?': ''
+            }
+            for sym, pron in replacements.items():
+                text = text.replace(sym, pron)
+
             try:
+                import asyncio, edge_tts, os, uuid
                 # Unique cache file
                 cache_file = f"tts_cache_{uuid.uuid4().hex[:8]}.mp3"
                 cache_path = os.path.join("sounds", cache_file)
