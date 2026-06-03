@@ -739,7 +739,8 @@ class GameModeIntroWidget(QWidget):
         self.ranked = ranked or []; self.saved_state = saved_state
         self.on_start = on_start; self.window = window; self.tts = tts
         # self.setAccessibleName("Game Mode Introduction")
-        self._init_ui(); self._speak_intro()
+        self._init_ui()
+        # self._speak_intro()
 
     def _init_ui(self):
         root = QVBoxLayout(); root.setAlignment(Qt.AlignCenter)
@@ -763,20 +764,13 @@ class GameModeIntroWidget(QWidget):
             status = QLabel(_("Starting fresh"))
         status.setAlignment(Qt.AlignCenter); status.setProperty("class","subtitle"); root.addWidget(status)
 
-        current_lang = getattr(lang_config, 'selected_language', 'English')
-        if current_lang == "മലയാളം":
-            rules_text = (
-                "ഗെയിം രീതി:\n"
-                "• നിശ്ചിത എണ്ണം ചോദ്യങ്ങൾ ശരിയാക്കിയാൽ അടുത്ത ഘട്ടത്തിലേക്ക് ഉയർത്തപ്പെടും\n"
-                "• കൂടുതൽ തെറ്റുകൾ വരുത്തിയാൽ എളുപ്പമുള്ള ഘട്ടത്തിലേക്ക് താഴ്ത്തപ്പെടും\n"
-                "• ആകെ സമയം 90 സെക്കൻഡ് · ഓരോ ശരിയുത്തരത്തിനും +3s · തെറ്റുകൾക്ക് -1s"
-            )
-        else:
-            rules_text = (
-                "How it works:\n• Reach correct threshold → promote to next skill\n"
-                "• Too many wrong/skips → demote to easier skill\n"
-                "• 90 seconds · correct answers add 3s · wrong cost 1s"
-            )
+        
+        rules_text = _(
+            "How it works:\n"
+            "• Reach correct threshold → promote to next skill\n"
+            "• Too many wrong/skips → demote to easier skill\n"
+            "• 90 seconds · correct answers add 3s · wrong cost 1s"
+        )
 
         rules = QLabel(rules_text)
         rules.setWordWrap(True); rules.setProperty("class","subtitle"); rules.setMaximumWidth(500)

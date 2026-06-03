@@ -524,30 +524,10 @@ class MainWindow(QMainWindow):
 
     def start_game_mode(self):
         """Entry point for Game Mode. Prompts to resume if a saved session or warmup is found, otherwise launches warmup."""
-        from question.warmup import get_saved_game_session, clear_saved_game_session, _load_logic_df
+        from question.warmup import _load_logic_df, _clear_logic_df
         import os
 
-        # 1. Check for a mid-game saved session
-        saved_state = get_saved_game_session()
-        if saved_state:
-            from PyQt5.QtWidgets import QMessageBox
-            msg_box = QMessageBox(self)
-            msg_box.setWindowTitle(_("Resume Session"))
-            msg_box.setText(_("A saved session was found. Do you want to resume?"))
-            yes_btn = msg_box.addButton(_("Yes"), QMessageBox.YesRole)
-            no_btn  = msg_box.addButton(_("No"),  QMessageBox.NoRole)
-            msg_box.setDefaultButton(yes_btn)
-            msg_box.exec_()
-
-            if msg_box.clickedButton() == yes_btn:
-                print("[DEBUG] Resuming saved game session...")
-                self._launch_game_mode_intro(saved_state=saved_state)
-                return
-            else:
-                print("[DEBUG] User elected not to resume. Clearing saved session...")
-                clear_saved_game_session()
-
-        # 2. Check for a saved warmup session (gamemode_logic.xlsx)
+        # Check for a saved warmup session (gamemode_logic.xlsx)
         logic_df = None
         try:
             logic_df = _load_logic_df()
@@ -569,15 +549,10 @@ class MainWindow(QMainWindow):
                 self._launch_game_mode_intro()
                 return
             else:
+                _clear_logic_df()
                 print("[DEBUG] User elected not to resume. Clearing saved warmup logic...")
-                fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
-                if os.path.exists(fp):
-                    try:
-                        os.remove(fp)
-                    except Exception as e:
-                        print(f"[ERROR] Failed to delete logic file: {e}")
-
-        # 3. Otherwise, launch warmup
+                
+        # launch warmup
         print("[DEBUG] Launching warmup")
         self._launch_warmup()
 
@@ -690,20 +665,18 @@ class MainWindow(QMainWindow):
 
     # ── Game Mode (adaptive) ────────────────────────────────────────────────
 
-    def _launch_game_mode_intro(self, saved_state=None):
+    def _launch_game_mode_intro(self):
         """Show the brief intro screen before starting a game session."""
         from pages.warmup_ui import GameModeIntroWidget
         from pages.shared_ui import apply_theme
         if hasattr(self, 'tts'): self.tts.stop()
 
-        # Pull ranked from saved state or the live warmup session
-        ranked = []
-        if hasattr(self, '_warmup_session'):
-            ranked = self._warmup_session.get_ranked_results()
+        # Pull ranked from the live warmup session
+        ranked = self._warmup_session.get_ranked_results() if hasattr(self, '_warmup_session') else []
 
         self._gamemode_intro = GameModeIntroWidget(
-            ranked=ranked, saved_state=saved_state,
-            on_start=lambda: self._start_game_session(saved_state=saved_state),
+            ranked=ranked, saved_state=None,
+            on_start=self._start_game_session,
             window=self, tts=self.tts,
         )
         apply_theme(self._gamemode_intro, self.current_theme)
@@ -725,23 +698,11 @@ class MainWindow(QMainWindow):
         if hasattr(self, 'tts'): self.tts.stop()
 
         # Pull ranked from saved state or the live warmup session
-        ranked = []
-        if saved_state and "ranked" in saved_state:
-            ranked = saved_state["ranked"]
-        elif hasattr(self, '_warmup_session'):
-            ranked = self._warmup_session.get_ranked_results()
+        ranked = self._warmup_session.get_ranked_results() if hasattr(self, '_warmup_session') else []
 
         # Retrieve question IDs asked during warmup to exclude them
-        warmup_used_ids = None
-        if hasattr(self, '_warmup_session') and hasattr(self._warmup_session, 'used_question_ids'):
-            warmup_used_ids = self._warmup_session.used_question_ids
-
-        self._game_session_new = GameModeSession(ranked, saved_state=saved_state, warmup_used_ids=warmup_used_ids)
-        
-        if saved_state and "time_remaining" in saved_state:
-            self.time_remaining = saved_state["time_remaining"]
-        else:
-            self.time_remaining = self._game_session_new.session_time
+        self._game_session_new = GameModeSession(ranked)
+        self.time_remaining = self._game_session_new.session_time
         self.game_active       = True
 
         if not hasattr(self, 'game_page_container') or sip.isdeleted(self.game_page_container):
@@ -792,10 +753,6 @@ class MainWindow(QMainWindow):
         self.game_timer.stop()
         if hasattr(self, 'tts'): self.tts.stop()
         if hasattr(self, '_original_back_to_home'): self.back_to_home = self._original_back_to_home
-
-        # Clear the saved game session upon clean completion
-        from question.warmup import clear_saved_game_session
-        clear_saved_game_session()
 
         print(f"[GAME] Session ended. Q={self._game_session_new.question_count} Acc={self._game_session_new.accuracy_pct()}%")
         # QTimer.singleShot(500, lambda: self.tts.speak(_("Time's up! Amazing effort.")))
