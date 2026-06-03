@@ -16,7 +16,7 @@ from pages.shared_ui import (
     QuestionWidget
 )
 
-from language.language import tr
+# from language.language import tr
 
 
 def load_pages(section_name, back_callback, difficulty_index,
@@ -26,11 +26,11 @@ def load_pages(section_name, back_callback, difficulty_index,
  
     # 👉 Custom logic for "Operations"
     if section_name.lower() == "operations":
-        title = create_label(tr("Choose an Operation"), bold=True)
+        title = create_label(_("Choose an Operation"), bold=True)
         title.setProperty("class", "subtitle")
         title.setAlignment(Qt.AlignCenter)
         # ✅ ACCESSIBILITY: Screen reader announces operations heading
-        title.setAccessibleName(tr("Choose an Operation"))
+        title.setAccessibleName(_("Choose an Operation"))
 
         grid = QGridLayout()
         grid.setSpacing(20)
@@ -38,7 +38,7 @@ def load_pages(section_name, back_callback, difficulty_index,
         operations = ["Addition", "Subtraction", "Multiplication", "Division", "Remainder", "Percentage"]
 
         for i, sub in enumerate(operations):
-            translated=tr(sub)
+            translated=_(sub)
             btn = create_menu_button(translated, lambda _, s=sub: main_window.load_section(s))
             # ✅ ACCESSIBILITY: Screen reader announces each operation button
             btn.setAccessibleName(translated)

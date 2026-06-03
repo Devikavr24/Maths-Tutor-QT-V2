@@ -14,15 +14,11 @@ def save_game_session(state):
         print(f"[ERROR] Failed to save game session: {e}")
 
 def get_saved_game_session():
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                state = json.load(f)
-                print(f"[DEBUG] Loaded saved game session from {STATE_FILE}")
-                return state
-        except Exception as e:
-            print(f"[ERROR] Failed to load saved game session: {e}")
-    return None
+    fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    df = pd.read_excel(fp)
+    if len(df) == 0:
+        return None
+    else: return df
 
 def clear_saved_game_session():
     if os.path.exists(STATE_FILE):

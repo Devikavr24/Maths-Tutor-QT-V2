@@ -1,0 +1,575 @@
+
+msgid ""
+msgstr ""
+"Project-Id-Version: Maths Tutor 1.0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-06-03 18:50+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: hi_IN\n"
+"Language-Team: hi_IN <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: main.py:70
+msgid "Welcome to Maths Tutor!"
+msgstr ""
+
+#: main.py:438
+msgid "welcome"
+msgstr "मैथ्स ट्यूटर में आपका स्वागत है!"
+
+#: main.py:76
+#, fuzzy
+msgid "Select your preferred language:"
+msgstr "अपनी पसंदीदा भाषा चुनें:"
+
+#: main.py:98
+msgid "Remember my selection"
+msgstr ""
+
+#: main.py:110
+#, fuzzy
+msgid "Continue"
+msgstr "जारी रखें"
+
+#: main.py:117 pages/shared_ui.py:851
+#, fuzzy
+msgid "Cancel"
+msgstr "रद्द करें"
+
+#: main.py:289 main.py:470
+msgid "🎓 Learning Mode"
+msgstr "🎓 सीखने का मोड"
+
+#: main.py:351 main.py:509 main.py:601 main.py:670 main.py:708 main.py:809
+#: main.py:1017 main.py:1037 main.py:1281 pages/shared_ui.py:154
+msgid "Back to Menu"
+msgstr "मेनू पर वापस जाएं"
+
+#: main.py:424
+msgid "Story"
+msgstr "कहानी"
+
+
+#: main.py:443
+msgid "ready"
+msgstr "{lang} में सीखने के लिए तैयार हैं?"
+
+#: main.py:468
+msgid "⚡Quickplay"
+msgstr "⚡त्वरित खेल"
+
+#: main.py:469
+msgid "🎮 Game Mode"
+msgstr "🎮 गेम मोड"
+
+#: main.py:527 main.py:552
+msgid "Resume Session"
+msgstr "सत्र फिर से शुरू करें"
+
+#: main.py:528 main.py:553
+msgid "A saved session was found. Do you want to resume?"
+msgstr "एक सहेजा गया सत्र मिला। क्या आप इसे फिर से शुरू करना चाहते हैं?"
+
+#: main.py:529 main.py:554 pages/shared_ui.py:193
+msgid "Yes"
+msgstr ""
+
+#: main.py:530 main.py:555 pages/shared_ui.py:194
+msgid "No"
+msgstr ""
+
+#: main.py:913 main.py:919
+#, fuzzy
+msgid "Back to Difficulty"
+msgstr "कठिनाई चुनें:"
+
+#: main.py:920
+msgid "Return to difficulty selection"
+msgstr ""
+
+#: main.py:1020 main.py:1033 pages/shared_ui.py:155
+msgid "Upload"
+msgstr "अपलोड करें"
+
+#: main.py:1190 main.py:1202
+msgid "Back to Operations"
+msgstr "ऑपरेशन्स पर वापस जाएं"
+
+#: main.py:1191 main.py:1204
+#, fuzzy
+msgid "Back to Learn"
+msgstr "मेनू पर वापस जाएं"
+
+#: main.py:1192 main.py:1206
+msgid "Back to Home"
+msgstr "मुखपृष्ठ पर वापस जाएं"
+
+#: main.py:1193 pages/shared_ui.py:156 pages/shared_ui.py:818
+msgid "Settings"
+msgstr "सेटिंग्स"
+
+#: pages/ques_functions.py:29 pages/ques_functions.py:33
+msgid "Choose an Operation"
+msgstr "एक गणितीय क्रिया चुनें"
+
+#: pages/shared_ui.py:169 pages/warmup_ui.py:264
+msgid "Enter your answer"
+msgstr "अपना उत्तर दर्ज करें"
+
+#: pages/shared_ui.py:191
+msgid "Exit Application"
+msgstr "एप्लिकेशन बंद करें"
+
+#: pages/shared_ui.py:192
+msgid "Are you sure you want to exit?"
+msgstr "क्या आप वाकई बाहर निकलना चाहते हैं?"
+
+#: pages/shared_ui.py:374 pages/warmup_ui.py:396 pages/warmup_ui.py:929
+msgid "Type your answer"
+msgstr "अपना उत्तर टाइप करें"
+
+#: pages/shared_ui.py:473
+msgid "Please enter a valid number."
+msgstr "कृपया एक मान्य संख्या दर्ज करें।"
+
+#: pages/shared_ui.py:518 pages/warmup_ui.py:454
+#, fuzzy
+msgid "Correct!"
+msgstr "मुद्रा"
+
+#: pages/shared_ui.py:549 pages/shared_ui.py:744
+msgid "Let's try another one!"
+msgstr ""
+
+#: pages/shared_ui.py:556
+#, fuzzy
+msgid "Try Again."
+msgstr "फिर से खेलें"
+
+#: pages/shared_ui.py:558
+msgid "Incorrect."
+msgstr ""
+
+#: pages/shared_ui.py:829
+#, fuzzy
+msgid "Difficulty"
+msgstr "कठिनाई चुनें:"
+
+#: pages/shared_ui.py:841 pages/shared_ui.py:844
+msgid "Reset Language"
+msgstr "भाषा रीसेट करें"
+
+#: pages/shared_ui.py:846
+msgid "Clear saved language preference and choose a new language"
+msgstr ""
+
+#: pages/shared_ui.py:850
+msgid "OK"
+msgstr ""
+
+#: pages/shared_ui.py:854
+msgid "OK — Apply settings"
+msgstr ""
+
+#: pages/shared_ui.py:855
+msgid "Cancel — Discard changes"
+msgstr ""
+
+#: pages/shared_ui.py:861
+msgid "Select Difficulty:"
+msgstr "कठिनाई चुनें:"
+
+#: pages/shared_ui.py:865
+msgid ""
+"Select Difficulty. Use left or right arrow keys to select difficulty "
+"level."
+msgstr ""
+
+#: pages/shared_ui.py:875 pages/shared_ui.py:880
+msgid "Help"
+msgstr "मदद"
+
+#: pages/shared_ui.py:876 pages/shared_ui.py:881
+msgid "About"
+msgstr "परिचय"
+
+#: pages/shared_ui.py:921
+msgid "Language Changed"
+msgstr ""
+
+#: pages/shared_ui.py:922
+#, python-brace-format
+msgid "Language changed to {new_lang}. The app will now reload."
+msgstr ""
+
+#: pages/shared_ui.py:976 pages/warmup_ui.py:1035
+msgid "Session Complete!"
+msgstr "सत्र पूरा हुआ!"
+
+#: pages/shared_ui.py:1006
+#, fuzzy
+msgid "questions answered"
+msgstr "प्रश्न"
+
+#: pages/shared_ui.py:1007
+msgid "Level"
+msgstr "स्तर"
+
+#: pages/shared_ui.py:1024 pages/shared_ui.py:1028
+#, python-brace-format
+msgid "Next Level: {level}"
+msgstr ""
+
+#: pages/shared_ui.py:1032 pages/shared_ui.py:1036
+#, fuzzy, python-brace-format
+msgid "Play {level} Again"
+msgstr "फिर से खेलें"
+
+#: pages/shared_ui.py:1049
+#, fuzzy
+msgid "Ready for the next level?"
+msgstr "एक नई चुनौती के लिए तैयार!"
+
+#: pages/shared_ui.py:1049
+msgid "Play again?"
+msgstr "फिर से खेलें?"
+
+#: pages/warmup_ui.py:46
+msgid "Warmup Match Introduction"
+msgstr ""
+
+#: pages/warmup_ui.py:59 pages/warmup_ui.py:62 pages/warmup_ui.py:202
+msgid "Warmup Match"
+msgstr ""
+
+#: pages/warmup_ui.py:98
+msgid "Speed matters"
+msgstr ""
+
+#: pages/warmup_ui.py:98
+#, fuzzy
+msgid "14 question types"
+msgstr "प्रश्न"
+
+#: pages/warmup_ui.py:98
+msgid "Ranked results"
+msgstr ""
+
+#: pages/warmup_ui.py:117 pages/warmup_ui.py:120
+msgid "Begin Warmup"
+msgstr ""
+
+#: pages/warmup_ui.py:249
+msgid "Auto-skip in %vs"
+msgstr ""
+
+#: pages/warmup_ui.py:273 pages/warmup_ui.py:872
+msgid "Submit"
+msgstr ""
+
+#: pages/warmup_ui.py:276 pages/warmup_ui.py:873
+#, fuzzy
+msgid "Submit answer"
+msgstr "उत्तर"
+
+#: pages/warmup_ui.py:285 pages/warmup_ui.py:289 pages/warmup_ui.py:878
+#, fuzzy
+msgid "Skip this question"
+msgstr "प्रश्न"
+
+#: pages/warmup_ui.py:291
+msgid "Skip the current question. Skipped questions score zero."
+msgstr ""
+
+#: pages/warmup_ui.py:339
+#, python-brace-format
+msgid "Question {n} / {total}"
+msgstr ""
+
+#: pages/warmup_ui.py:438
+msgid "Invalid — try again"
+msgstr ""
+
+#: pages/warmup_ui.py:477
+msgid "Wrong — moving on"
+msgstr ""
+
+#: pages/warmup_ui.py:499 pages/warmup_ui.py:1000
+msgid "Skipped"
+msgstr ""
+
+#: pages/warmup_ui.py:513
+msgid "Time out — auto-skipped"
+msgstr ""
+
+#: pages/warmup_ui.py:565
+msgid "Warmup Results"
+msgstr ""
+
+#: pages/warmup_ui.py:576 pages/warmup_ui.py:579
+#, fuzzy
+msgid "Warmup Complete!"
+msgstr "सत्र पूरा हुआ!"
+
+#: pages/warmup_ui.py:589
+msgid "Warmup completed early wrong"
+msgstr ""
+
+#: pages/warmup_ui.py:591
+msgid "Warmup completed early skipped"
+msgstr ""
+
+#: pages/warmup_ui.py:593
+msgid "Warmup completed success"
+msgstr ""
+
+#: pages/warmup_ui.py:667 pages/warmup_ui.py:670
+#, fuzzy
+msgid "Continue to Game Mode"
+msgstr "🎮 गेम मोड"
+
+#: pages/warmup_ui.py:672
+msgid "Proceed to the Game Mode difficulty selector."
+msgstr ""
+
+#: pages/warmup_ui.py:748
+#, fuzzy
+msgid "Game Mode"
+msgstr "🎮 गेम मोड"
+
+#: pages/warmup_ui.py:760
+#, python-brace-format
+msgid "Resuming at {lbl_name}"
+msgstr ""
+
+#: pages/warmup_ui.py:763
+#, fuzzy
+msgid "Starting fresh"
+msgstr "सेटिंग्स"
+
+#: pages/warmup_ui.py:784
+#, fuzzy
+msgid "Start Game"
+msgstr "क्विज़ शुरू करें"
+
+#: pages/warmup_ui.py:786
+#, fuzzy
+msgid "Start Game Mode"
+msgstr "🎮 गेम मोड"
+
+#: pages/warmup_ui.py:869
+msgid "Answer input"
+msgstr "उत्तर इनपुट"
+
+#: pages/warmup_ui.py:876
+msgid "Skip"
+msgstr ""
+
+#: pages/warmup_ui.py:909
+msgid "Question"
+msgstr "प्रश्न"
+
+#: pages/warmup_ui.py:947
+msgid "Invalid"
+msgstr ""
+
+#: pages/warmup_ui.py:982
+msgid "Wrong"
+msgstr ""
+
+#: pages/warmup_ui.py:1031
+#, fuzzy
+msgid "Game Mode Results"
+msgstr "गेम मोड! चलिए शुरू करते हैं!"
+
+#: pages/warmup_ui.py:1047
+#, fuzzy
+msgid "Questions"
+msgstr "प्रश्न"
+
+#: pages/warmup_ui.py:1047
+#, fuzzy
+msgid "Accuracy"
+msgstr "मुद्रा"
+
+#: pages/warmup_ui.py:1047
+msgid "Final Skill"
+msgstr ""
+
+#: pages/warmup_ui.py:1076 pages/warmup_ui.py:1077
+msgid "Play Again"
+msgstr "फिर से खेलें"
+
+#: question/loader.py:753
+#, fuzzy
+msgid "Session complete!"
+msgstr "सत्र पूरा हुआ!"
+
+#: question/loader.py:759
+msgid "Level Complete! Outstanding job!"
+msgstr ""
+
+#: question/loader.py:760
+#, fuzzy
+msgid "Great job!"
+msgstr "शानदार सत्र!"
+
+#: question/loader.py:761
+#, fuzzy
+msgid "Good effort!"
+msgstr "अद्भुत प्रयास"
+
+#: question/loader.py:762
+#, fuzzy
+msgid "Keep practicing!"
+msgstr "जारी रखें!"
+
+#~ msgid "Addition"
+#~ msgstr "जोड़"
+
+#~ msgid "Bellring"
+#~ msgstr "घंटी"
+
+#~ msgid "Choose Mode"
+#~ msgstr "मोड चुनें"
+
+#~ msgid "Click below to start the quiz"
+#~ msgstr "क्विज़ शुरू करने के लिए नीचे क्लिक करें"
+
+#~ msgid "Distance"
+#~ msgstr "दूरी"
+
+#~ msgid "Division"
+#~ msgstr "भाग"
+
+#~ msgid "Easy"
+#~ msgstr "आसान"
+
+#~ msgid "Extra Hard"
+#~ msgstr "बहुत कठिन"
+
+#~ msgid "Great session! You really know your {strength}. {weakness}"
+#~ msgstr "शानदार सत्र! आप वास्तव में अपने {strength} को जानते हैं। {weakness}"
+
+#~ msgid "Hard"
+#~ msgstr "कठिन"
+
+#~ msgid "Keep exploring"
+#~ msgstr "अन्वेषण जारी रखें"
+
+#~ msgid "Keep exploring {skill}!"
+#~ msgstr "{skill} को एक्सप्लोर करते रहें!"
+
+#~ msgid "Level: {level}"
+#~ msgstr ""
+
+#~ msgid "Medium"
+#~ msgstr "मध्यम"
+
+#~ msgid "Multiplication"
+#~ msgstr "गुणा"
+
+#~ msgid "Next: {level}"
+#~ msgstr ""
+
+#~ msgid "One more!"
+#~ msgstr "एक और!"
+
+#~ msgid "Operations"
+#~ msgstr "गणित क्रियाएँ"
+
+#~ msgid "Percentage"
+#~ msgstr "प्रतिशत"
+
+#~ msgid "Remainder"
+#~ msgstr "शेषफल"
+
+#~ msgid "Same level again — you're getting closer!"
+#~ msgstr "वही स्तर फिर से — आप करीब आ रहे हैं!"
+
+#~ msgid "Select Game Difficulty"
+#~ msgstr "गेम की कठिनाई चुनें"
+
+#~ msgid "Session Complete"
+#~ msgstr "सत्र पूरा हुआ"
+
+#~ msgid "Subtraction"
+#~ msgstr "घटाव"
+
+#~ msgid "Time"
+#~ msgstr "समय"
+
+#~ msgid "Time's up!"
+#~ msgstr "समय समाप्त!"
+
+#~ msgid "Time's up! Amazing effort."
+#~ msgstr "समय समाप्त! अद्भुत प्रयास।"
+
+#~ msgid "Type your answer as a number and press Enter."
+#~ msgstr "अपना उत्तर एक संख्या के रूप में टाइप करें और Enter दबाएं।"
+
+#~ msgid "Wow!"
+#~ msgstr "वाह!"
+
+#~ msgid "Wow! {strength} is your superpower. {weakness}"
+#~ msgstr "वाह! {strength} आपकी महाशक्ति है। {weakness}"
+
+#~ msgid "You are brilliant across everything!"
+#~ msgstr "आप हर चीज में शानदार हैं!"
+
+#~ msgid "You really know your"
+#~ msgstr "आप वास्तव में जानते हैं"
+
+#~ msgid "You were amazing at"
+#~ msgstr "आप कमाल थे"
+
+#~ msgid "You were amazing at {strength} today! {weakness}"
+#~ msgstr "आज आप {strength} में कमाल थे! {weakness}"
+
+#~ msgid "and"
+#~ msgstr "और"
+
+#~ msgid "is your next adventure!"
+#~ msgstr "आपका अगला साहसिक कार्य है!"
+
+#~ msgid "is your superpower."
+#~ msgstr "आपकी महाशक्ति है।"
+
+#~ msgid "next adventure"
+#~ msgstr "अगला साहसिक कार्य"
+
+#~ msgid "remember"
+#~ msgstr "मेरी पसंद याद रखें"
+
+#~ msgid "superpower"
+#~ msgstr "महाशक्ति"
+
+#~ msgid "today!"
+#~ msgstr "आज!"
+
+#~ msgid "trying hard"
+#~ msgstr "कड़ी मेहनत"
+
+#~ msgid "very strong"
+#~ msgstr "बहुत मजबूत"
+
+#~ msgid "wants more of your attention next time!"
+#~ msgstr "अगली बार अधिक ध्यान देने की आवश्यकता है!"
+
+#~ msgid "you is getting there!"
+#~ msgstr "आप पहुँच रहे हैं!"
+
+#~ msgid "you're getting there"
+#~ msgstr "आप पहुँच रहे हैं"
+
+#~ msgid "{skill} is your next adventure!"
+#~ msgstr "{skill} आपका अगला साहसिक कार्य है!"
+
+#~ msgid "{skill} wants more of your attention!"
+#~ msgstr "{skill} को आपके अधिक ध्यान की आवश्यकता है!"
+

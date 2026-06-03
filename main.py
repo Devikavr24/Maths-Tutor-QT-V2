@@ -36,10 +36,17 @@ from tts.tts_worker import TextToSpeech
 
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 
-from language.language import get_saved_language, save_selected_language_to_file, tr, set_language
+from language.language import get_saved_language, save_selected_language_to_file, set_language
 
 from PyQt5.QtGui import QMovie, QKeySequence, QFont
 from PyQt5.QtCore import Qt
+
+languages = {"English" : "en", 
+                "हिंदी" : "hi_IN",
+                "മലയാളം" : "ml_IN",
+                "தமிழ்" : "ta_IN", 
+                "عربي" : "ar_SA", 
+                "संस्कृत" : "sa_IN"}
 
 def clear_layout(layout):
     if layout is None or sip.isdeleted(layout):
@@ -67,18 +74,25 @@ class RootWindow(QDialog):
         layout = QVBoxLayout()
 
         if not self.minimal:
-            title_label = QLabel("Welcome to Maths Tutor!")
+            title_label = QLabel(_("Welcome to Maths Tutor!"))
             title_label.setProperty("class", "title")
             title_label.setAccessibleName("Welcome to Maths Tutor")
             layout.addWidget(title_label)
             layout.addSpacing(15)
 
-        language_label = QLabel("Select your preferred language:")
+        language_label = QLabel(_("Select your preferred language:"))
         language_label.setProperty("class", "subtitle")
 
-        languages = ["English", "हिंदी", "മലയാളം", "தமிழ்", "عربي", "संस्कृत"]
+        # self.languages = {"English" : "en", 
+        #              "हिंदी" : "hi_IN",
+        #              "മലയാളം" : "ml_IN",
+        #             "தமிழ்" : "ta_IN", 
+        #             "عربي" : "ar_SA", 
+        #             "संस्कृत" : "sa_IN"}
+        global languages
+        
         self.language_combo = QComboBox()
-        self.language_combo.addItems(languages)
+        self.language_combo.addItems(list(languages.keys()))
         self.language_combo.setProperty("class", "combo-box")
 
         language_label.setBuddy(self.language_combo)
@@ -89,7 +103,7 @@ class RootWindow(QDialog):
         layout.addWidget(self.language_combo)
 
         if not self.minimal:
-            self.remember_check = QCheckBox("Remember my selection")
+            self.remember_check = QCheckBox(_("Remember my selection"))
             self.remember_check.setChecked(False)
             self.remember_check.setProperty("class", "checkbox")
             self.remember_check.setStyleSheet("color: #ffffff;")
@@ -101,14 +115,14 @@ class RootWindow(QDialog):
 
         if not self.minimal:
             layout.addWidget(self.create_line())
-        self.ok_button = QPushButton("Continue")
+        self.ok_button = QPushButton(_("Continue"))
         self.ok_button.setDefault(True)
         self.ok_button.setAutoDefault(True)
         QTimer.singleShot(100, lambda: self.language_combo.setFocus())
         self.ok_button.setAccessibleName("Continue")
         self.ok_button.setAccessibleDescription("Confirm language selection and continue to the app")
 
-        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button = QPushButton(_("Cancel"))
         self.cancel_button.setAutoDefault(False)
         self.cancel_button.setShortcut(Qt.Key_Escape)
         self.cancel_button.setProperty("class", "danger-button")
@@ -137,7 +151,8 @@ class RootWindow(QDialog):
 
     def handle_continue(self):
         selected = self.language_combo.currentText()
-        set_language(selected)
+        lang = languages.get(selected)
+        set_language(lang)
         print("Language selected:", selected)
         self.remember = (hasattr(self, 'remember_check') and self.remember_check.isChecked()) if not self.minimal else False
 
@@ -164,9 +179,9 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.language = language
-        set_language(self.language)
+        set_language(languages.get(self.language))
 
-        self.setWindowTitle(f"Maths Tutor - {self.language}")
+        self.setWindowTitle(_(f"Maths Tutor - {self.language}"))
         self.resize(900, 600)
         self.setMinimumSize(800, 550)
         self.current_difficulty = 1
@@ -207,8 +222,8 @@ class MainWindow(QMainWindow):
     def refresh_ui(self, new_language):
         print(f"[System] Refreshing UI to {new_language}...")
         self.language = new_language
-        set_language(new_language)
-        self.setWindowTitle(f"Maths Tutor - {self.language}")
+        set_language(languages.get(new_language))
+        self.setWindowTitle(_(f"Maths Tutor - {self.language}"))
 
         if hasattr(self, 'tts'):
             self.tts.stop()
@@ -279,7 +294,7 @@ class MainWindow(QMainWindow):
 
         menu_layout.addStretch()
 
-        title = QLabel(tr("🎓 Learning Mode"))
+        title = QLabel(_("🎓 Learning Mode"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
         menu_layout.addWidget(title, alignment=Qt.AlignCenter)
@@ -341,7 +356,7 @@ class MainWindow(QMainWindow):
 
         self.section_footer.hide()
 
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.hide()
 
@@ -414,7 +429,7 @@ class MainWindow(QMainWindow):
 
     def focus_story_button(self):
         for btn in self.menu_buttons:
-            if btn.text() == tr("Story"):
+            if btn.text() ==_("Story"):
                 btn.setFocus()
                 break
 
@@ -428,12 +443,12 @@ class MainWindow(QMainWindow):
         layout.setAlignment(Qt.AlignCenter)
         widget.setLayout(layout)
 
-        title = QLabel(tr("welcome"))
+        title = QLabel(_("welcome"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
         layout.addWidget(title, alignment=Qt.AlignCenter)
 
-        subtitle = QLabel(tr("ready").format(lang=self.language))
+        subtitle = QLabel(_("ready").format(lang=self.language))
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setProperty("class", "subtitle")
         layout.addWidget(subtitle, alignment=Qt.AlignCenter)
@@ -458,9 +473,9 @@ class MainWindow(QMainWindow):
         buttons_layout.setAlignment(Qt.AlignCenter)
 
         buttons = [
-            (tr("⚡Quickplay"), self.start_quickplay_mode),
-            (tr("🎮 Game Mode"), self.start_game_mode),
-            (tr("🎓 Learning Mode"), self.start_learning_mode)
+            (_("⚡Quickplay"), self.start_quickplay_mode),
+            (_("🎮 Game Mode"), self.start_game_mode),
+            (_("🎓 Learning Mode"), self.start_learning_mode)
         ]
         for text, callback in buttons:
             btn = QPushButton(text)
@@ -499,7 +514,7 @@ class MainWindow(QMainWindow):
         self._switch_to_page(self.menu_widget)
         self.main_footer.show()
         self.section_footer.hide()
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
         for btn in self.main_footer.findChildren(QPushButton):
@@ -517,10 +532,10 @@ class MainWindow(QMainWindow):
         if saved_state:
             from PyQt5.QtWidgets import QMessageBox
             msg_box = QMessageBox(self)
-            msg_box.setWindowTitle(tr("Resume Session"))
-            msg_box.setText(tr("A saved session was found. Do you want to resume?"))
-            yes_btn = msg_box.addButton(tr("Yes"), QMessageBox.YesRole)
-            no_btn  = msg_box.addButton(tr("No"),  QMessageBox.NoRole)
+            msg_box.setWindowTitle(_("Resume Session"))
+            msg_box.setText(_("A saved session was found. Do you want to resume?"))
+            yes_btn = msg_box.addButton(_("Yes"), QMessageBox.YesRole)
+            no_btn  = msg_box.addButton(_("No"),  QMessageBox.NoRole)
             msg_box.setDefaultButton(yes_btn)
             msg_box.exec_()
 
@@ -542,10 +557,10 @@ class MainWindow(QMainWindow):
         if logic_df is not None and not logic_df.empty:
             from PyQt5.QtWidgets import QMessageBox
             msg_box = QMessageBox(self)
-            msg_box.setWindowTitle(tr("Resume Session"))
-            msg_box.setText(tr("A saved session was found. Do you want to resume?"))
-            yes_btn = msg_box.addButton(tr("Yes"), QMessageBox.YesRole)
-            no_btn  = msg_box.addButton(tr("No"),  QMessageBox.NoRole)
+            msg_box.setWindowTitle(_("Resume Session"))
+            msg_box.setText(_("A saved session was found. Do you want to resume?"))
+            yes_btn = msg_box.addButton(_("Yes"), QMessageBox.YesRole)
+            no_btn  = msg_box.addButton(_("No"),  QMessageBox.NoRole)
             msg_box.setDefaultButton(yes_btn)
             msg_box.exec_()
 
@@ -591,7 +606,7 @@ class MainWindow(QMainWindow):
 
             self.main_footer.show()
             self.section_footer.hide()
-            back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+            back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
             if back_btn:
                 back_btn.show()
             for btn in self.main_footer.findChildren(QPushButton):
@@ -660,7 +675,7 @@ class MainWindow(QMainWindow):
 
         self.main_footer.show()
         self.section_footer.hide()
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
         for btn in self.main_footer.findChildren(QPushButton):
@@ -683,9 +698,7 @@ class MainWindow(QMainWindow):
 
         # Pull ranked from saved state or the live warmup session
         ranked = []
-        if saved_state and "ranked" in saved_state:
-            ranked = saved_state["ranked"]
-        elif hasattr(self, '_warmup_session'):
+        if hasattr(self, '_warmup_session'):
             ranked = self._warmup_session.get_ranked_results()
 
         self._gamemode_intro = GameModeIntroWidget(
@@ -698,7 +711,7 @@ class MainWindow(QMainWindow):
 
         self.main_footer.show()
         self.section_footer.hide()
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn: back_btn.show()
         for btn in self.main_footer.findChildren(QPushButton):
             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
@@ -767,8 +780,8 @@ class MainWindow(QMainWindow):
             self.back_to_main_menu()
         self.back_to_home = safe_back
 
-        if hasattr(self, 'tts') and not self.is_muted:
-            QTimer.singleShot(300, lambda: self.tts.speak(tr("Game mode! Let's go!")))
+        # if hasattr(self, 'tts') and not self.is_muted:
+        #     QTimer.singleShot(300, lambda: self.tts.speak(_("Game mode! Let's go!")))
 
         self.game_timer.start()
 
@@ -785,7 +798,7 @@ class MainWindow(QMainWindow):
         clear_saved_game_session()
 
         print(f"[GAME] Session ended. Q={self._game_session_new.question_count} Acc={self._game_session_new.accuracy_pct()}%")
-        QTimer.singleShot(500, lambda: self.tts.speak(tr("Time's up! Amazing effort.")))
+        # QTimer.singleShot(500, lambda: self.tts.speak(_("Time's up! Amazing effort.")))
         QTimer.singleShot(2200, self._show_game_report)
 
     def _show_game_report(self):
@@ -799,7 +812,7 @@ class MainWindow(QMainWindow):
         self._switch_to_page(report)
         self.section_footer.hide()
         self.main_footer.show()
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn: back_btn.show()
         for btn in self.main_footer.findChildren(QPushButton):
             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower(): btn.hide()
@@ -811,7 +824,7 @@ class MainWindow(QMainWindow):
     def load_game_questions(self, difficulty_index):
         from question.loader import LinearProgressionSession
         from PyQt5.QtWidgets import QVBoxLayout, QProgressBar, QWidget, QPushButton
-        from language.language import tr
+        # from language.language import tr
 
         if hasattr(self, 'tts'):
             self.tts.stop()
@@ -839,8 +852,8 @@ class MainWindow(QMainWindow):
 
         self.game_timer.start()
 
-        if hasattr(self, 'tts') and not self.is_muted:
-            self.tts.speak(tr("Game mode! Let's go!"))
+        # if hasattr(self, 'tts') and not self.is_muted:
+        #     self.tts.speak(_("Game mode! Let's go!"))
 
         processor = self.game_session.get_next_question()
 
@@ -903,14 +916,14 @@ class MainWindow(QMainWindow):
 
             self.back_to_home = safe_back_to_home
 
-            back_to_diff_btn = QPushButton(tr("Back to Difficulty"))
+            back_to_diff_btn = QPushButton(_("Back to Difficulty"))
             back_to_diff_btn.setObjectName("back_to_difficulty")
             back_to_diff_btn.setProperty("class", "footer-button")
             back_to_diff_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             back_to_diff_btn.adjustSize()
             back_to_diff_btn.setFont(QFont("Arial", 14))
-            back_to_diff_btn.setAccessibleName(tr("Back to Difficulty"))
-            back_to_diff_btn.setAccessibleDescription(tr("Return to difficulty selection"))
+            back_to_diff_btn.setAccessibleName("Back to Difficulty")
+            back_to_diff_btn.setAccessibleDescription("Return to difficulty selection")
             back_to_diff_btn.clicked.connect(self._back_to_difficulty)
 
             from pages.shared_ui import apply_theme
@@ -954,8 +967,8 @@ class MainWindow(QMainWindow):
     def _get_difficulty_name(self, index):
         levels = ["Easy", "Medium", "Hard", "Extra Hard"]
         if 0 <= index < len(levels):
-            from language.language import tr
-            return tr(levels[index])
+            # from language.language import tr
+            return _(levels[index])
         return ""
 
     def _on_game_tick(self):
@@ -966,12 +979,12 @@ class MainWindow(QMainWindow):
         elif hasattr(self, 'timer_bar'):
             self._update_timer_bar()
 
-        from language.language import tr
-        if self.time_remaining == 15:
-            self.tts.speak(tr("Keep going!"))
-        elif self.time_remaining == 5:
-            self.tts.speak(tr("One more!"))
-        elif self.time_remaining <= 0:
+        # from language.language import tr
+        # if self.time_remaining == 15:
+        #     self.tts.speak(_("Keep going!"))
+        # elif self.time_remaining == 5:
+        #     self.tts.speak(_("One more!"))
+        if self.time_remaining <= 0:
             if hasattr(self, 'game_mode_widget') and self.game_mode_widget:
                 self._on_game_mode_end()
             else:
@@ -988,15 +1001,15 @@ class MainWindow(QMainWindow):
         if hasattr(self, '_original_back_to_home'):
             self.back_to_home = self._original_back_to_home
 
-        from language.language import tr
+        # from language.language import tr
         print(f"[GAME] Session ended. Final scores: {self.game_session.skill_scores}")
 
-        QTimer.singleShot(500, lambda: self.tts.speak(tr("Time's up! Amazing effort.")))
+        # QTimer.singleShot(500, lambda: self.tts.speak(_("Time's up! Amazing effort.")))
         QTimer.singleShot(2500, self.show_end_report)
 
     def show_end_report(self):
         from pages.shared_ui import GameReportWidget, apply_theme
-        from language.language import tr
+        # from language.language import tr
 
         self._cleanup_game_footer()
         report = GameReportWidget(session=self.game_session, window=self, tts=self.tts)
@@ -1007,10 +1020,10 @@ class MainWindow(QMainWindow):
 
         if hasattr(self, 'section_footer'): self.section_footer.hide()
         if hasattr(self, 'main_footer'): self.main_footer.show()
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn: back_btn.show()
 
-        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
+        upload_btn = self.main_footer.findChild(QPushButton, _("Upload").lower().replace(" ", "_"))
         if upload_btn: upload_btn.hide()
 
     def start_quickplay_mode(self):
@@ -1023,11 +1036,11 @@ class MainWindow(QMainWindow):
         self.main_footer.show()
         self.section_footer.hide()
 
-        upload_btn = self.main_footer.findChild(QPushButton, tr("Upload").lower().replace(" ", "_"))
+        upload_btn = self.main_footer.findChild(QPushButton, _("Upload").lower().replace(" ", "_"))
         if upload_btn:
             upload_btn.hide()
 
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.show()
 
@@ -1160,7 +1173,7 @@ class MainWindow(QMainWindow):
         self.menu_buttons = []
 
         for i, name in enumerate(sections):
-            translated_name = tr(name)
+            translated_name = _(name)
             button = QPushButton(translated_name)
             button.setMinimumSize(250, 65)
             button.setMaximumSize(300, 75)
@@ -1177,13 +1190,13 @@ class MainWindow(QMainWindow):
 
     def create_section_footer(self):
         buttons = ["Back to Operations", "Back to Learn", "Back to Home", "Settings"]
-        translated = [tr(b) for b in buttons]
+        translated = [_(b) for b in buttons]
 
         callbacks = {
-            tr("Back to Operations"): lambda: self.load_section("Operations"),
-            tr("Back to Learn"): self.back_to_learn_menu,
-            tr("Back to Home"): lambda: self.back_to_home(),
-            tr("Settings"): self.handle_settings
+            _("Back to Operations"): lambda: self.load_section("Operations"),
+            _("Back to Learn"): self.back_to_learn_menu,
+            _("Back to Home"): lambda: self.back_to_home(),
+            _("Settings"): self.handle_settings
         }
 
         footer = create_footer_buttons(translated, callbacks=callbacks)
@@ -1192,11 +1205,11 @@ class MainWindow(QMainWindow):
         footer.layout().insertWidget(0, audio_btn, alignment=Qt.AlignLeft)
 
         for btn in footer.findChildren(QPushButton):
-            if btn.text() == tr("Back to Operations"):
+            if btn.text() == _("Back to Operations"):
                 btn.setObjectName("back_to_operations")
-            elif btn.text() == tr("Back to Learn"):
+            elif btn.text() == _("Back to Learn"):
                 btn.setObjectName("back_to_learn")
-            elif btn.text() == tr("Back to Home"):
+            elif btn.text() == _("Back to Home"):
                 btn.setObjectName("back_to_home")
 
         return footer
@@ -1212,7 +1225,7 @@ class MainWindow(QMainWindow):
             self.current_difficulty = dialog.get_difficulty_index()
             new_language = dialog.get_selected_language()
             if new_language != self.language:
-                self.refresh_ui(new_language)
+                self.refresh_ui(languages.get(new_language))
 
     def load_section(self, name):
         if hasattr(self, 'tts'):
@@ -1271,7 +1284,7 @@ class MainWindow(QMainWindow):
             if "upload" in btn.objectName().lower() or "upload" in btn.text().lower():
                 btn.show()
 
-        back_btn = self.main_footer.findChild(QPushButton, tr("Back to Menu").lower().replace(" ", "_"))
+        back_btn = self.main_footer.findChild(QPushButton, _("Back to Menu").lower().replace(" ", "_"))
         if back_btn:
             back_btn.hide()
         self.focus_quickplay_button()
