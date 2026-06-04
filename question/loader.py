@@ -4,7 +4,6 @@ import random
 import pandas as pd
 import language.language as lang_config
 
-
 # Bridge question generator (under development - stub returns empty list)
 def generate_bridge_questions(concept: str) -> list[dict]:
     #returns empty list until implemented
@@ -216,11 +215,11 @@ class QuestionProcessor:
         input_string    = ''.join(c for c in variable_string if not c.isalpha())
         self.variables  = [c for c in variable_string if c.isalpha()]
         self.oprands    = self.parseInputRange(input_string)
-
-        current_lang = getattr(lang_config, 'selected_language', 'English')
-        if current_lang == "हिंदी" and "question_hi" in working_df.columns:
+        # print(f"\n\n{languages}\n\n")
+        current_lang = getattr(lang_config, 'selected_language', 'en')
+        if current_lang == "hi_IN" and "question_hi" in working_df.columns:
             question_template = str(row["question_hi"])
-        elif current_lang == "മലയാളം" and "question_mal" in working_df.columns:
+        elif current_lang == "ml_IN" and "question_mal" in working_df.columns:
             question_template = str(row["question_mal"])
         else:
             question_template = str(row.get("question", row.get("question_", "")))

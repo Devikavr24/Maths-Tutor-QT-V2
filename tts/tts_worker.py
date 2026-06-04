@@ -58,10 +58,10 @@ class TTSWorker(QObject):
                     pass
 
     def speak(self, text):
-        current_lang = getattr(lang_config, 'selected_language', 'English')
+        current_lang = getattr(lang_config, 'selected_language', 'en')
         
         # Malayalam support
-        if current_lang == "മലയാളം":
+        if current_lang == "ml_IN":
             # Pronounce math symbols correctly in Malayalam
             replacements = {
                 '+': ' കൂട്ടണം ',
@@ -92,7 +92,7 @@ class TTSWorker(QObject):
                 print("[Edge TTS Error] Fallback failed:", e)
         
         # ✅ FIX: Convert standard numbers to Hindi Devanagari numerals for correct pronunciation
-        if current_lang == "हिंदी":
+        if current_lang == "hi_IN":
             hindi_numerals = {
                 '0': '०', '1': '१', '2': '२', '3': '३', '4': '४', 
                 '5': '५', '6': '६', '7': '७', '8': '८', '9': '९'
@@ -133,10 +133,10 @@ class TTSWorker(QObject):
         self._stop_windows() # Stop any previous speech
 
         # 1. ATTEMPT NATIVE VOICE (OneCore) OR FALLBACK TO ESPEAK-NG
-        if current_lang in ["हिंदी", "മലയാളം"]:
+        if current_lang in ["hi_IN", "ml_IN"]:
             voice_found = False
-            lang_code = 'hi' if current_lang == "हिंदी" else 'ml'
-            search_name = "hindi" if current_lang == "हिंदी" else "malayalam"
+            lang_code = 'hi' if current_lang == "hi_IN" else 'ml'
+            search_name = "hindi" if current_lang == "hi_IN" else "malayalam"
             
             try:
                 pythoncom.CoInitialize() # Required for COM in QThread
@@ -150,7 +150,7 @@ class TTSWorker(QObject):
                 target_voice = None
                 for token in cat.EnumerateTokens():
                     desc = token.GetDescription().lower()
-                    if search_name in desc or (current_lang == "हिंदी" and ("kalpana" in desc or "hemant" in desc)):
+                    if search_name in desc or (current_lang == "hi_IN" and ("kalpana" in desc or "hemant" in desc)):
                         target_voice = token
                         voice_found = True
                         break
@@ -200,7 +200,7 @@ class TTSWorker(QObject):
         for voice in voices:
             v_name = voice.name.lower()
             v_id = voice.id.lower()
-            if current_lang != "हिंदी" and ("english" in v_name or "en-us" in v_id or "zira" in v_name or "david" in v_name):
+            if current_lang != "hi_IN" and ("english" in v_name or "en-us" in v_id or "zira" in v_name or "david" in v_name):
                 target_voice = voice.id
                 break
                 
@@ -259,8 +259,8 @@ class TTSWorker(QObject):
     def _speak_linux(self, text, current_lang):
         self._stop_linux()
         try:
-            if current_lang == "हिंदी": voice_arg = 'hi'
-            elif current_lang == "മലയാളം": voice_arg = 'ml'
+            if current_lang == "hi_IN": voice_arg = 'hi'
+            elif current_lang == "ml_IN": voice_arg = 'ml'
             else: voice_arg = 'en'
             
             self.process = subprocess.Popen(['espeak-ng', '-v', voice_arg, '-s', str(self.speech_rate), text])

@@ -299,7 +299,9 @@ class QuestionWidget(QWidget):
         self.gif_feedback_label.setAccessibleName("")
         self.gif_feedback_label.setAccessibleDescription("")
         self.layout.addWidget(self.gif_feedback_label, alignment=Qt.AlignCenter)
-
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
         self.load_new_question()
 
     def update_scaling(self, scale):
@@ -351,7 +353,8 @@ class QuestionWidget(QWidget):
             if self.bell_button and not self.bell_button.hasFocus():
                 self.bell_button.setFocus()
         elif self.input_box and not self.input_box.hasFocus():
-            self.input_box.setFocus()
+            # self.input_box.setFocus()
+            pass
 
     def load_new_question(self):
         if hasattr(self, "gif_feedback_label"):
@@ -368,6 +371,10 @@ class QuestionWidget(QWidget):
             and not self.main_window.is_muted
             and self.processor.questionType.lower() != "bellring"
         )
+
+        if self.input_box:
+            self.input_box.clear()
+            self.setFocus()
 
         delay_ms = 0
         if app_tts_active and hasattr(self, 'tts'):
@@ -394,8 +401,7 @@ class QuestionWidget(QWidget):
 
         self.label.setText(question_text)
 
-        if self.input_box:
-            self.input_box.clear()
+        
         self.result_label.setText("")
         self.show_feedback_gif("question")
 
@@ -411,9 +417,23 @@ class QuestionWidget(QWidget):
         if self.is_bell_mode:
             QTimer.singleShot(100, lambda: self.bell_button.setFocus(Qt.OtherFocusReason))
         elif self.input_box:
-            QTimer.singleShot(100, lambda: self.input_box.setFocus(Qt.OtherFocusReason))
+            # QTimer.singleShot(100, lambda: self.input_box.setFocus(Qt.OtherFocusReason))
+            pass
 
         self._question_count += 1
+
+    def keyPressEvent(self, event):
+        """This catches keys because the QuestionWidget currently has focus."""
+        
+        # If the user starts typing, instantly shift focus to the input box
+        if not self.input_box.hasFocus():
+            self.input_box.setFocus()
+            
+            # Forward the exact key they just pressed so it isn't lost
+            self.input_box.keyPressEvent(event)
+        else:
+            # Normal behavior
+            super().keyPressEvent(event)
 
     def play_bell_sounds(self, count):
         if not hasattr(self, "bell_timer"):

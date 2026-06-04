@@ -118,34 +118,44 @@ class WarmupIntroWidget(QWidget):
         self.begin_btn.setMinimumSize(260, 70)
         self.begin_btn.setProperty("class", "menu-button")
         self.begin_btn.setAccessibleName(_("Begin Warmup"))
-        self.begin_btn.setAccessibleDescription(
-            "Welcome! Before we begin the real game, let's do a quick Warmup Match so we can understand your strengths"
-            "You will answer one question from each of the different question types starting from the easiest. Press Sapce key to Start"
-        )
+        # self.begin_btn.setAccessibleDescription(
+        #     "Welcome! Before we begin the real game, let's do a quick Warmup Match so we can understand your strengths"
+        #     "You will answer one question from each of the different question types starting from the easiest. Press Sapce key to Start"
+        # )
         self.begin_btn.clicked.connect(self._on_begin)
         layout.addWidget(self.begin_btn, alignment=Qt.AlignCenter)
-
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
         layout.addStretch()
+        if hasattr(self, "tts") :
+            QTimer.singleShot(1000, self._speak_intro)
 
-        QTimer.singleShot(200, self.begin_btn.setFocus)
+        # QTimer.singleShot(200, self.begin_btn.setFocus)
+
 
     def _speak_intro(self):
         if self.window and not self.window.is_muted and self.tts:
-            current_lang = getattr(lang_config, 'selected_language', 'English')
-            intros = {
-                "മലയാളം": "വാംഅപ്പ് മത്സരത്തിലേക്ക് സ്വാഗതം! ഓരോ ചോദ്യ തരം പരിശോധിച്ചു നിങ്ങളുടെ കഴിവുകൾ ഞങ്ങൾ വിലയിരുത്തും. തയ്യാറാകുമ്പോൾ വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക.",
-                "हिंदी": "वार्मअप मैच में आपका स्वागत है! हम प्रत्येक प्रकार के प्रश्न पूछकर आपकी ताकत का आकलन करेंगे। जब आप तैयार हों तो वार्मअप शुरू करें बटन दबाएं।",
-                "தமிழ்": "வார்ம்அப் போட்டிக்கு வரவேற்கிறோம்! ஒவ்வொரு கேள்வி வகையையும் கேட்டு உங்கள் திறமைகளை நாங்கள் மதிப்பீடு செய்வோம். நீங்கள் தயாராக இருக்கும்போது வார்ம்அப் தொடங்கவும் பொத்தானை அழுத்தவும்.",
-                "عربي": "مرحبًا بك في المباراة التجريبية! سنقوم بتقييم نقاط قوتك من خلال طرح سؤال من كل نوع. اضغط على ابدأ الإحماء عندما تكون مستعدًا.",
-                "संस्कृत": "वार्मअप क्रीडायां भवतः स्वागतम्! वयं प्रत्येकं प्रकारस्य प्रश्नान् पृष्ट्वा भवतး सामर्थ्यस्य मूल्याङ्कनं करिष्यामः। यदा भवान् सज्जः भवति तदा വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക।",
-                "English": (
+            # current_lang = getattr(lang_config, 'selected_language', 'English')
+            # intros = {
+            #     "ml_IN": "വാംഅപ്പ് മത്സരത്തിലേക്ക് സ്വാഗതം! ഓരോ ചോദ്യ തരം പരിശോധിച്ചു നിങ്ങളുടെ കഴിവുകൾ ഞങ്ങൾ വിലയിരുത്തും. തയ്യാറാകുമ്പോൾ വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക.",
+            #     "hi_IN": "वार्मअप मैच में आपका स्वागत है! हम प्रत्येक प्रकार के प्रश्न पूछकर आपकी ताकत का आकलन करेंगे। जब आप तैयार हों तो वार्मअप शुरू करें बटन दबाएं।",
+            #     "ta_IN": "வார்ம்அப் போட்டிக்கு வரவேற்கிறோம்! ஒவ்வொரு கேள்வி வகையையும் கேட்டு உங்கள் திறமைகளை நாங்கள் மதிப்பீடு செய்வோம். நீங்கள் தயாராக இருக்கும்போது வார்ம்அப் தொடங்கவும் பொத்தானை அழுத்தவும்.",
+            #     "ar_SA": "مرحبًا بك في المباراة التجريبية! سنقوم بتقييم نقاط قوتك من خلال طرح سؤال من كل نوع. اضغط على ابدأ الإحماء عندما تكون مستعدًا.",
+            #     "sa_IN": "वार्मअप क्रीडायां भवतः स्वागतम्! वयं प्रत्येकं प्रकारस्य प्रश्नान् पृष्ट्वा भवतး सामर्थ्यस्य मूल्याङ्कनं करिष्यामः। यदा भवान् सज्जः भवति तदा വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക।",
+            #     "en": (
+            #         "Welcome to the Warmup Match! "
+            #         "We will assess your strengths by asking some questions. "
+            #         "Press Begin Warmup when you are ready."
+            #     )
+            # }
+            # msg = intros.get(current_lang, intros["English"])
+            msg = _(
                     "Welcome to the Warmup Match! "
-                    "We will assess your strengths by asking one question from each type. "
-                    "Press Begin Warmup when you are ready."
+                    "We will assess your strengths by asking some questions. "
+                    "Press Begin Warmup button when you are ready."
                 )
-            }
-            msg = intros.get(current_lang, intros["English"])
-            # QTimer.singleShot(400, lambda: self.tts.speak(msg))
+            QTimer.singleShot(400, lambda: self.tts.speak(msg))
 
     def _on_begin(self):
         if self.tts:
@@ -316,6 +326,9 @@ class WarmupQuestionWidget(QWidget):
         self.autoskip_tick_timer.timeout.connect(self._on_autoskip_tick)
 
         self._autoskip_remaining = AUTO_SKIP_SECONDS
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
 
     # ── Step loading ─────────────────────────────────────────────────────────
 
@@ -351,6 +364,7 @@ class WarmupQuestionWidget(QWidget):
         self.feedback_lbl.setText("")
         self.feedback_lbl.setFocus()   
         self.input_box.clear()
+        self.setFocus()
         self.input_box.setEnabled(False)
         self.submit_btn.setEnabled(True)
         self.skip_btn.setEnabled(True)
@@ -400,7 +414,18 @@ class WarmupQuestionWidget(QWidget):
         else:
             self._on_tts_done()
 
+    def keyPressEvent(self, event):
+        """This catches keys because the QuestionWidget currently has focus."""
         
+        # If the user starts typing, instantly shift focus to the input box
+        if not self.input_box.hasFocus():
+            self.input_box.setFocus()
+            
+            # Forward the exact key they just pressed so it isn't lost
+            self.input_box.keyPressEvent(event)
+        else:
+            # Normal behavior
+            super().keyPressEvent(event)
 
     def _on_tts_done(self):
         if not self._active:
@@ -412,7 +437,7 @@ class WarmupQuestionWidget(QWidget):
         self.autoskip_timer.start()
         self.autoskip_tick_timer.start()
         self.input_box.setEnabled(True)
-        QTimer.singleShot(100, self.input_box.setFocus)
+        # QTimer.singleShot(100, self.input_box.setFocus)
 
     def _on_autoskip_tick(self):
         self._autoskip_remaining = max(0, self._autoskip_remaining - 1)
@@ -877,6 +902,9 @@ class GameModeWidget(QWidget):
         self.feedback_lbl.setAccessibleName(" ")
         self.feedback_lbl.setFocus()
         root.addWidget(self.feedback_lbl); root.addStretch(1)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
 
     def _load_next_question(self):
         if not self._active: return
@@ -915,7 +943,7 @@ class GameModeWidget(QWidget):
         ln = len(question_text)
         self.question_lbl.setStyleSheet("font-size:14pt;" if ln>120 else "font-size:18pt;" if ln>80 else "")
         self.question_lbl.setText(question_text)
-        self.feedback_lbl.setText(""); self.input_box.clear()
+        self.feedback_lbl.setText(""); self.input_box.clear(); self.setFocus()
         self.input_box.setEnabled(True); self.submit_btn.setEnabled(True); self.skip_btn.setEnabled(True)
         self._question_start_time = None
         audio_on = self.window and not self.window.is_muted
@@ -925,12 +953,24 @@ class GameModeWidget(QWidget):
         else:
             self._on_tts_done()
         
+    def keyPressEvent(self, event):
+        """This catches keys because the QuestionWidget currently has focus."""
+        
+        # If the user starts typing, instantly shift focus to the input box
+        if not self.input_box.hasFocus():
+            self.input_box.setFocus()
+            
+            # Forward the exact key they just pressed so it isn't lost
+            self.input_box.keyPressEvent(event)
+        else:
+            # Normal behavior
+            super().keyPressEvent(event)
 
     def _on_tts_done(self):
         if not self._active:
             return
         self._question_start_time = time()
-        QTimer.singleShot(100, self.input_box.setFocus)
+        # QTimer.singleShot(100, self.input_box.setFocus)
 
     def _check_answer(self):
         if not self._active: return

@@ -446,6 +446,7 @@ class MainWindow(QMainWindow):
         title = QLabel(_("welcome"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
+        # title.setAccessibleName(_("welcome"))
         layout.addWidget(title, alignment=Qt.AlignCenter)
 
         subtitle = QLabel(_("ready").format(lang=self.language))
