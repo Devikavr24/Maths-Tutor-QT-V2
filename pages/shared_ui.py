@@ -14,7 +14,7 @@ import random
 from tts.tts_worker import TextToSpeech
 from PyQt5.QtMultimedia import QSound
 
-from language.language import tr
+# from language.language import tr
 from PyQt5.QtGui import QMovie
 
 DIFFICULTY_LEVELS = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
@@ -146,14 +146,14 @@ def create_footer_buttons(names, callbacks=None) -> QWidget:
 
 def create_main_footer_buttons(self):
     buttons    = ["Back to Menu", "Upload", "Settings"]
-    translated = {tr(b): b for b in buttons}
+    translated = {_(b): b for b in buttons}
 
     footer = create_footer_buttons(
         list(translated.keys()),
         callbacks={
-            tr("Back to Menu"): self.back_to_main_menu,
-            tr("Upload"):       self.handle_upload,
-            tr("Settings"):     self.handle_settings,
+            _("Back to Menu"): self.back_to_main_menu,
+            _("Upload"):       self.handle_upload,
+            _("Settings"):     self.handle_settings,
         }
     )
 
@@ -166,7 +166,7 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box = QLineEdit()
     input_box.setMinimumSize(width, height)
     input_box.setAlignment(Qt.AlignCenter)
-    input_box.setPlaceholderText(tr("Enter your answer"))
+    input_box.setPlaceholderText(_("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
     input_box.setProperty("class", "answer-input")
     validator = QRegExpValidator(QRegExp(r"-?\d*\.?\d*"))
@@ -188,10 +188,10 @@ def setup_exit_handling(window, require_confirmation=False):
     def check_and_close(event=None):
         if require_confirmation:
             msg_box = QMessageBox(window)
-            msg_box.setWindowTitle(tr("Exit Application"))
-            msg_box.setText(tr("Are you sure you want to exit?"))
-            yes_btn = msg_box.addButton(tr("Yes"), QMessageBox.YesRole)
-            no_btn  = msg_box.addButton(tr("No"),  QMessageBox.NoRole)
+            msg_box.setWindowTitle(_("Exit Application"))
+            msg_box.setText(_("Are you sure you want to exit?"))
+            yes_btn = msg_box.addButton(_("Yes"), QMessageBox.YesRole)
+            no_btn  = msg_box.addButton(_("No"),  QMessageBox.NoRole)
             msg_box.setDefaultButton(no_btn)
             msg_box.exec_()
             if msg_box.clickedButton() == yes_btn:
@@ -371,7 +371,7 @@ class QuestionWidget(QWidget):
 
         delay_ms = 0
         if app_tts_active and hasattr(self, 'tts'):
-            tts_text = f"{question_text}. {tr('Type your answer')}"
+            tts_text = f"{question_text}. {_('Type your answer')}"
             
             # Accessibility Timer Fix: Time is len(text) * 70ms + 500ms + 1000ms cognitive buffer
             delay_ms = len(tts_text) * 70 + 1500
@@ -454,7 +454,7 @@ class QuestionWidget(QWidget):
     # ── Answer checking ──────────────────────────────────────────────────
 
     def check_answer(self):
-        from language.language import tr
+        # from language.language import tr
         self.stop_all_activity()
         self._active = True
 
@@ -470,7 +470,7 @@ class QuestionWidget(QWidget):
             result = self.processor.submit_answer(user_input, self.answer, elapsed)
 
         if not result["valid"]:
-            msg = tr("Please enter a valid number.")
+            msg = _("Please enter a valid number.")
             self.result_label.setText(msg)
             self.result_label.setAccessibleName(msg)
             return
@@ -511,17 +511,17 @@ class QuestionWidget(QWidget):
                     sound_file   = f"{prefix}-{sound_index}.mp3"
                     break
 
-            clean_feedback = tr(feedback_key)
+            clean_feedback = _(feedback_key)
             self.result_label.setText(
                 f'<span style="font-size:16pt;">{emoji} {clean_feedback}</span>'
             )
-            self.result_label.setAccessibleName(f"{tr('Correct!')} {clean_feedback}")
+            self.result_label.setAccessibleName(f"{_('Correct!')} {clean_feedback}")
 
             if audio_on and self.main_window:
                 self.main_window.play_sound(sound_file)
                 self.show_feedback_gif(sound_file)
-                if hasattr(self, 'tts'):
-                    QTimer.singleShot(10, lambda t=clean_feedback: self.tts.speak(t))
+                # if hasattr(self, 'tts'):
+                #     QTimer.singleShot(10, lambda t=clean_feedback: self.tts.speak(t))
 
             self.processor.retry_count = 0
             QTimer.singleShot(2000, self.call_next_question)
@@ -546,16 +546,16 @@ class QuestionWidget(QWidget):
                 return
             else:
                 if self.processor.retry_count >= 2:
-                    msg = tr("Let's try another one!")
+                    msg = _("Let's try another one!")
                     self.result_label.setText(
                         f'<span style="font-size:16pt;">{msg}</span>'
                     )
                     QTimer.singleShot(2000, self.call_next_question)
                     return
 
-            try_again = tr("Try Again.")
+            try_again = _("Try Again.")
             self.result_label.setText(f'<span style="font-size:16pt;">{try_again}</span>')
-            self.result_label.setAccessibleName(f"{tr('Incorrect.')} {try_again}")
+            self.result_label.setAccessibleName(f"{_('Incorrect.')} {try_again}")
 
             if audio_on:
                 si = random.randint(1, 2)
@@ -566,8 +566,8 @@ class QuestionWidget(QWidget):
                 )
                 self.main_window.play_sound(sf)
                 self.show_feedback_gif(sf)
-                if hasattr(self, 'tts'):
-                    QTimer.singleShot(300, lambda t=try_again: self.tts.speak(t))
+                # if hasattr(self, 'tts'):
+                #     QTimer.singleShot(300, lambda t=try_again: self.tts.speak(t))
 
             if not self.input_box.hasFocus():
                 self.input_box.setFocus()
@@ -717,15 +717,15 @@ class QuestionWidget(QWidget):
                 else:              sf = f"okay-{sound_index}.mp3"
                 self.main_window.play_sound(sf)
                 self.show_feedback_gif(sf)
-                if hasattr(self, 'tts'):
-                    QTimer.singleShot(300, lambda t=clean: self.tts.speak(t))
+                # if hasattr(self, 'tts'):
+                #     QTimer.singleShot(300, lambda t=clean: self.tts.speak(t))
 
             self.processor.retry_count = 0
             QTimer.singleShot(2000, self.call_next_question)
 
         else:
             self.processor.retry_count += 1
-            from language.language import tr
+            # from language.language import tr
 
             is_game = hasattr(self.main_window, 'game_active') and self.main_window.game_active
             if is_game:
@@ -741,7 +741,7 @@ class QuestionWidget(QWidget):
                 return
             else:
                 if getattr(self.processor, 'retry_count', 0) >= 2:
-                    msg = tr("Let's try another one!")
+                    msg = _("Let's try another one!")
                     self.result_label.setText(
                         f'<span style="font-size:16pt;">{msg}</span>'
                     )
@@ -760,8 +760,8 @@ class QuestionWidget(QWidget):
                 )
                 self.main_window.play_sound(sf)
                 self.show_feedback_gif(sf)
-                if hasattr(self, 'tts'):
-                    QTimer.singleShot(300, lambda: self.tts.speak("Try Again"))
+                # if hasattr(self, 'tts'):
+                #     QTimer.singleShot(300, lambda: self.tts.speak("Try Again"))
 
             if self.bell_button and not self.bell_button.hasFocus():
                 self.bell_button.setFocus()
@@ -815,7 +815,7 @@ class SettingsDialog(QDialog):
         self.main_window      = main_window
         self.updated_language = main_window.language if main_window else "English"
 
-        self.setWindowTitle(tr("Settings"))
+        self.setWindowTitle(_("Settings"))
         self.setMinimumSize(400, 280)
 
         self.difficulty_slider = QSlider(Qt.Horizontal)
@@ -826,7 +826,7 @@ class SettingsDialog(QDialog):
         self.difficulty_slider.setTickInterval(1)
         self.difficulty_slider.setTickPosition(QSlider.TicksBelow)
         self.difficulty_slider.setTracking(True)
-        self.difficulty_slider.setAccessibleName(tr("Difficulty"))
+        self.difficulty_slider.setAccessibleName(_("Difficulty"))
         self.difficulty_slider.setValue(initial_difficulty)
         self.difficulty_slider.valueChanged.connect(self.update_difficulty_label)
 
@@ -838,31 +838,31 @@ class SettingsDialog(QDialog):
         QTimer.singleShot(250, lambda: self.difficulty_slider.setFocus())
         self.setProperty("theme", parent.current_theme)
 
-        self.language_reset_btn = QPushButton(tr("Reset Language"))
+        self.language_reset_btn = QPushButton(_("Reset Language"))
         self.language_reset_btn.setFixedHeight(30)
         self.language_reset_btn.clicked.connect(self.handle_reset_language)
-        self.language_reset_btn.setAccessibleName(tr("Reset Language"))
+        self.language_reset_btn.setAccessibleName(_("Reset Language"))
         self.language_reset_btn.setAccessibleDescription(
-            tr("Clear saved language preference and choose a new language")
+            _("Clear saved language preference and choose a new language")
         )
 
         button_box = QDialogButtonBox()
-        ok_btn     = button_box.addButton(tr("OK"),     QDialogButtonBox.AcceptRole)
-        cancel_btn = button_box.addButton(tr("Cancel"), QDialogButtonBox.RejectRole)
+        ok_btn     = button_box.addButton(_("OK"),     QDialogButtonBox.AcceptRole)
+        cancel_btn = button_box.addButton(_("Cancel"), QDialogButtonBox.RejectRole)
         button_box.accepted.connect(self.accept_settings)
         button_box.rejected.connect(self.reject)
-        ok_btn.setAccessibleName(tr("OK — Apply settings"))
-        cancel_btn.setAccessibleName(tr("Cancel — Discard changes"))
+        ok_btn.setAccessibleName(_("OK — Apply settings"))
+        cancel_btn.setAccessibleName(_("Cancel — Discard changes"))
 
         layout = QVBoxLayout()
         layout.setSpacing(12)
         layout.setContentsMargins(20, 20, 20, 20)
 
-        diff_header = QLabel(tr("Select Difficulty:"))
+        diff_header = QLabel(_("Select Difficulty:"))
         diff_header.setProperty("class", "difficulty-label")
         diff_header.setProperty("theme", parent.current_theme)
         diff_header.setAccessibleName(
-            tr("Select Difficulty. Use left or right arrow keys to select difficulty level.")
+            _("Select Difficulty. Use left or right arrow keys to select difficulty level.")
         )
         diff_header.setBuddy(self.difficulty_slider)
 
@@ -872,13 +872,13 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.language_reset_btn)
 
         extra = QHBoxLayout()
-        self.help_button  = QPushButton(tr("Help"))
-        self.about_button = QPushButton(tr("About"))
+        self.help_button  = QPushButton(_("Help"))
+        self.about_button = QPushButton(_("About"))
         for btn in [self.help_button, self.about_button]:
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             btn.setFixedHeight(30)
-        self.help_button.setAccessibleName(tr("Help"))
-        self.about_button.setAccessibleName(tr("About"))
+        self.help_button.setAccessibleName(_("Help"))
+        self.about_button.setAccessibleName(_("About"))
         extra.addWidget(self.help_button)
         extra.addWidget(self.about_button)
         layout.addLayout(extra)
@@ -904,25 +904,27 @@ class SettingsDialog(QDialog):
         level = self.get_localized_difficulty(index)
         self.difficulty_label.setText(level)
         self.difficulty_label.setAccessibleName(" ")
-        if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
-            self.main_window.tts.stop()
-            QTimer.singleShot(200, lambda: self.main_window.tts.speak(level))
+        # if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
+        #     self.main_window.tts.stop()
+        #     QTimer.singleShot(200, lambda: self.main_window.tts.speak(level))
 
     def handle_reset_language(self):
-        from main import RootWindow
+        from main import RootWindow, languages
         from language.language import clear_remember_language, set_language
         clear_remember_language()
+        
         dialog = RootWindow(minimal=True)
         if dialog.exec_() == QDialog.Accepted:
-            new_lang = dialog.language_combo.currentText()
-            set_language(new_lang)
-            self.updated_language = new_lang
+            new_lang_display = dialog.language_combo.currentText()
+            # new_lang = dialog.languages.get(new_lang_display, new_lang_display)
+            set_language(languages.get(new_lang_display, new_lang_display))
+            self.updated_language = new_lang_display
             QMessageBox.information(
-                self, tr("Language Changed"),
-                tr("Language changed to {new_lang}. The app will now reload.").format(new_lang=new_lang)
+                self, _("Language Changed"),
+                _("Language changed to {new_lang}. The app will now reload.").format(new_lang=new_lang_display)
             )
             if self.main_window:
-                self.main_window.refresh_ui(new_lang)
+                self.main_window.refresh_ui(new_lang_display)
             self.close()
 
     def accept_settings(self):
@@ -963,7 +965,7 @@ class GameReportWidget(QWidget):
         self._speak_report()
 
     def init_ui(self):
-        from language.language import tr
+        # from language.language import tr
         levels = ["Easy", "Medium", "Hard", "Extra Hard"]
 
         layout = QVBoxLayout()
@@ -973,7 +975,7 @@ class GameReportWidget(QWidget):
         self.setLayout(layout)
 
         # Title
-        title = QLabel(tr("Session Complete!"))
+        title = QLabel(_("Session Complete!"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
         layout.addWidget(title)
@@ -1003,8 +1005,8 @@ class GameReportWidget(QWidget):
         # Session info
         cur_level  = levels[self.session.starting_difficulty] if self.session.starting_difficulty < len(levels) else ""
         info_label = QLabel(
-            f"{self.session.questions_answered} {tr('questions answered')}  ·  "
-            f"{tr('Level')}: {tr(cur_level)}"
+            f"{self.session.questions_answered} {_('questions answered')}  ·  "
+            f"{_('Level')}: {_(cur_level)}"
         )
         info_label.setAlignment(Qt.AlignCenter)
         info_label.setProperty("class", "subtitle")
@@ -1017,23 +1019,23 @@ class GameReportWidget(QWidget):
         btn_row.setAlignment(Qt.AlignCenter)
         btn_row.setSpacing(20)
 
-        current_name = tr(cur_level)
+        current_name = _(cur_level)
 
         if self.can_advance:
-            next_name        = tr(levels[self.session.difficulty_index + 1])
-            self.primary_btn = QPushButton(tr("Next Level: {level}").format(level=next_name))
+            next_name        = _(levels[self.session.difficulty_index + 1])
+            self.primary_btn = QPushButton(_("Next Level: {level}").format(level=next_name))
             self.primary_btn.setMinimumHeight(65)
             self.primary_btn.setProperty("class", "menu-button")
             self.primary_btn.setProperty("theme", self.main_window.current_theme)
-            self.primary_btn.setAccessibleName(tr("Next Level: {level}").format(level=next_name))
+            self.primary_btn.setAccessibleName(_("Next Level: {level}").format(level=next_name))
             self.primary_btn.clicked.connect(self._go_next_level)
             btn_row.addWidget(self.primary_btn)
 
-        self.replay_btn = QPushButton(tr("Play {level} Again").format(level=current_name))
+        self.replay_btn = QPushButton(_("Play {level} Again").format(level=current_name))
         self.replay_btn.setMinimumHeight(65)
         self.replay_btn.setProperty("class", "menu-button")
         self.replay_btn.setProperty("theme", self.main_window.current_theme)
-        self.replay_btn.setAccessibleName(tr("Play {level} Again").format(level=current_name))
+        self.replay_btn.setAccessibleName(_("Play {level} Again").format(level=current_name))
         self.replay_btn.clicked.connect(self._replay_level)
         btn_row.addWidget(self.replay_btn)
 
@@ -1043,13 +1045,13 @@ class GameReportWidget(QWidget):
         if self.main_window and not self.main_window.is_muted:
             import random
             self.main_window.play_sound(f"finished-{random.randint(1, 3)}.mp3")
-        from language.language import tr
+        # from language.language import tr
         speak_text   = f"{self.breakdown_text}. {self.summary_text}"
         est_ms       = len(speak_text) * 65
-        choice_text  = tr("Ready for the next level?") if self.can_advance else tr("Play again?")
+        choice_text  = _("Ready for the next level?") if self.can_advance else _("Play again?")
 
-        QTimer.singleShot(800,          lambda: self.tts.speak(speak_text))
-        QTimer.singleShot(800 + est_ms, lambda: self.tts.speak(choice_text))
+        # QTimer.singleShot(800,          lambda: self.tts.speak(speak_text))
+        # QTimer.singleShot(800 + est_ms, lambda: self.tts.speak(choice_text))
 
         primary = self.primary_btn if self.can_advance else self.replay_btn
         QTimer.singleShot(

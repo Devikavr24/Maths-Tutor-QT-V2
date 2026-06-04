@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-
+import openpyxl
 import json
 
 STATE_FILE = os.path.join(os.getcwd(), "question", "saved_gamemode_state.json")
@@ -14,15 +14,11 @@ def save_game_session(state):
         print(f"[ERROR] Failed to save game session: {e}")
 
 def get_saved_game_session():
-    if os.path.exists(STATE_FILE):
-        try:
-            with open(STATE_FILE, "r", encoding="utf-8") as f:
-                state = json.load(f)
-                print(f"[DEBUG] Loaded saved game session from {STATE_FILE}")
-                return state
-        except Exception as e:
-            print(f"[ERROR] Failed to load saved game session: {e}")
-    return None
+    fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    df = pd.read_excel(fp)
+    if len(df) == 0:
+        return None
+    else: return df
 
 def clear_saved_game_session():
     if os.path.exists(STATE_FILE):
@@ -94,6 +90,30 @@ def _load_game_df() -> pd.DataFrame:
     df["difficulty"] = pd.to_numeric(df.get("difficulty", 0), errors="coerce").fillna(0).astype(int)
     return df
 
+def _clear_logic_df():
+    fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    if os.path.exists(fp):
+        try:
+            # Load the workbook and select the active sheet
+            wb = openpyxl.load_workbook(fp)
+            ws = wb.active
+
+            # Delete all rows starting from row 2 up to the maximum row count
+            if ws.max_row > 1:
+                ws.delete_rows(2, amount=ws.max_row - 1)
+                        
+                # Save the changes back to the same file
+                wb.save(fp)
+                wb.close()
+                print("[SUCCESS] Cleaned gamemode_logic file, kept the first row.")
+                return True
+
+        except Exception as e:
+            print(f"[ERROR] Failed to clean logic file: {e}")
+            return False
+    else:
+        print(f"[ERROR] File does not exist at {fp}")
+        return False
 
 BUILTIN_WARMUP_ORDER = {
     "1D_addition": 1,

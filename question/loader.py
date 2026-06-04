@@ -736,30 +736,30 @@ class LinearProgressionSession:
 
     #Reporting 
     def generate_breakdown(self) -> str:
-        from language.language import tr
+        # from language.language import tr
         parts = []
         for q_type, stats in sorted(self.skill_log.items()):
             total = stats["correct"] + stats["wrong"]
             if total == 0:
                 continue
-            parts.append(f"{tr(q_type.capitalize())}: {stats['correct']}/{total}")
+            parts.append(f"{_(q_type.capitalize())}: {stats['correct']}/{total}")
         return "  ·  ".join(parts) if parts else ""
 
     def generate_summary(self) -> str:
-        from language.language import tr
+        # from language.language import tr
         total   = self.questions_answered
         correct = sum(s["correct"] for s in self.skill_log.values())
         if total == 0:
-            return tr("Session complete!")
+            return _("Session complete!")
         pct          = int((correct / total) * 100)
         elapsed      = int(__import__("time").time() - self.session_start_time)
         mins, secs   = elapsed // 60, elapsed % 60
         time_str     = f"{mins}m {secs}s" if mins > 0 else f"{secs}s"
         if getattr(self, "level_completed", False):
-            mood = tr("Level Complete! Outstanding job!")
-        elif pct >= 80: mood = tr("Great job!")
-        elif pct >= 60: mood = tr("Good effort!")
-        else:           mood = tr("Keep practicing!")
+            mood = _("Level Complete! Outstanding job!")
+        elif pct >= 80: mood = _("Great job!")
+        elif pct >= 60: mood = _("Good effort!")
+        else:           mood = _("Keep practicing!")
         return f"{mood} {correct}/{total} correct · {time_str}"
 
     def generate_report(self) -> str:

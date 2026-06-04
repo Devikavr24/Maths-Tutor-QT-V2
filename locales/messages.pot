@@ -1,0 +1,411 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-06-03 20:30+0530\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: main.py:77
+msgid "Welcome to Maths Tutor!"
+msgstr ""
+
+#: main.py:83
+msgid "Select your preferred language:"
+msgstr ""
+
+#: main.py:106
+msgid "Remember my selection"
+msgstr ""
+
+#: main.py:118
+msgid "Continue"
+msgstr ""
+
+#: main.py:125 pages/shared_ui.py:851
+msgid "Cancel"
+msgstr ""
+
+#: main.py:297 main.py:478
+msgid "🎓 Learning Mode"
+msgstr ""
+
+#: main.py:359 main.py:517 main.py:584 main.py:653 main.py:687 main.py:772
+#: main.py:980 main.py:1000 main.py:1244 pages/shared_ui.py:154
+msgid "Back to Menu"
+msgstr ""
+
+#: main.py:432
+msgid "Story"
+msgstr ""
+
+#: main.py:446
+msgid "welcome"
+msgstr ""
+
+#: main.py:451
+msgid "ready"
+msgstr ""
+
+#: main.py:476
+msgid "⚡Quickplay"
+msgstr ""
+
+#: main.py:477
+msgid "🎮 Game Mode"
+msgstr ""
+
+#: main.py:540
+msgid "Resume Session"
+msgstr ""
+
+#: main.py:541
+msgid "A saved session was found. Do you want to resume?"
+msgstr ""
+
+#: main.py:542 pages/shared_ui.py:193
+msgid "Yes"
+msgstr ""
+
+#: main.py:543 pages/shared_ui.py:194
+msgid "No"
+msgstr ""
+
+#: main.py:876
+msgid "Back to Difficulty"
+msgstr ""
+
+#: main.py:983 main.py:996 pages/shared_ui.py:155
+msgid "Upload"
+msgstr ""
+
+#: main.py:1153 main.py:1165
+msgid "Back to Operations"
+msgstr ""
+
+#: main.py:1154 main.py:1167
+msgid "Back to Learn"
+msgstr ""
+
+#: main.py:1155 main.py:1169
+msgid "Back to Home"
+msgstr ""
+
+#: main.py:1156 pages/shared_ui.py:156 pages/shared_ui.py:818
+msgid "Settings"
+msgstr ""
+
+#: pages/ques_functions.py:29 pages/ques_functions.py:33
+msgid "Choose an Operation"
+msgstr ""
+
+#: pages/shared_ui.py:169 pages/warmup_ui.py:264
+msgid "Enter your answer"
+msgstr ""
+
+#: pages/shared_ui.py:191
+msgid "Exit Application"
+msgstr ""
+
+#: pages/shared_ui.py:192
+msgid "Are you sure you want to exit?"
+msgstr ""
+
+#: pages/shared_ui.py:374 pages/warmup_ui.py:396 pages/warmup_ui.py:923
+msgid "Type your answer"
+msgstr ""
+
+#: pages/shared_ui.py:473
+msgid "Please enter a valid number."
+msgstr ""
+
+#: pages/shared_ui.py:518 pages/warmup_ui.py:454
+msgid "Correct!"
+msgstr ""
+
+#: pages/shared_ui.py:549 pages/shared_ui.py:744
+msgid "Let's try another one!"
+msgstr ""
+
+#: pages/shared_ui.py:556
+msgid "Try Again."
+msgstr ""
+
+#: pages/shared_ui.py:558
+msgid "Incorrect."
+msgstr ""
+
+#: pages/shared_ui.py:829
+msgid "Difficulty"
+msgstr ""
+
+#: pages/shared_ui.py:841 pages/shared_ui.py:844
+msgid "Reset Language"
+msgstr ""
+
+#: pages/shared_ui.py:846
+msgid "Clear saved language preference and choose a new language"
+msgstr ""
+
+#: pages/shared_ui.py:850
+msgid "OK"
+msgstr ""
+
+#: pages/shared_ui.py:854
+msgid "OK — Apply settings"
+msgstr ""
+
+#: pages/shared_ui.py:855
+msgid "Cancel — Discard changes"
+msgstr ""
+
+#: pages/shared_ui.py:861
+msgid "Select Difficulty:"
+msgstr ""
+
+#: pages/shared_ui.py:865
+msgid ""
+"Select Difficulty. Use left or right arrow keys to select difficulty "
+"level."
+msgstr ""
+
+#: pages/shared_ui.py:875 pages/shared_ui.py:880
+msgid "Help"
+msgstr ""
+
+#: pages/shared_ui.py:876 pages/shared_ui.py:881
+msgid "About"
+msgstr ""
+
+#: pages/shared_ui.py:923
+msgid "Language Changed"
+msgstr ""
+
+#: pages/shared_ui.py:924
+#, python-brace-format
+msgid "Language changed to {new_lang}. The app will now reload."
+msgstr ""
+
+#: pages/shared_ui.py:978 pages/warmup_ui.py:1029
+msgid "Session Complete!"
+msgstr ""
+
+#: pages/shared_ui.py:1008
+msgid "questions answered"
+msgstr ""
+
+#: pages/shared_ui.py:1009
+msgid "Level"
+msgstr ""
+
+#: pages/shared_ui.py:1026 pages/shared_ui.py:1030
+#, python-brace-format
+msgid "Next Level: {level}"
+msgstr ""
+
+#: pages/shared_ui.py:1034 pages/shared_ui.py:1038
+#, python-brace-format
+msgid "Play {level} Again"
+msgstr ""
+
+#: pages/shared_ui.py:1051
+msgid "Ready for the next level?"
+msgstr ""
+
+#: pages/shared_ui.py:1051
+msgid "Play again?"
+msgstr ""
+
+#: pages/warmup_ui.py:46
+msgid "Warmup Match Introduction"
+msgstr ""
+
+#: pages/warmup_ui.py:59 pages/warmup_ui.py:62 pages/warmup_ui.py:202
+msgid "Warmup Match"
+msgstr ""
+
+#: pages/warmup_ui.py:98
+msgid "Speed matters"
+msgstr ""
+
+#: pages/warmup_ui.py:98
+msgid "14 question types"
+msgstr ""
+
+#: pages/warmup_ui.py:98
+msgid "Ranked results"
+msgstr ""
+
+#: pages/warmup_ui.py:117 pages/warmup_ui.py:120
+msgid "Begin Warmup"
+msgstr ""
+
+#: pages/warmup_ui.py:249
+msgid "Auto-skip in %vs"
+msgstr ""
+
+#: pages/warmup_ui.py:273 pages/warmup_ui.py:866
+msgid "Submit"
+msgstr ""
+
+#: pages/warmup_ui.py:276 pages/warmup_ui.py:867
+msgid "Submit answer"
+msgstr ""
+
+#: pages/warmup_ui.py:285 pages/warmup_ui.py:289 pages/warmup_ui.py:872
+msgid "Skip this question"
+msgstr ""
+
+#: pages/warmup_ui.py:291
+msgid "Skip the current question. Skipped questions score zero."
+msgstr ""
+
+#: pages/warmup_ui.py:339
+#, python-brace-format
+msgid "Question {n} / {total}"
+msgstr ""
+
+#: pages/warmup_ui.py:438
+msgid "Invalid — try again"
+msgstr ""
+
+#: pages/warmup_ui.py:477
+msgid "Wrong — moving on"
+msgstr ""
+
+#: pages/warmup_ui.py:499 pages/warmup_ui.py:994
+msgid "Skipped"
+msgstr ""
+
+#: pages/warmup_ui.py:513
+msgid "Time out — auto-skipped"
+msgstr ""
+
+#: pages/warmup_ui.py:565
+msgid "Warmup Results"
+msgstr ""
+
+#: pages/warmup_ui.py:576 pages/warmup_ui.py:579
+msgid "Warmup Complete!"
+msgstr ""
+
+#: pages/warmup_ui.py:589
+msgid "Warmup completed early wrong"
+msgstr ""
+
+#: pages/warmup_ui.py:591
+msgid "Warmup completed early skipped"
+msgstr ""
+
+#: pages/warmup_ui.py:593
+msgid "Warmup completed success"
+msgstr ""
+
+#: pages/warmup_ui.py:667 pages/warmup_ui.py:670
+msgid "Continue to Game Mode"
+msgstr ""
+
+#: pages/warmup_ui.py:672
+msgid "Proceed to the Game Mode difficulty selector."
+msgstr ""
+
+#: pages/warmup_ui.py:749
+msgid "Game Mode"
+msgstr ""
+
+#: pages/warmup_ui.py:761
+#, python-brace-format
+msgid "Resuming at {lbl_name}"
+msgstr ""
+
+#: pages/warmup_ui.py:764
+msgid "Starting fresh"
+msgstr ""
+
+#: pages/warmup_ui.py:769
+msgid ""
+"How it works:\n"
+"• Reach correct threshold → promote to next skill\n"
+"• Too many wrong/skips → demote to easier skill\n"
+"• 90 seconds · correct answers add 3s · wrong cost 1s"
+msgstr ""
+
+#: pages/warmup_ui.py:778
+msgid "Start Game"
+msgstr ""
+
+#: pages/warmup_ui.py:780
+msgid "Start Game Mode"
+msgstr ""
+
+#: pages/warmup_ui.py:863
+msgid "Answer input"
+msgstr ""
+
+#: pages/warmup_ui.py:870
+msgid "Skip"
+msgstr ""
+
+#: pages/warmup_ui.py:903
+msgid "Question"
+msgstr ""
+
+#: pages/warmup_ui.py:941
+msgid "Invalid"
+msgstr ""
+
+#: pages/warmup_ui.py:976
+msgid "Wrong"
+msgstr ""
+
+#: pages/warmup_ui.py:1025
+msgid "Game Mode Results"
+msgstr ""
+
+#: pages/warmup_ui.py:1041
+msgid "Questions"
+msgstr ""
+
+#: pages/warmup_ui.py:1041
+msgid "Accuracy"
+msgstr ""
+
+#: pages/warmup_ui.py:1041
+msgid "Final Skill"
+msgstr ""
+
+#: pages/warmup_ui.py:1070 pages/warmup_ui.py:1071
+msgid "Play Again"
+msgstr ""
+
+#: question/loader.py:753
+msgid "Session complete!"
+msgstr ""
+
+#: question/loader.py:759
+msgid "Level Complete! Outstanding job!"
+msgstr ""
+
+#: question/loader.py:760
+msgid "Great job!"
+msgstr ""
+
+#: question/loader.py:761
+msgid "Good effort!"
+msgstr ""
+
+#: question/loader.py:762
+msgid "Keep practicing!"
+msgstr ""
+
