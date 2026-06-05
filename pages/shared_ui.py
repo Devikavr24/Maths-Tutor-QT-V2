@@ -169,6 +169,8 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box.setPlaceholderText(_("Enter your answer"))
     input_box.setFont(QFont("Arial", font_size))
     input_box.setProperty("class", "answer-input")
+    input_box.setAccessibleName(" ")
+    input_box.setAccessibleDescription(" ")
     validator = QRegExpValidator(QRegExp(r"-?\d*\.?\d*"))
     input_box.setValidator(validator)
     return input_box
@@ -331,13 +333,20 @@ class QuestionWidget(QWidget):
             if sound_filename == "question"
             else sound_filename.replace(".mp3", ".gif")
         )
-        movie = QMovie(f"images/{gif_name}")
-        movie.setScaledSize(QSize(200, 200))
+        
+        # FIX 1: Save it to 'self' so Python doesn't delete it!
+        self.current_movie = QMovie(f"images/{gif_name}")
+        self.current_movie.setScaledSize(QSize(200, 200))
+        
         self.gif_feedback_label.setFixedSize(200, 200)
         self.gif_feedback_label.setAlignment(Qt.AlignCenter)
-        self.gif_feedback_label.setMovie(movie)
+        self.gif_feedback_label.setMovie(self.current_movie)
         self.gif_feedback_label.setVisible(True)
-        movie.start()
+        
+        self.current_movie.start()
+        
+        # FIX 2: Force PyQt to instantly redraw the screen before executing the next line of code
+        QApplication.processEvents()
 
     def hide_feedback_gif(self):
         self.gif_feedback_label.setVisible(False)
@@ -374,7 +383,7 @@ class QuestionWidget(QWidget):
 
         if self.input_box:
             self.input_box.clear()
-            self.setFocus()
+            # self.setFocus()
 
         delay_ms = 0
         if app_tts_active and hasattr(self, 'tts'):
@@ -424,7 +433,14 @@ class QuestionWidget(QWidget):
 
     def keyPressEvent(self, event):
         """This catches keys because the QuestionWidget currently has focus."""
-        
+        if event.key() == Qt.Key_Space:
+        # Ignore the spacebar entirely and exit the function
+            return
+        if event.modifiers() & (Qt.ControlModifier | Qt.AltModifier):
+            # Tell PyQt to ignore this event and pass it to the Main Window
+            # This guarantees your shortcuts (like Ctrl+R) still work!
+            event.ignore() 
+            return
         # If the user starts typing, instantly shift focus to the input box
         if not self.input_box.hasFocus():
             self.input_box.setFocus()
@@ -538,8 +554,9 @@ class QuestionWidget(QWidget):
             self.result_label.setAccessibleName(f"{_('Correct!')} {clean_feedback}")
 
             if audio_on and self.main_window:
-                self.main_window.play_sound(sound_file)
                 self.show_feedback_gif(sound_file)
+                self.main_window.play_sound(sound_file, True)
+                
                 # if hasattr(self, 'tts'):
                 #     QTimer.singleShot(10, lambda t=clean_feedback: self.tts.speak(t))
 
@@ -584,8 +601,8 @@ class QuestionWidget(QWidget):
                     if self.processor.retry_count == 1
                     else f"wrong-anwser-repeted-{si}.mp3"
                 )
-                self.main_window.play_sound(sf)
                 self.show_feedback_gif(sf)
+                self.main_window.play_sound(sf, True)
                 # if hasattr(self, 'tts'):
                 #     QTimer.singleShot(300, lambda t=try_again: self.tts.speak(t))
 
@@ -735,8 +752,8 @@ class QuestionWidget(QWidget):
                 elif elapsed < 15: sf = f"good-{sound_index}.mp3"
                 elif elapsed < 20: sf = f"not-bad-{sound_index}.mp3"
                 else:              sf = f"okay-{sound_index}.mp3"
-                self.main_window.play_sound(sf)
                 self.show_feedback_gif(sf)
+                self.main_window.play_sound(sf, True)
                 # if hasattr(self, 'tts'):
                 #     QTimer.singleShot(300, lambda t=clean: self.tts.speak(t))
 
@@ -778,8 +795,8 @@ class QuestionWidget(QWidget):
                     if self.processor.retry_count == 1
                     else f"wrong-anwser-repeted-{si}.mp3"
                 )
-                self.main_window.play_sound(sf)
                 self.show_feedback_gif(sf)
+                self.main_window.play_sound(sf, True)
                 # if hasattr(self, 'tts'):
                 #     QTimer.singleShot(300, lambda: self.tts.speak("Try Again"))
 
@@ -892,12 +909,13 @@ class SettingsDialog(QDialog):
         layout.addWidget(self.language_reset_btn)
 
         extra = QHBoxLayout()
-        self.help_button  = QPushButton(_("Help"))
+        self.help_button  = QPushButton(_("User Guide"))
         self.about_button = QPushButton(_("About"))
         for btn in [self.help_button, self.about_button]:
             btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             btn.setFixedHeight(30)
-        self.help_button.setAccessibleName(_("Help"))
+        self.help_button.setAccessibleName(_("User Guide"))
+        self.help_button.clicked.connect(self._open_user_guide)
         self.about_button.setAccessibleName(_("About"))
         extra.addWidget(self.help_button)
         extra.addWidget(self.about_button)
@@ -957,6 +975,14 @@ class SettingsDialog(QDialog):
 
     def get_selected_language(self):
         return self.updated_language
+
+    def _open_user_guide(self):
+        import os
+        from PyQt5.QtGui import QDesktopServices
+        from PyQt5.QtCore import QUrl
+        path = os.path.abspath(os.path.join("user_guides", "User_Guide_EN.html"))
+        if os.path.exists(path):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(path))
 
 
 # ---------------------------------------------------------------------------

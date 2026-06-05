@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Maths Tutor 1.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-05 01:02+0530\n"
+"POT-Creation-Date: 2026-06-06 00:08+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: sa_IN\n"
@@ -32,79 +32,87 @@ msgstr ""
 msgid "Continue"
 msgstr "अनुवर्तस्व"
 
-#: main.py:125 pages/shared_ui.py:871
+#: main.py:125 pages/shared_ui.py:888
 #, fuzzy
 msgid "Cancel"
 msgstr "निरसयतु"
 
-#: main.py:297 main.py:479
+#: main.py:302 main.py:524
 msgid "🎓 Learning Mode"
 msgstr ""
 
-#: main.py:359 main.py:518 main.py:585 main.py:654 main.py:688 main.py:773
-#: main.py:981 main.py:1001 main.py:1245 pages/shared_ui.py:154
+#: main.py:364 main.py:563 main.py:630 main.py:699 main.py:733 main.py:818
+#: main.py:1026 main.py:1046 main.py:1315 pages/shared_ui.py:154
 msgid "Back to Menu"
 msgstr "मेनू प्रत्यागच्छ"
 
-#: main.py:432
+#: main.py:465
+msgid ""
+"Following are the shortcuts essential for you: Control S to hear all "
+"shortcuts. Control R to repeat questions. Control semicolon to decrease "
+"speech speed. Alt semicolon to increase speech speed. Control Q to exit "
+"the application."
+msgstr ""
+
+#: main.py:477
 msgid "Story"
 msgstr "कथा"
 
-#: main.py:446
+#: main.py:491
 msgid "welcome"
 msgstr "गणितशिक्षके स्वागतम्!"
 
-#: main.py:452
+#: main.py:497
 msgid "ready"
 msgstr "भवान् {lang} भाषायां अध्ययनाय सज्जः अस्ति वा?"
 
-#: main.py:477
+#: main.py:522
 msgid "⚡Quickplay"
 msgstr ""
 
-#: main.py:478
+#: main.py:523
 msgid "🎮 Game Mode"
 msgstr ""
 
-#: main.py:541
+#: main.py:586
 msgid "Resume Session"
 msgstr "सङ्क्रमं अनुवर्तस्व"
 
-#: main.py:542
+#: main.py:587
 msgid "A saved session was found. Do you want to resume?"
 msgstr "एकः सुरक्षितः सङ्क्रमഃ प्राप्तः। किं भवान् अनुवर्तितुम् इच्छति?"
 
-#: main.py:543 pages/shared_ui.py:193
+#: main.py:588 pages/shared_ui.py:195
 msgid "Yes"
 msgstr ""
 
-#: main.py:544 pages/shared_ui.py:194
+#: main.py:589 pages/shared_ui.py:196
 msgid "No"
 msgstr ""
 
-#: main.py:877
+#: main.py:922
 #, fuzzy
 msgid "Back to Difficulty"
 msgstr "मेनू प्रत्यागच्छ"
 
-#: main.py:984 main.py:997 pages/shared_ui.py:155
+#: main.py:1029 main.py:1042 pages/shared_ui.py:155
 msgid "Upload"
 msgstr "अधरयतु"
 
-#: main.py:1154 main.py:1166
+#: main.py:1218 main.py:1230
 msgid "Back to Operations"
 msgstr "गणितक्रियाः प्रत्यागच्छ"
 
-#: main.py:1155 main.py:1168
+#: main.py:1219 main.py:1232
 #, fuzzy
 msgid "Back to Learn"
 msgstr "मेनू प्रत्यागच्छ"
 
-#: main.py:1156 main.py:1170
+#: main.py:1220 main.py:1234
 msgid "Back to Home"
 msgstr "मुखपृष्ठं प्रत्यागच्छ"
 
-#: main.py:1157 pages/shared_ui.py:156 pages/shared_ui.py:838
+#: main.py:1221 main.py:1236 pages/shared_ui.py:156 pages/shared_ui.py:855
 msgid "Settings"
 msgstr "संयोजनानि"
 
@@ -112,122 +120,122 @@ msgstr "संयोजनानि"
 msgid "Choose an Operation"
 msgstr "एकां गणितक्रियाम् चयनयतु"
 
-#: pages/shared_ui.py:169 pages/warmup_ui.py:274
+#: pages/shared_ui.py:169 pages/warmup_ui.py:272
 msgid "Enter your answer"
 msgstr "स्वउत्तरं प्रविश्यताम्"
 
-#: pages/shared_ui.py:191
+#: pages/shared_ui.py:193
 msgid "Exit Application"
 msgstr ""
 
-#: pages/shared_ui.py:192
+#: pages/shared_ui.py:194
 msgid "Are you sure you want to exit?"
 msgstr ""
 
-#: pages/shared_ui.py:381 pages/warmup_ui.py:410 pages/warmup_ui.py:951
+#: pages/shared_ui.py:390 pages/warmup_ui.py:434 pages/warmup_ui.py:1033
 msgid "Type your answer"
 msgstr ""
 
-#: pages/shared_ui.py:493
+#: pages/shared_ui.py:509
 msgid "Please enter a valid number."
 msgstr ""
 
-#: pages/shared_ui.py:538 pages/warmup_ui.py:479
+#: pages/shared_ui.py:554 pages/warmup_ui.py:525
 #, fuzzy
 msgid "Correct!"
 msgstr "मुद्रा"
 
-#: pages/shared_ui.py:569 pages/shared_ui.py:764
+#: pages/shared_ui.py:586 pages/shared_ui.py:781
 msgid "Let's try another one!"
 msgstr ""
 
-#: pages/shared_ui.py:576
+#: pages/shared_ui.py:593
 msgid "Try Again."
 msgstr ""
 
-#: pages/shared_ui.py:578
+#: pages/shared_ui.py:595
 msgid "Incorrect."
 msgstr ""
 
-#: pages/shared_ui.py:849
+#: pages/shared_ui.py:866
 msgid "Difficulty"
 msgstr ""
 
-#: pages/shared_ui.py:861 pages/shared_ui.py:864
+#: pages/shared_ui.py:878 pages/shared_ui.py:881
 msgid "Reset Language"
 msgstr ""
 
-#: pages/shared_ui.py:866
+#: pages/shared_ui.py:883
 msgid "Clear saved language preference and choose a new language"
 msgstr ""
 
-#: pages/shared_ui.py:870
+#: pages/shared_ui.py:887
 msgid "OK"
 msgstr ""
 
-#: pages/shared_ui.py:874
+#: pages/shared_ui.py:891
 msgid "OK — Apply settings"
 msgstr ""
 
-#: pages/shared_ui.py:875
+#: pages/shared_ui.py:892
 msgid "Cancel — Discard changes"
 msgstr ""
 
-#: pages/shared_ui.py:881
+#: pages/shared_ui.py:898
 msgid "Select Difficulty:"
 msgstr ""
 
-#: pages/shared_ui.py:885
+#: pages/shared_ui.py:902
 msgid ""
 "Select Difficulty. Use left or right arrow keys to select difficulty "
 "level."
 msgstr ""
 
-#: pages/shared_ui.py:895 pages/shared_ui.py:900
+#: pages/shared_ui.py:912 pages/shared_ui.py:917
 msgid "Help"
 msgstr "साहाय्यम्"
 
-#: pages/shared_ui.py:896 pages/shared_ui.py:901
+#: pages/shared_ui.py:913 pages/shared_ui.py:918
 msgid "About"
 msgstr "विवरणम्"
 
-#: pages/shared_ui.py:943
+#: pages/shared_ui.py:960
 msgid "Language Changed"
 msgstr ""
 
-#: pages/shared_ui.py:944
+#: pages/shared_ui.py:961
 #, python-brace-format
 msgid "Language changed to {new_lang}. The app will now reload."
 msgstr ""
 
-#: pages/shared_ui.py:998 pages/warmup_ui.py:1069
+#: pages/shared_ui.py:1015 pages/warmup_ui.py:1190
 msgid "Session Complete!"
 msgstr ""
 
-#: pages/shared_ui.py:1028
+#: pages/shared_ui.py:1045
 #, fuzzy
 msgid "questions answered"
 msgstr "प्रश्नः"
 
-#: pages/shared_ui.py:1029
+#: pages/shared_ui.py:1046
 msgid "Level"
 msgstr ""
 
-#: pages/shared_ui.py:1046 pages/shared_ui.py:1050
+#: pages/shared_ui.py:1063 pages/shared_ui.py:1067
 #, python-brace-format
 msgid "Next Level: {level}"
 msgstr ""
 
-#: pages/shared_ui.py:1054 pages/shared_ui.py:1058
+#: pages/shared_ui.py:1071 pages/shared_ui.py:1075
 #, python-brace-format
 msgid "Play {level} Again"
 msgstr ""
 
-#: pages/shared_ui.py:1071
+#: pages/shared_ui.py:1088
 msgid "Ready for the next level?"
 msgstr ""
 
-#: pages/shared_ui.py:1071
+#: pages/shared_ui.py:1088
 msgid "Play again?"
 msgstr ""
 
@@ -235,119 +243,118 @@ msgstr ""
 msgid "Warmup Match Introduction"
 msgstr ""
 
-#: pages/warmup_ui.py:59 pages/warmup_ui.py:62 pages/warmup_ui.py:212
+#: pages/warmup_ui.py:59 pages/warmup_ui.py:62 pages/warmup_ui.py:210
 msgid "Warmup Match"
 msgstr ""
 
-#: pages/warmup_ui.py:98
+#: pages/warmup_ui.py:76
+msgid ""
+"Welcome! Before we begin the real game, let's do a quick Warmup Match.\n"
+"You will answer some question, starting from the easiest.\n"
+"The warmup ends early only if you miss or skip too many questions."
+msgstr ""
+
+#: pages/warmup_ui.py:96
 msgid "Speed matters"
 msgstr ""
 
-#: pages/warmup_ui.py:98
+#: pages/warmup_ui.py:96
 #, fuzzy
 msgid "14 question types"
 msgstr "प्रश्नः"
 
-#: pages/warmup_ui.py:98
+#: pages/warmup_ui.py:96
 msgid "Ranked results"
 msgstr ""
 
-#: pages/warmup_ui.py:117 pages/warmup_ui.py:120
+#: pages/warmup_ui.py:115 pages/warmup_ui.py:118
 msgid "Begin Warmup"
 msgstr ""
 
-#: pages/warmup_ui.py:154
+#: pages/warmup_ui.py:152
 msgid ""
 "Welcome to the Warmup Match! We will assess your strengths by asking some"
 " questions. Press Begin Warmup button when you are ready."
 msgstr ""
 
-#: pages/warmup_ui.py:259
+#: pages/warmup_ui.py:257
 msgid "Auto-skip in %vs"
 msgstr ""
 
-#: pages/warmup_ui.py:283 pages/warmup_ui.py:891
+#: pages/warmup_ui.py:282 pages/warmup_ui.py:947
 msgid "Submit"
 msgstr ""
 
-#: pages/warmup_ui.py:286 pages/warmup_ui.py:892
+#: pages/warmup_ui.py:285 pages/warmup_ui.py:948
 #, fuzzy
 msgid "Submit answer"
 msgstr "उत्तरम्"
 
-#: pages/warmup_ui.py:295 pages/warmup_ui.py:299 pages/warmup_ui.py:897
+#: pages/warmup_ui.py:294 pages/warmup_ui.py:298 pages/warmup_ui.py:953
 #, fuzzy
 msgid "Skip this question"
 msgstr "प्रश्नः"
 
-#: pages/warmup_ui.py:301
+#: pages/warmup_ui.py:300
 msgid "Skip the current question. Skipped questions score zero."
 msgstr ""
 
-#: pages/warmup_ui.py:352
+#: pages/warmup_ui.py:376
 #, python-brace-format
 msgid "Question {n} / {total}"
 msgstr ""
 
-#: pages/warmup_ui.py:463
+#: pages/warmup_ui.py:507
 msgid "Invalid — try again"
 msgstr ""
 
-#: pages/warmup_ui.py:502
+#: pages/warmup_ui.py:551
 msgid "Wrong — moving on"
 msgstr ""
 
-#: pages/warmup_ui.py:524 pages/warmup_ui.py:1034
+#: pages/warmup_ui.py:570 pages/warmup_ui.py:1151
 msgid "Skipped"
 msgstr ""
 
-#: pages/warmup_ui.py:538
+#: pages/warmup_ui.py:584
 msgid "Time out — auto-skipped"
 msgstr ""
 
-#: pages/warmup_ui.py:590
+#: pages/warmup_ui.py:644
 msgid "Warmup Results"
 msgstr ""
 
-#: pages/warmup_ui.py:601 pages/warmup_ui.py:604
+#: pages/warmup_ui.py:655 pages/warmup_ui.py:658
 msgid "Warmup Complete!"
 msgstr ""
 
-#: pages/warmup_ui.py:614
+#: pages/warmup_ui.py:668
 msgid "Warmup completed early wrong"
 msgstr ""
 
-#: pages/warmup_ui.py:616
-msgid "Warmup completed early skipped"
-msgstr ""
-
-#: pages/warmup_ui.py:618
+#: pages/warmup_ui.py:670
 msgid "Warmup completed success"
 msgstr ""
 
-#: pages/warmup_ui.py:692 pages/warmup_ui.py:695
+#: pages/warmup_ui.py:764 pages/warmup_ui.py:767
 msgid "Continue to Game Mode"
 msgstr ""
 
-#: pages/warmup_ui.py:697
-msgid "Proceed to the Game Mode difficulty selector."
-msgstr ""
-
-#: pages/warmup_ui.py:774
+#: pages/warmup_ui.py:844
 msgid "Game Mode"
 msgstr ""
 
-#: pages/warmup_ui.py:786
+#: pages/warmup_ui.py:856
 #, python-brace-format
 msgid "Resuming at {lbl_name}"
 msgstr ""
 
-#: pages/warmup_ui.py:789
+#: pages/warmup_ui.py:859
 #, fuzzy
 msgid "Starting fresh"
 msgstr "संयोजनानि"
 
-#: pages/warmup_ui.py:794
+#: pages/warmup_ui.py:864
 msgid ""
 "How it works:\n"
 "• Reach correct threshold → promote to next skill\n"
@@ -355,54 +362,62 @@ msgid ""
 "• 90 seconds · correct answers add 3s · wrong cost 1s"
 msgstr ""
 
-#: pages/warmup_ui.py:803
+#: pages/warmup_ui.py:873
 msgid "Start Game"
 msgstr ""
 
-#: pages/warmup_ui.py:805
-msgid "Start Game Mode"
-msgstr ""
-
-#: pages/warmup_ui.py:888
+#: pages/warmup_ui.py:944
 msgid "Answer input"
 msgstr "उत्तर निवेशः"
 
-#: pages/warmup_ui.py:895
+#: pages/warmup_ui.py:951
 msgid "Skip"
 msgstr ""
 
-#: pages/warmup_ui.py:931
+#: pages/warmup_ui.py:1013
 msgid "Question"
 msgstr "प्रश्नः"
 
-#: pages/warmup_ui.py:981
+#: pages/warmup_ui.py:1083
 msgid "Invalid"
 msgstr ""
 
-#: pages/warmup_ui.py:1016
+#: pages/warmup_ui.py:1131
 msgid "Wrong"
 msgstr ""
 
-#: pages/warmup_ui.py:1065
+#: pages/warmup_ui.py:1186
 msgid "Game Mode Results"
 msgstr ""
 
-#: pages/warmup_ui.py:1081
+#: pages/warmup_ui.py:1202
 #, fuzzy
 msgid "Questions"
 msgstr "प्रश्नः"
 
-#: pages/warmup_ui.py:1081
+#: pages/warmup_ui.py:1202
 #, fuzzy
 msgid "Accuracy"
 msgstr "मुद्रा"
 
-#: pages/warmup_ui.py:1081
+#: pages/warmup_ui.py:1202
 msgid "Final Skill"
 msgstr ""
 
-#: pages/warmup_ui.py:1110 pages/warmup_ui.py:1111
+#: pages/warmup_ui.py:1253 pages/warmup_ui.py:1254
 msgid "Play Again"
+msgstr ""
+
+#: pages/warmup_ui.py:1274
+#, python-brace-format
+msgid ""
+"Congratulations, game mode completed! Your accuracy was {pct} percent and"
+" your top skill is {skill}."
+msgstr ""
+
+#: pages/warmup_ui.py:1276
+#, python-brace-format
+msgid "Congratulations, game mode completed! Your accuracy was {pct} percent."
 msgstr ""
 
 #: question/loader.py:752
@@ -588,5 +603,26 @@ msgstr ""
 #~ msgstr ""
 
 #~ msgid "Return to difficulty selection"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "Welcome! Before we begin the real "
+#~ "game, let's do a quick Warmup "
+#~ "Match so we can understand your "
+#~ "strengths.\n"
+#~ "You will answer some question, starting"
+#~ " from the easiest. Your speed and "
+#~ "accuracy are measured The warmup ends"
+#~ " early only if you miss or skip"
+#~ " too many questions."
+#~ msgstr ""
+
+#~ msgid "Warmup completed early skipped"
+#~ msgstr ""
+
+#~ msgid "Proceed to the Game Mode difficulty selector."
+#~ msgstr ""
+
+#~ msgid "Start Game Mode"
 #~ msgstr ""
 
