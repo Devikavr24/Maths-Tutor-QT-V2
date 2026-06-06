@@ -9,7 +9,7 @@ Three QWidget screens for the Warmup Match flow:
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QProgressBar, QSizePolicy, QScrollArea, QFrame,
-    QSpacerItem
+    QSpacerItem, QApplication
 )
 from PyQt5.QtCore import Qt, QTimer, QRegExp
 from PyQt5.QtGui import QFont, QRegExpValidator
@@ -25,7 +25,7 @@ import language.language as lang_config
 # ---------------------------------------------------------------------------
 # Colour palette (score → hex) — used on ranking rows
 # ---------------------------------------------------------------------------
-SCORE_COLOURS = {1.0: "#27AE60", 0.5: "#D4AC0D", 0.2: "#E67E22", 0.0: "#95A5A6"}
+SCORE_COLOURS = {10.0: "#27AE60", 5.0: "#D4AC0D", 2.0: "#E67E22", -2.0: "#95A5A6"}
 
 
 # ---------------------------------------------------------------------------
@@ -51,7 +51,7 @@ class WarmupIntroWidget(QWidget):
         layout = QVBoxLayout()
         layout.setAlignment(Qt.AlignCenter)
         layout.setSpacing(18)
-        layout.setContentsMargins(50, 30, 50, 30)
+        layout.setContentsMargins(10, 10, 10, 0)
         self.setLayout(layout)
 
         layout.addStretch()
@@ -64,37 +64,35 @@ class WarmupIntroWidget(QWidget):
 
         layout.addSpacing(10)
 
-        current_lang = getattr(lang_config, 'selected_language', 'English')
-        if current_lang == "മലയാളം":
-            desc_text = (
-                "സ്വാഗതം! യഥാർത്ഥ ഗെയിം ആരംഭിക്കുന്നതിന് മുൻപ്, നിങ്ങളുടെ കഴിവുകൾ മനസ്സിലാക്കാൻ നമുക്കൊരു ചെറിയ വാംഅപ്പ് മത്സരം കളിക്കാം.\n\n"
-                "ഏറ്റവും എളുപ്പമുള്ളതിൽ തുടങ്ങി വ്യത്യസ്ത ചോദ്യ തരങ്ങളിൽ നിന്നുള്ള ഓരോ ചോദ്യങ്ങൾക്ക് നിങ്ങൾ ഉത്തരം നൽകേണ്ടതുണ്ട്. ചോദ്യം ഉച്ചത്തിൽ വായിച്ചതിന് ശേഷം നിങ്ങളുടെ വേഗതയും കൃത്യതയും അളക്കപ്പെടുന്നു.\n\n"
-                "കൂടുതൽ ചോദ്യങ്ങൾ തെറ്റിക്കുകയോ ഒഴിവാക്കുകയോ ചെയ്താൽ മാത്രമേ വാംഅപ്പ് നേരത്തെ അവസാനിക്കുകയുള്ളൂ."
-            )
-        else:
-            desc_text = (
-                "Welcome! Before we begin the real game, let's do a quick "
-                "Warmup Match so we can understand your strengths.\n\n"
-                "You will answer one question from each of the different question types, "
-                "starting from the easiest. Your speed and accuracy are measured "
-                "after the question is read aloud.\n\n"
-                "The warmup ends early only if you miss or skip too many questions."
-            )
+        # current_lang = getattr(lang_config, 'selected_language', 'English')
+        # if current_lang == "മലയാളം":
+        #     desc_text = (
+        #         "സ്വാഗതം! യഥാർത്ഥ ഗെയിം ആരംഭിക്കുന്നതിന് മുൻപ്, നിങ്ങളുടെ കഴിവുകൾ മനസ്സിലാക്കാൻ നമുക്കൊരു ചെറിയ വാംഅപ്പ് മത്സരം കളിക്കാം.\n\n"
+        #         "ഏറ്റവും എളുപ്പമുള്ളതിൽ തുടങ്ങി വ്യത്യസ്ത ചോദ്യ തരങ്ങളിൽ നിന്നുള്ള ഓരോ ചോദ്യങ്ങൾക്ക് നിങ്ങൾ ഉത്തരം നൽകേണ്ടതുണ്ട്. ചോദ്യം ഉച്ചത്തിൽ വായിച്ചതിന് ശേഷം നിങ്ങളുടെ വേഗതയും കൃത്യതയും അളക്കപ്പെടുന്നു.\n\n"
+        #         "കൂടുതൽ ചോദ്യങ്ങൾ തെറ്റിക്കുകയോ ഒഴിവാക്കുകയോ ചെയ്താൽ മാത്രമേ വാംഅപ്പ് നേരത്തെ അവസാനിക്കുകയുള്ളൂ."
+        #     )
+        # else:
+        desc_text = _(
+            "Welcome! Before we begin the real game, let's do a quick Warmup Match.\n"
+            "You will answer some question, "
+            "starting from the easiest.\n"
+            "The warmup ends early only if you miss or skip too many questions."
+        )
 
         desc = QLabel(desc_text)
         desc.setAlignment(Qt.AlignCenter)
-        desc.setWordWrap(True)
+        # desc.setWordWrap(True)
         desc.setProperty("class", "subtitle")
-        desc.setMaximumWidth(560)
+        # desc.setMaximumWidth(700)
         # desc.setAccessibleDescription("")
         layout.addWidget(desc, alignment=Qt.AlignCenter)
 
-        layout.addSpacing(20)
+        layout.addSpacing(10)
 
         # Info row
         info_row = QHBoxLayout()
         info_row.setAlignment(Qt.AlignCenter)
-        info_row.setSpacing(30)
+        info_row.setSpacing(15)
         for icon, label_text in [("⏱️", _("Speed matters")), ("🎯", _("14 question types")), ("📊", _("Ranked results"))]:
             col = QVBoxLayout()
             col.setAlignment(Qt.AlignCenter)
@@ -112,40 +110,50 @@ class WarmupIntroWidget(QWidget):
             info_row.addWidget(w)
         layout.addLayout(info_row)
 
-        layout.addSpacing(25)
+        layout.addSpacing(15)
 
         self.begin_btn = QPushButton("🚀  " + _("Begin Warmup"))
         self.begin_btn.setMinimumSize(260, 70)
         self.begin_btn.setProperty("class", "menu-button")
         self.begin_btn.setAccessibleName(_("Begin Warmup"))
-        self.begin_btn.setAccessibleDescription(
-            "Welcome! Before we begin the real game, let's do a quick Warmup Match so we can understand your strengths"
-            "You will answer one question from each of the different question types starting from the easiest. Press Sapce key to Start"
-        )
+        # self.begin_btn.setAccessibleDescription(
+        #     "Welcome! Before we begin the real game, let's do a quick Warmup Match so we can understand your strengths"
+        #     "You will answer one question from each of the different question types starting from the easiest. Press Sapce key to Start"
+        # )
         self.begin_btn.clicked.connect(self._on_begin)
         layout.addWidget(self.begin_btn, alignment=Qt.AlignCenter)
-
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
         layout.addStretch()
+        if hasattr(self, "tts") :
+            QTimer.singleShot(800, self._speak_intro)
 
-        QTimer.singleShot(200, self.begin_btn.setFocus)
+        # QTimer.singleShot(200, self.begin_btn.setFocus)
+
 
     def _speak_intro(self):
         if self.window and not self.window.is_muted and self.tts:
-            current_lang = getattr(lang_config, 'selected_language', 'English')
-            intros = {
-                "മലയാളം": "വാംഅപ്പ് മത്സരത്തിലേക്ക് സ്വാഗതം! ഓരോ ചോദ്യ തരം പരിശോധിച്ചു നിങ്ങളുടെ കഴിവുകൾ ഞങ്ങൾ വിലയിരുത്തും. തയ്യാറാകുമ്പോൾ വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക.",
-                "हिंदी": "वार्मअप मैच में आपका स्वागत है! हम प्रत्येक प्रकार के प्रश्न पूछकर आपकी ताकत का आकलन करेंगे। जब आप तैयार हों तो वार्मअप शुरू करें बटन दबाएं।",
-                "தமிழ்": "வார்ம்அப் போட்டிக்கு வரவேற்கிறோம்! ஒவ்வொரு கேள்வி வகையையும் கேட்டு உங்கள் திறமைகளை நாங்கள் மதிப்பீடு செய்வோம். நீங்கள் தயாராக இருக்கும்போது வார்ம்அப் தொடங்கவும் பொத்தானை அழுத்தவும்.",
-                "عربي": "مرحبًا بك في المباراة التجريبية! سنقوم بتقييم نقاط قوتك من خلال طرح سؤال من كل نوع. اضغط على ابدأ الإحماء عندما تكون مستعدًا.",
-                "संस्कृत": "वार्मअप क्रीडायां भवतः स्वागतम्! वयं प्रत्येकं प्रकारस्य प्रश्नान् पृष्ट्वा भवतး सामर्थ्यस्य मूल्याङ्कनं करिष्यामः। यदा भवान् सज्जः भवति तदा വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക।",
-                "English": (
+            # current_lang = getattr(lang_config, 'selected_language', 'English')
+            # intros = {
+            #     "ml_IN": "വാംഅപ്പ് മത്സരത്തിലേക്ക് സ്വാഗതം! ഓരോ ചോദ്യ തരം പരിശോധിച്ചു നിങ്ങളുടെ കഴിവുകൾ ഞങ്ങൾ വിലയിരുത്തും. തയ്യാറാകുമ്പോൾ വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക.",
+            #     "hi_IN": "वार्मअप मैच में आपका स्वागत है! हम प्रत्येक प्रकार के प्रश्न पूछकर आपकी ताकत का आकलन करेंगे। जब आप तैयार हों तो वार्मअप शुरू करें बटन दबाएं।",
+            #     "ta_IN": "வார்ம்அப் போட்டிக்கு வரவேற்கிறோம்! ஒவ்வொரு கேள்வி வகையையும் கேட்டு உங்கள் திறமைகளை நாங்கள் மதிப்பீடு செய்வோம். நீங்கள் தயாராக இருக்கும்போது வார்ம்அப் தொடங்கவும் பொத்தானை அழுத்தவும்.",
+            #     "ar_SA": "مرحبًا بك في المباراة التجريبية! سنقوم بتقييم نقاط قوتك من خلال طرح سؤال من كل نوع. اضغط على ابدأ الإحماء عندما تكون مستعدًا.",
+            #     "sa_IN": "वार्मअप क्रीडायां भवतः स्वागतम्! वयं प्रत्येकं प्रकारस्य प्रश्नान् पृष्ट्वा भवतး सामर्थ्यस्य मूल्याङ्कनं करिष्यामः। यदा भवान् सज्जः भवति तदा വാംഅപ്പ് ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക।",
+            #     "en": (
+            #         "Welcome to the Warmup Match! "
+            #         "We will assess your strengths by asking some questions. "
+            #         "Press Begin Warmup when you are ready."
+            #     )
+            # }
+            # msg = intros.get(current_lang, intros["English"])
+            msg = _(
                     "Welcome to the Warmup Match! "
-                    "We will assess your strengths by asking one question from each type. "
-                    "Press Begin Warmup when you are ready."
+                    "We will assess your strengths by asking some questions. "
+                    "Press Begin Warmup button when you are ready."
                 )
-            }
-            msg = intros.get(current_lang, intros["English"])
-            # QTimer.singleShot(400, lambda: self.tts.speak(msg))
+            QTimer.singleShot(400, lambda: self.tts.speak(msg))
 
     def _on_begin(self):
         if self.tts:
@@ -264,7 +272,8 @@ class WarmupQuestionWidget(QWidget):
         self.input_box.setPlaceholderText(_("Enter your answer"))
         self.input_box.setFont(QFont("Arial", 16))
         self.input_box.setProperty("class", "answer-input")
-        # self.input_box.setAccessibleName(_("Answer input"))
+        self.input_box.setAccessibleName(" ")
+        self.input_box.setAccessibleDescription(" ")
         validator = QRegExpValidator(QRegExp(r"-?\d*\.?\d*"))
         self.input_box.setValidator(validator)
         self.input_box.returnPressed.connect(self._check_answer)
@@ -316,6 +325,34 @@ class WarmupQuestionWidget(QWidget):
         self.autoskip_tick_timer.timeout.connect(self._on_autoskip_tick)
 
         self._autoskip_remaining = AUTO_SKIP_SECONDS
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
+        QTimer.singleShot(50, self._setup_tab_order)
+
+    def _setup_tab_order(self):
+        from PyQt5.QtWidgets import QWidget, QPushButton
+        QWidget.setTabOrder(self.input_box, self.submit_btn)
+        QWidget.setTabOrder(self.submit_btn, self.skip_btn)
+        
+        if self.window and hasattr(self.window, "section_footer"):
+            back_btn = self.window.section_footer.findChild(QPushButton, "back_to_home")
+            settings_btn = self.window.section_footer.findChild(QPushButton, "settings_btn")
+            mute_btn = self.window.section_footer.findChild(QPushButton, "audio-button")
+            theme_btn = getattr(self.window, "theme_button", None)
+
+            prev = self.skip_btn
+            if back_btn:
+                QWidget.setTabOrder(prev, back_btn)
+                prev = back_btn
+            if settings_btn:
+                QWidget.setTabOrder(prev, settings_btn)
+                prev = settings_btn
+            if mute_btn:
+                QWidget.setTabOrder(prev, mute_btn)
+                prev = mute_btn
+            if theme_btn:
+                QWidget.setTabOrder(prev, theme_btn)
 
     # ── Step loading ─────────────────────────────────────────────────────────
 
@@ -351,6 +388,7 @@ class WarmupQuestionWidget(QWidget):
         self.feedback_lbl.setText("")
         self.feedback_lbl.setFocus()   
         self.input_box.clear()
+        # self.setFocus()
         self.input_box.setEnabled(False)
         self.submit_btn.setEnabled(True)
         self.skip_btn.setEnabled(True)
@@ -400,7 +438,25 @@ class WarmupQuestionWidget(QWidget):
         else:
             self._on_tts_done()
 
-        
+    def keyPressEvent(self, event):
+        """This catches keys because the QuestionWidget currently has focus."""
+        if event.key() == Qt.Key_Space:
+        # Ignore the spacebar entirely and exit the function
+            return
+        if event.modifiers() & (Qt.ControlModifier | Qt.AltModifier):
+            # Tell PyQt to ignore this event and pass it to the Main Window
+            # This guarantees your shortcuts (like Ctrl+R) still work!
+            event.ignore() 
+            return
+        # If the user starts typing, instantly shift focus to the input box
+        if not self.input_box.hasFocus():
+            self.input_box.setFocus()
+            
+            # Forward the exact key they just pressed so it isn't lost
+            self.input_box.keyPressEvent(event)
+        else:
+            # Normal behavior
+            super().keyPressEvent(event)
 
     def _on_tts_done(self):
         if not self._active:
@@ -412,7 +468,7 @@ class WarmupQuestionWidget(QWidget):
         self.autoskip_timer.start()
         self.autoskip_tick_timer.start()
         self.input_box.setEnabled(True)
-        QTimer.singleShot(100, self.input_box.setFocus)
+        # QTimer.singleShot(100, self.input_box.setFocus)
 
     def _on_autoskip_tick(self):
         self._autoskip_remaining = max(0, self._autoskip_remaining - 1)
@@ -421,13 +477,26 @@ class WarmupQuestionWidget(QWidget):
     # ── Answer handling ──────────────────────────────────────────────────────
 
     def _check_answer(self):
-        if not self._active:
+        # 1. THE GUARD: If we are already processing an answer, ignore extra Enter presses!
+        if getattr(self, '_is_processing', False):
             return
+        self._is_processing = True
+
+        self.input_box.setEnabled(False)
+        
+        if not self._active:
+            self._is_processing = False
+            return
+            
         self._stop_timers()
 
         user_text = self.input_box.text().strip()
+        
+        # 2. THE LOCKOUT FIX: Always re-enable the box if we cancel early!
         if not user_text:
+            self.input_box.setEnabled(True)
             self.input_box.setFocus()
+            self._is_processing = False
             return
 
         try:
@@ -436,13 +505,15 @@ class WarmupQuestionWidget(QWidget):
             is_correct  = (user_val == correct_val)
         except (TypeError, ValueError):
             self.feedback_lbl.setText(f'<span style="color:#E74C3C;">✗ {_("Invalid — try again")}</span>')
+            self.input_box.setEnabled(True)
             self.input_box.setFocus()
+            self._is_processing = False
             return
 
         elapsed = (time() - self._question_start_time) if self._question_start_time else 0.0
         score   = self.session.submit_answer(is_correct, elapsed)
+        
         self.feedback_lbl.setFocus()
-        self.input_box.setEnabled(False)
         self.submit_btn.setEnabled(False)
         self.skip_btn.setEnabled(False)
 
@@ -453,39 +524,39 @@ class WarmupQuestionWidget(QWidget):
             self.feedback_lbl.setText(
                 f'<span style="color:#27AE60; font-size:22pt;">{emoji} {_("Correct!")}  {_(label)}</span>'
             )
+            
+            # 3. FORCE UI UPDATE: Make sure the "Correct!" text paints before the audio freezes the code
+            QApplication.processEvents()
+            
             if self.window and not self.window.is_muted:
                 import random
                 sound_index = random.randint(1, 3)
-                if score == 1.0:
+                if score >= 10.0:
                     sound_file = f"excellent-{sound_index}.mp3"
-                elif score == 0.5:
+                elif score >= 5.0:
                     sound_file = f"good-{sound_index}.mp3"
-                elif score == 0.2:
+                elif score >= 2.0:
                     sound_file = f"not-bad-{sound_index}.mp3"
                 else:
                     sound_file = f"okay-{sound_index}.mp3"
-                self.window.play_sound(sound_file)
-
-            # if self.tts and self.window and not self.window.is_muted:
-            #     if current_lang == "മലയാളം":
-            #         QTimer.singleShot(50, lambda: self.tts.speak(f"ശരിയാണ്! {_(label)}"))
-            #     else:
-            #         QTimer.singleShot(50, lambda: self.tts.speak(f"Correct! {label}"))
+                    
+                # Plays sound and waits
+                self.window.play_sound(sound_file, True)
+                
+            # Waits 1.4 seconds in silence after the audio finishes
             QTimer.singleShot(1400, self._advance)
+            
         else:
             self.feedback_lbl.setText(
                 f'<span style="color:#E74C3C; font-size:22pt;">✗ {_("Wrong — moving on")}</span>'
             )
             self.feedback_lbl.setFocus()
+            QApplication.processEvents()
+            
             if self.window and not self.window.is_muted:
                 import random
                 self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3")
 
-            # if self.tts and self.window and not self.window.is_muted:
-            #     if current_lang == "മലയാളം":
-            #         QTimer.singleShot(50, lambda: self.tts.speak("തെറ്റാണ്."))
-            #     else:
-            #         QTimer.singleShot(50, lambda: self.tts.speak("Wrong."))
             QTimer.singleShot(1200, self._advance)
 
     def _on_skip(self):
@@ -516,8 +587,16 @@ class WarmupQuestionWidget(QWidget):
         QTimer.singleShot(1000, self._advance)
 
     def _advance(self):
+    # 4. RELEASE THE GUARD: The new question is ready, allow answering again
+        self._is_processing = False 
+        
         if not self._active:
             return
+            
+        self.input_box.clear()
+        self.input_box.setEnabled(True)
+        self.input_box.setFocus()
+        
         if self.session.is_complete():
             self._finish()
         else:
@@ -585,10 +664,8 @@ class WarmupRankingWidget(QWidget):
         correct  = self.session.correct_count()
         reason   = self.session.completion_reason()
 
-        if reason == "wrong":
+        if reason == "wrong" or reason == "skipped":
             summary_text = _("Warmup completed early wrong").format(correct=correct, total=total)
-        elif reason == "skipped":
-            summary_text = _("Warmup completed early skipped").format(correct=correct, total=total)
         else:
             summary_text = _("Warmup completed success").format(correct=correct, total=total)
 
@@ -596,7 +673,7 @@ class WarmupRankingWidget(QWidget):
         summary.setAlignment(Qt.AlignCenter)
         summary.setWordWrap(True)
         summary.setProperty("class", "subtitle")
-        summary.setAccessibleName(summary_text)
+        # summary.setAccessibleName(summary_text)
         root.addWidget(summary)
 
         divider = QFrame()
@@ -614,6 +691,8 @@ class WarmupRankingWidget(QWidget):
         list_layout = QVBoxLayout(list_widget)
         list_layout.setSpacing(6)
         list_layout.setContentsMargins(0, 0, 0, 0)
+
+        # ... (Your scroll area setup remains the same) ...
 
         for rank, entry in enumerate(ranked, start=1):
             label_text = entry["label"]
@@ -647,14 +726,32 @@ class WarmupRankingWidget(QWidget):
             pts_lbl.setFont(QFont("Arial", 13, QFont.Bold))
             pts_lbl.setAlignment(Qt.AlignRight)
             pts_lbl.setStyleSheet(f"color: {colour};")
-            pts_lbl.setAccessibleName(f"{translated_label_text}: {_(tier_name)}, {score} points")
             row.addWidget(pts_lbl)
 
+            # --- THE ACCESSIBILITY MODIFICATIONS START HERE ---
+            
             row_widget = QWidget()
             row_widget.setLayout(row)
-            row_widget.setStyleSheet(
-                "QWidget { border-bottom: 1px solid rgba(128,128,128,0.2); padding: 4px 0; }"
-            )
+            
+            # 1. Give the row an ObjectName so our CSS doesn't bleed into the labels
+            row_widget.setObjectName("ListRow")
+            
+            # 2. Make the entire row focusable (Allows Tab / Shift+Tab navigation)
+            row_widget.setFocusPolicy(Qt.StrongFocus)
+            
+            # 3. Consolidate the Accessible Name onto the row itself.
+            # When the row gets focus, the screen reader reads this exact string.
+            screen_reader_text = f"Rank {rank}, {translated_label_text}, {_(tier_name)}, {score} points"
+            row_widget.setAccessibleName(screen_reader_text)
+
+            # 4. Update the stylesheet to include a visual :focus state
+            row_widget.setStyleSheet("""
+                QWidget#ListRow { 
+                    border-bottom: 1px solid rgba(128,128,128,0.2); 
+                    padding: 4px 0; 
+                }
+            """)
+            
             list_layout.addWidget(row_widget)
 
         list_layout.addStretch()
@@ -668,9 +765,7 @@ class WarmupRankingWidget(QWidget):
         self.continue_btn.setMinimumSize(280, 70)
         self.continue_btn.setProperty("class", "menu-button")
         self.continue_btn.setAccessibleName(_("Continue to Game Mode"))
-        self.continue_btn.setAccessibleDescription(
-            _("Proceed to the Game Mode difficulty selector.")
-        )
+        self.continue_btn.setAccessibleDescription(" ")
         self.continue_btn.clicked.connect(self._on_continue)
         root.addWidget(self.continue_btn, alignment=Qt.AlignCenter)
 
@@ -740,7 +835,7 @@ class GameModeIntroWidget(QWidget):
         self.on_start = on_start; self.window = window; self.tts = tts
         # self.setAccessibleName("Game Mode Introduction")
         self._init_ui()
-        # self._speak_intro()
+        QTimer.singleShot(1000,self._speak_intro)
 
     def _init_ui(self):
         root = QVBoxLayout(); root.setAlignment(Qt.AlignCenter)
@@ -777,31 +872,17 @@ class GameModeIntroWidget(QWidget):
         root.addWidget(rules, alignment=Qt.AlignCenter); root.addSpacing(16)
         self.start_btn = QPushButton("🚀  " + _("Start Game"))
         self.start_btn.setMinimumSize(260,70); self.start_btn.setProperty("class","menu-button")
-        self.start_btn.setAccessibleName(_("Start Game Mode")); self.start_btn.clicked.connect(self._on_start)
+        self.start_btn.clicked.connect(self._on_start)
         root.addWidget(self.start_btn, alignment=Qt.AlignCenter); root.addStretch()
-        QTimer.singleShot(200, self.start_btn.setFocus)
+        # QTimer.singleShot(200, self.start_btn.setFocus)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
 
     def _speak_intro(self):
         if self.window and not self.window.is_muted and self.tts:
-            current_lang = getattr(lang_config, 'selected_language', 'English')
-            if current_lang == "മലയാളം":
-                pfx = "ഗെയിം പുനരാരംഭിക്കുന്നു. " if self.saved_state else ""
-                msg = pfx + "ഗെയിം മോഡ് തയ്യാറാണ്. ഗെയിം ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക."
-            elif current_lang == "हिंदी":
-                pfx = "खेल फिर से शुरू हो रहा है। " if self.saved_state else ""
-                msg = pfx + "गेम मोड तैयार है। गेम शुरू करें दबाएं।"
-            elif current_lang == "தமிழ்":
-                pfx = "விளையாட்டு மீண்டும் தொடங்குகிறது. " if self.saved_state else ""
-                msg = pfx + "கேம் முறை தயாராக உள்ளது. விளையாட்டைத் தொடங்கவும் பொத்தானை அழுத்தவும்."
-            elif current_lang == "عربي":
-                pfx = "جاري استئناف اللعبة. " if self.saved_state else ""
-                msg = pfx + "وضع اللعبة جاهز. اضغط على ابدأ اللعبة."
-            elif current_lang == "संस्कृत":
-                pfx = "खेलः पुनः आरभ्यते। " if self.saved_state else ""
-                msg = pfx + "गेम मोड सज्जः अस्ति। ഗെയിം ആരംഭിക്കുക ക്ലിക്ക് ചെയ്യുക।"
-            else:
-                pfx = f"Resuming game. " if self.saved_state else ""
-                msg = pfx + "Game Mode ready. Press Start Game."
+            pfx = f"Resuming game. " if self.saved_state else ""
+            msg = pfx + "Game Mode ready. Answer as many questions possible. Use Control plus 'S' to view all shortcuts. Press Start Game when you are ready."
             
             QTimer.singleShot(400, lambda: self.tts.speak(msg))
 
@@ -877,8 +958,37 @@ class GameModeWidget(QWidget):
         self.feedback_lbl.setAccessibleName(" ")
         self.feedback_lbl.setFocus()
         root.addWidget(self.feedback_lbl); root.addStretch(1)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.setAccessibleName(" ")
+        self.setAccessibleDescription(" ")
+        QTimer.singleShot(50, self._setup_tab_order)
+
+    def _setup_tab_order(self):
+        from PyQt5.QtWidgets import QWidget, QPushButton
+        QWidget.setTabOrder(self.input_box, self.submit_btn)
+        QWidget.setTabOrder(self.submit_btn, self.skip_btn)
+        
+        if self.window and hasattr(self.window, "section_footer"):
+            back_btn = self.window.section_footer.findChild(QPushButton, "back_to_home")
+            settings_btn = self.window.section_footer.findChild(QPushButton, "settings_btn")
+            mute_btn = self.window.section_footer.findChild(QPushButton, "audio-button")
+            theme_btn = getattr(self.window, "theme_button", None)
+
+            prev = self.skip_btn
+            if back_btn:
+                QWidget.setTabOrder(prev, back_btn)
+                prev = back_btn
+            if settings_btn:
+                QWidget.setTabOrder(prev, settings_btn)
+                prev = settings_btn
+            if mute_btn:
+                QWidget.setTabOrder(prev, mute_btn)
+                prev = mute_btn
+            if theme_btn:
+                QWidget.setTabOrder(prev, theme_btn)
 
     def _load_next_question(self):
+        self._is_processing = False
         if not self._active: return
         self._current_config = self.session.get_next_question_config()
         if self._current_config is None: self._finish(); return
@@ -915,7 +1025,7 @@ class GameModeWidget(QWidget):
         ln = len(question_text)
         self.question_lbl.setStyleSheet("font-size:14pt;" if ln>120 else "font-size:18pt;" if ln>80 else "")
         self.question_lbl.setText(question_text)
-        self.feedback_lbl.setText(""); self.input_box.clear()
+        self.feedback_lbl.setText(""); self.input_box.clear(); self.setFocus()
         self.input_box.setEnabled(True); self.submit_btn.setEnabled(True); self.skip_btn.setEnabled(True)
         self._question_start_time = None
         audio_on = self.window and not self.window.is_muted
@@ -925,76 +1035,125 @@ class GameModeWidget(QWidget):
         else:
             self._on_tts_done()
         
+    def keyPressEvent(self, event):
+        """This catches keys because the QuestionWidget currently has focus."""
+        if event.key() == Qt.Key_Space:
+        # Ignore the spacebar entirely and exit the function
+            return
+        if event.modifiers() & (Qt.ControlModifier | Qt.AltModifier):
+            # Tell PyQt to ignore this event and pass it to the Main Window
+            # This guarantees your shortcuts (like Ctrl+R) still work!
+            event.ignore() 
+            return
+        # If the user starts typing, instantly shift focus to the input box
+        if not self.input_box.hasFocus():
+            self.input_box.setFocus()
+            
+            # Forward the exact key they just pressed so it isn't lost
+            self.input_box.keyPressEvent(event)
+        else:
+            # Normal behavior
+            super().keyPressEvent(event)
 
     def _on_tts_done(self):
         if not self._active:
             return
         self._question_start_time = time()
-        QTimer.singleShot(100, self.input_box.setFocus)
 
     def _check_answer(self):
-        if not self._active: return
+        if getattr(self, '_is_processing', False):
+            return
+        self._is_processing = True
+        self.input_box.setEnabled(False)
+
+        if not self._active:
+            self._is_processing = False
+            return
+
         user_text = self.input_box.text().strip()
-        if not user_text: self.input_box.setFocus(); return
-        try: is_correct = (float(user_text) == float(self._current_answer))
+        if not user_text:
+            self.input_box.setEnabled(True)
+            self.input_box.setFocus()
+            self._is_processing = False
+            return
+
+        try: 
+            is_correct = (float(user_text) == float(self._current_answer))
         except (TypeError, ValueError):
-            self.feedback_lbl.setText(f'<span style="color:#E74C3C;">✗ {_("Invalid")}</span>'); self.input_box.setFocus(); return
+            self.feedback_lbl.setText(f'<span style="color:#E74C3C;">✗ {_("Invalid")}</span>')
+            self.input_box.setEnabled(True)
+            self.input_box.setFocus()
+            self._is_processing = False
+            return
+
+        if self.window and hasattr(self.window, "game_timer"):
+            self.window.game_timer.stop()
+
         elapsed = (time()-self._question_start_time) if self._question_start_time else 0.0
         score   = self.session.submit_answer(self._current_config, is_correct, elapsed)
-        self.input_box.setEnabled(False); self.submit_btn.setEnabled(False); self.skip_btn.setEnabled(False)
+        
+        self.feedback_lbl.setFocus()
+        self.submit_btn.setEnabled(False)
+        self.skip_btn.setEnabled(False)
+
         if is_correct:
             self.window.time_remaining = min(self.window.time_remaining+3, self.session.session_time)
         else:
             self.window.time_remaining = max(0, self.window.time_remaining-1)
         self.update_timer(self.window.time_remaining)
-        from question.warmup import save_game_session; save_game_session(self.session.save_state(self.window.time_remaining))
         
         current_lang = getattr(lang_config, 'selected_language', 'English')
         if is_correct:
             emoji, tier = SCORE_INFO.get(score, ("✓",""))
             self.feedback_lbl.setText(f'<span style="color:#27AE60;">{emoji} {_(tier)}</span>')
+            
+            QApplication.processEvents()
+
             if self.window and not self.window.is_muted:
                 import random
                 sound_index = random.randint(1, 3)
-                if score == 1.0:
+                if score >= 10.0:
                     sound_file = f"excellent-{sound_index}.mp3"
-                elif score == 0.5:
+                elif score >= 5.0:
                     sound_file = f"good-{sound_index}.mp3"
-                elif score == 0.2:
+                elif score >= 2.0:
                     sound_file = f"not-bad-{sound_index}.mp3"
                 else:
                     sound_file = f"okay-{sound_index}.mp3"
-                self.window.play_sound(sound_file)
+                self.window.play_sound(sound_file, True)
 
-            # if self.tts and not self.window.is_muted:
-            #     if current_lang == "മലയാളം":
-            #         QTimer.singleShot(50, lambda t=tier: self.tts.speak(f"ശരിയാണ്! {_(t)}"))
-            #     else:
-            #         QTimer.singleShot(50, lambda t=tier: self.tts.speak(_(t)))
-            QTimer.singleShot(1200, self._load_next_question)
+            if self.window and hasattr(self.window, "game_timer") and not self.window.game_timer.isActive():
+                self.window.game_timer.start()
+
+            QTimer.singleShot(1400, self._load_next_question)
         else:
             self.feedback_lbl.setText(f'<span style="color:#E74C3C;">✗ {_("Wrong")}</span>')
+            QApplication.processEvents()
+
             if self.window and not self.window.is_muted:
                 import random
-                self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3")
+                self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3", True)
 
-            # if self.tts and not self.window.is_muted:
-            #     if current_lang == "മലയാളം":
-            #         QTimer.singleShot(50, lambda: self.tts.speak("തെറ്റാണ്."))
-            #     else:
-            #         QTimer.singleShot(50, lambda: self.tts.speak("Wrong"))
-            QTimer.singleShot(900, self._load_next_question)
+            if self.window and hasattr(self.window, "game_timer") and not self.window.game_timer.isActive():
+                self.window.game_timer.start()
+
+            QTimer.singleShot(1200, self._load_next_question)
 
     def _on_skip(self):
         if not self._active: return
+        if self.window and hasattr(self.window, "game_timer"):
+            self.window.game_timer.stop()
         self.session.skip_question(self._current_config)
         self.window.time_remaining = max(0, self.window.time_remaining-2)
         self.update_timer(self.window.time_remaining)
-        from question.warmup import save_game_session; save_game_session(self.session.save_state(self.window.time_remaining))
         self.feedback_lbl.setText(f'<span style="color:#95A5A6;">⏭ {_("Skipped")}</span>')
         self.input_box.setEnabled(False); self.submit_btn.setEnabled(False); self.skip_btn.setEnabled(False)
         if self.window and not self.window.is_muted:
-            self.window.play_sound("wrong-anwser-1.mp3")
+            self.window.play_sound("wrong-anwser-1.mp3", True)
+            
+        if self.window and hasattr(self.window, "game_timer") and not self.window.game_timer.isActive():
+            self.window.game_timer.start()
+            
         QTimer.singleShot(700, self._load_next_question)
 
     def update_timer(self, secs):
@@ -1048,7 +1207,7 @@ class GameModeReportWidget(QWidget):
         lw = QWidget(); ll = QVBoxLayout(lw); ll.setSpacing(4); ll.setContentsMargins(0,0,0,0)
         for rank, entry in enumerate(updated, 1):
             lbl = entry["label"]; score = entry["score"]; gained = entry.get("gained",0.0)
-            key = 1.0 if score>=1.0 else 0.5 if score>=0.5 else 0.2 if score>0 else 0.0
+            key = 10.0 if score>=10.0 else 5.0 if score>=5.0 else 2.0 if score>0 else -2.0
             colour = SCORE_COLOURS.get(key,"#95A5A6"); gained_txt = f"+{gained:.1f}" if gained>0 else "–"
             
             # Localize label dynamically
@@ -1065,32 +1224,56 @@ class GameModeReportWidget(QWidget):
             gl = QLabel(gained_txt); gl.setFont(QFont("Arial",12,QFont.Bold)); gl.setStyleSheet(f"color:{colour};"); gl.setFixedWidth(44); gl.setAlignment(Qt.AlignRight)
             sl = QLabel(f"{score:.1f}pt"); sl.setFont(QFont("Arial",12)); sl.setFixedWidth(48); sl.setAlignment(Qt.AlignRight)
             for w in (rl,tl,gl,sl): row.addWidget(w)
-            rw = QWidget(); rw.setLayout(row); rw.setStyleSheet("QWidget{border-bottom:1px solid rgba(128,128,128,0.2);padding:3px 0;}"); ll.addWidget(rw)
+            
+            # --- THE ACCESSIBILITY MODIFICATIONS START HERE ---
+            rw = QWidget()
+            rw.setLayout(row)
+            rw.setObjectName("ListRow")
+            rw.setFocusPolicy(Qt.StrongFocus)
+            
+            accessible_text = f"Rank {rank}. {translated_lbl}. Score {score:.1f} points. Gained {gained_txt}."
+            rw.setAccessibleName(accessible_text)
+            
+            rw.setStyleSheet("""
+                QWidget#ListRow {
+                    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+                    padding: 3px 0;
+                }
+                QWidget#ListRow:focus {
+                    border: 2px solid #3498DB;
+                    border-radius: 4px;
+                    background-color: rgba(52, 152, 219, 0.1);
+                }
+            """)
+            ll.addWidget(rw)
+            # --- END MODIFICATIONS ---
         ll.addStretch(); scroll.setWidget(lw); root.addWidget(scroll)
         self.play_btn = QPushButton("🔄  " + _("Play Again")); self.play_btn.setMinimumSize(220,65)
         self.play_btn.setProperty("class","menu-button"); self.play_btn.setAccessibleName(_("Play Again"))
         self.play_btn.clicked.connect(self._on_play_again); root.addWidget(self.play_btn, alignment=Qt.AlignCenter)
-        QTimer.singleShot(300, self.play_btn.setFocus)
 
     def _speak_summary(self):
         if not (self.window and not self.window.is_muted and self.tts): return
         import random
         self.window.play_sound(f"finished-{random.randint(1, 3)}.mp3")
-        current_lang = getattr(lang_config, 'selected_language', 'English')
+        
         pct = self.session.accuracy_pct()
-        # if current_lang == "മലയാളം":
-        #     msg = f"സെഷൻ പൂർത്തിയായി! {pct} ശതമാനം കൃത്യത. മികച്ച ശ്രമം!"
-        # elif current_lang == "हिंदी":
-        #     msg = f"सत्र पूरा हुआ! {pct} प्रतिशत सटीकता। शानदार प्रयास!"
-        # elif current_lang == "தமிழ்":
-        #     msg = f"அமர்வு முடிந்தது! {pct} சதவீத துல்லியம். சிறந்த முயற்சி!"
-        # elif current_lang == "عربي":
-        #     msg = f"اكتملت الجلسة! دقة بنسبة {pct} بالمائة. جهد رائع!"
-        # elif current_lang == "संस्कृत":
-        #     msg = f"സത്രം സമാപ്തം! {pct} ശതമാനം ശുദ്ധത. ഉത്തമൻ പ്രയാസം!"
-        # else:
-        #     msg = f"Session complete! {pct} percent accuracy. Great effort!"
-        # QTimer.singleShot(600, lambda: self.tts.speak(msg))
+        updated = self.session.get_ranked_results_updated()
+        
+        if updated:
+            top_skill_label = updated[0]["label"]
+            parts = top_skill_label.split("_")
+            if len(parts) == 2:
+                digit, operation = parts[0], parts[1].capitalize()
+                translated_skill = f"{digit} {_(operation)}"
+            else:
+                translated_skill = _(top_skill_label)
+                
+            msg = _("Congratulations, game mode completed! Your accuracy was {pct} percent and your top skill is {skill}.").format(pct=pct, skill=translated_skill)
+        else:
+            msg = _("Congratulations, game mode completed! Your accuracy was {pct} percent.").format(pct=pct)
+
+        QTimer.singleShot(600, lambda: self.tts.speak(msg))
 
     def _on_play_again(self):
         if self.tts: self.tts.stop()

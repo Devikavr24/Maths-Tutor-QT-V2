@@ -28,7 +28,7 @@ from PyQt5.QtWidgets import (
     QWidget, QGridLayout, QStackedWidget, QSizePolicy, QShortcut,
     QBoxLayout
 )
-from PyQt5.QtCore import Qt, QUrl, QSize, QTimer
+from PyQt5.QtCore import Qt, QUrl, QSize, QTimer, QEventLoop
 from question.loader import QuestionProcessor
 from pages.shared_ui import create_footer_buttons, apply_theme, SettingsDialog, create_main_footer_buttons, QuestionWidget, setup_exit_handling
 from pages.ques_functions import load_pages, upload_excel
@@ -219,6 +219,11 @@ class MainWindow(QMainWindow):
         self._repeat_shortcut = QShortcut(QKeySequence("Ctrl+R"), self)
         self._repeat_shortcut.activated.connect(self._on_repeat_question)
 
+        # Ctrl+S shortcut to read all shortcuts
+        self._shortcuts_help_shortcut = QShortcut(QKeySequence("Ctrl+S"), self)
+        self._shortcuts_help_shortcut.activated.connect(self._on_read_all_shortcuts)
+        self._is_settings_open = False
+
     def refresh_ui(self, new_language):
         print(f"[System] Refreshing UI to {new_language}...")
         self.language = new_language
@@ -367,12 +372,36 @@ class MainWindow(QMainWindow):
 
     def _get_question_text(self):
         current_page = self.stack.currentWidget()
-        if current_page:
-            question_widget = current_page.findChild(QuestionWidget)
-            if question_widget and hasattr(question_widget, 'label'):
-                text = question_widget.label.text()
+        if not current_page:
+            return None
+
+        # Try to find QuestionWidget (Learning/Quickplay)
+        qw = current_page.findChild(QuestionWidget)
+        if qw and hasattr(qw, 'label'):
+            text = qw.label.text()
+            if text:
+                return text
+
+        try:
+            from pages.warmup_ui import WarmupQuestionWidget, GameModeWidget
+            
+            # Check WarmupQuestionWidget
+            # (It can be the current_page itself or a child)
+            ww = current_page if isinstance(current_page, WarmupQuestionWidget) else current_page.findChild(WarmupQuestionWidget)
+            if ww and hasattr(ww, 'question_lbl'):
+                text = ww.question_lbl.text()
                 if text:
                     return text
+
+            # Check GameModeWidget
+            gw = current_page if isinstance(current_page, GameModeWidget) else current_page.findChild(GameModeWidget)
+            if gw and hasattr(gw, 'question_lbl'):
+                text = gw.question_lbl.text()
+                if text:
+                    return text
+        except ImportError:
+            pass
+
         return None
 
     def _on_repeat_question(self):
@@ -427,6 +456,22 @@ class MainWindow(QMainWindow):
                 if qw:
                     qw.increment_replay()
 
+    def _on_read_all_shortcuts(self):
+        if getattr(self, '_is_settings_open', False):
+            return
+
+        if hasattr(self, 'tts'):
+            shortcuts_text = _(
+                "Following are the shortcuts essential for you: "
+                "Control S to hear all shortcuts. "
+                "Control R to repeat questions. "
+                "Control semicolon to decrease speech speed. "
+                "Alt semicolon to increase speech speed. "
+                "Control Q to exit the application."
+            )
+            self.tts.speak(shortcuts_text)
+            print("[Ctrl+S] Reading shortcuts...")
+
     def focus_story_button(self):
         for btn in self.menu_buttons:
             if btn.text() ==_("Story"):
@@ -446,6 +491,7 @@ class MainWindow(QMainWindow):
         title = QLabel(_("welcome"))
         title.setAlignment(Qt.AlignCenter)
         title.setProperty("class", "main-title")
+        # title.setAccessibleName(_("welcome"))
         layout.addWidget(title, alignment=Qt.AlignCenter)
 
         subtitle = QLabel(_("ready").format(lang=self.language))
@@ -1049,7 +1095,7 @@ class MainWindow(QMainWindow):
         else:
             print(f"[TTS SOUND ERROR] File not found: {filepath}")
 
-    def play_sound(self, filename):
+    def play_sound(self, filename, wait=False):
         if self.is_muted:
             return
 
@@ -1066,6 +1112,25 @@ class MainWindow(QMainWindow):
         if os.path.exists(filepath):
             self.media_player.setMedia(QMediaContent(QUrl.fromLocalFile(filepath)))
             self.media_player.play()
+
+        if wait:
+            loop = QEventLoop()
+            
+            # Create a localized function to check the status
+            def on_status_changed(status):
+                if status == QMediaPlayer.EndOfMedia:
+                    loop.quit()
+            
+            # Connect the signal so PyQt knows when to unpause
+            self.media_player.mediaStatusChanged.connect(on_status_changed)
+            
+            # Halt the code here (but keep the GUI alive) until the audio finishes!
+            loop.exec_()
+            
+            # CRITICAL: Disconnect the signal afterward so they don't pile up 
+            # the next time you call play_sound!
+            self.media_player.mediaStatusChanged.disconnect(on_status_changed)
+
         else:
             print(f"[SOUND ERROR] File not found: {filepath}")
 
@@ -1168,21 +1233,27 @@ class MainWindow(QMainWindow):
                 btn.setObjectName("back_to_learn")
             elif btn.text() == _("Back to Home"):
                 btn.setObjectName("back_to_home")
+            elif btn.text() == _("Settings"):
+                btn.setObjectName("settings_btn")
 
         return footer
 
     def handle_settings(self):
-        dialog = SettingsDialog(
-            parent=self,
-            initial_difficulty=getattr(self, "current_difficulty", 1),
-            main_window=self
-        )
+        self._is_settings_open = True
+        try:
+            dialog = SettingsDialog(
+                parent=self,
+                initial_difficulty=getattr(self, "current_difficulty", 1),
+                main_window=self
+            )
 
-        if dialog.exec_() == QDialog.Accepted:
-            self.current_difficulty = dialog.get_difficulty_index()
-            new_language = dialog.get_selected_language()
-            if new_language != self.language:
-                self.refresh_ui(languages.get(new_language))
+            if dialog.exec_() == QDialog.Accepted:
+                self.current_difficulty = dialog.get_difficulty_index()
+                new_language = dialog.get_selected_language()
+                if new_language != self.language:
+                    self.refresh_ui(languages.get(new_language))
+        finally:
+            self._is_settings_open = False
 
     def load_section(self, name):
         if hasattr(self, 'tts'):

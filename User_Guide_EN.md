@@ -94,6 +94,7 @@ There is no point system, score table, grade, or percentage calculation at the e
 | **Enter** | Submit your answer (during a session) or confirm a choice (default button). |
 | **Space Bar** | Activate a focused button or check/uncheck a checkbox. |
 | **Control + R** | The narrator repeats the current question aloud. |
+| **Control + S** | The narrator reads all the shortcuts. |
 | **Control + ;** | The narrator's voice slows down and re-reads the question. |
 | **Alt + ;** | The narrator's voice speeds up. |
 | **Tab** | Move forward through the buttons and options on the screen. |

@@ -3,15 +3,6 @@ import os
 import openpyxl
 import json
 
-STATE_FILE = os.path.join(os.getcwd(), "question", "saved_gamemode_state.json")
-
-def save_game_session(state):
-    try:
-        with open(STATE_FILE, "w", encoding="utf-8") as f:
-            json.dump(state, f, indent=4)
-        print(f"[DEBUG] Saved game session state to {STATE_FILE}")
-    except Exception as e:
-        print(f"[ERROR] Failed to save game session: {e}")
 
 def get_saved_game_session():
     fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
@@ -20,24 +11,16 @@ def get_saved_game_session():
         return None
     else: return df
 
-def clear_saved_game_session():
-    if os.path.exists(STATE_FILE):
-        try:
-            os.remove(STATE_FILE)
-            print(f"[DEBUG] Cleared saved game session at {STATE_FILE}")
-        except Exception as e:
-            print(f"[ERROR] Failed to clear game session: {e}")
-
 
 # ── Constants ─────────────────────────────────────────────────────────────────
 MAX_WRONG = MAX_SKIPS = 2
 AUTO_SKIP_SECONDS      = 30
 SCORE_FAST_THRESHOLD   = 4.0
 SCORE_MEDIUM_THRESHOLD = 12.0
-SCORE_INFO  = {1.0: ("🌟", "Very Fast"), 0.5: ("👍", "Good"),
-               0.2: ("🐢", "Slow"),      0.0: ("✗",  "Missed")}
-SCORE_COLOURS = {1.0: "#27AE60", 0.5: "#D4AC0D",
-                 0.2: "#E67E22", 0.0: "#95A5A6"}
+SCORE_INFO  = {10.0: ("🌟", "Very Fast"), 5.0: ("👍", "Good"),
+               2.0: ("🐢", "Slow"),      -2.0: ("✗",  "Missed")}
+SCORE_COLOURS = {10.0: "#27AE60", 5.0: "#D4AC0D",
+                 2.0: "#E67E22", -2.0: "#95A5A6"}
 
 # ── Excel helper ──────────────────────────────────────────────────────────────
 
@@ -170,8 +153,8 @@ def get_warmup_sequence(full_df):
 def generate_logic_from_warmup(ranked_results):
     try:
         logic_rows = []
-        # Filter out those skills the user excelled at (score >= 1.0)
-        ladder = [item for item in ranked_results if item.get("score", 0.0) < 1.0]
+        # Filter out those skills the user excelled at (score >= 10.0)
+        ladder = [item for item in ranked_results if item.get("score", 0.0) < 10.0]
         
         # Fallback if they excelled at absolutely everything
         if not ladder:
@@ -194,6 +177,9 @@ def generate_logic_from_warmup(ranked_results):
                     "warmup_order": BUILTIN_WARMUP_ORDER[lbl]
                 })
         
+        # Ensure the final ladder sequence always respects the logical difficulty progression: 1D add/sub first, then warmup_order
+        ladder.sort(key=lambda x: (0 if str(x["label"]).lower() in ["1d_addition", "1d_subtraction"] else 1, x.get("warmup_order", 999)))
+
         for i, item in enumerate(ladder):
             label = item["label"]
             forward = ladder[i+1]["label"] if i + 1 < len(ladder) else "NaN"
@@ -300,20 +286,20 @@ class WarmupSession:
         if step is None:
             return 0.0
         if not is_correct:
-            score = 0.0
+            score = -2.0
             self.wrong_count += 1
             self.consecutive_wrong += 1
             self.consecutive_skips = 0
         elif elapsed <= SCORE_FAST_THRESHOLD:
-            score = 1.0
+            score = 10.0
             self.consecutive_wrong = 0
             self.consecutive_skips = 0
         elif elapsed <= SCORE_MEDIUM_THRESHOLD:
-            score = 0.5
+            score = 5.0
             self.consecutive_wrong = 0
             self.consecutive_skips = 0
         else:
-            score = 0.2
+            score = 2.0
             self.consecutive_wrong = 0
             self.consecutive_skips = 0
         self.scores[step["label"]] = score
@@ -323,7 +309,7 @@ class WarmupSession:
     def skip_question(self):
         step = self.current_step()
         if step:
-            self.scores[step["label"]] = 0.0
+            self.scores[step["label"]] = -2.0
             self.skip_count += 1
             self.consecutive_skips += 1
             self.consecutive_wrong = 0
@@ -339,6 +325,7 @@ class WarmupSession:
                 "score":  score,
                 "q_type": s.get("q_type", "addition"),
                 "digits": s.get("digits", "1d"),
+                "warmup_order": s.get("warmup_order", 999)
             })
         return sorted(result, key=lambda x: x["score"], reverse=True)
 
@@ -465,10 +452,10 @@ class GameModeSession:
 
     @staticmethod
     def calc_score(is_correct: bool, elapsed: float) -> float:
-        if not is_correct:                    return 0.0
-        if elapsed <= SCORE_FAST_THRESHOLD:   return 1.0
-        if elapsed <= SCORE_MEDIUM_THRESHOLD: return 0.5
-        return 0.2
+        if not is_correct:                    return -2.0
+        if elapsed <= SCORE_FAST_THRESHOLD:   return 10.0
+        if elapsed <= SCORE_MEDIUM_THRESHOLD: return 5.0
+        return 2.0
 
     def submit_answer(self, config: dict, is_correct: bool, elapsed: float) -> float:
         score = self.calc_score(is_correct, elapsed)
@@ -546,17 +533,3 @@ class GameModeSession:
     def level_name(self) -> str:
         parts = self.current_label.split("_")
         return " ".join([p.capitalize() for p in parts])
-
-    def save_state(self, time_remaining: int = 90) -> dict:
-        return {
-            "current_label": self.current_label,
-            "questions_in_current_label": getattr(self, "questions_in_current_label", 0),
-            "used_question_ids": list(self.used_question_ids),
-            "ranked": self.ranked,
-            "accumulated_points": self.accumulated_points,
-            "question_count": self.question_count,
-            "correct_count": self.correct_count,
-            "consecutive_correct": self.consecutive_correct,
-            "consecutive_wrong": self.consecutive_wrong,
-            "time_remaining": time_remaining
-        }

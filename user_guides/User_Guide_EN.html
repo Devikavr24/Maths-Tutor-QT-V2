@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Maths-Tutor User Guide</title>
+<style>
+body { font-family: sans-serif; max-width: 800px; margin: 40px auto; line-height: 1.6; padding: 0 20px; }
+table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+th { background-color: #f2f2f2; font-weight: bold; }
+code { background-color: #f4f4f4; padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+h1, h2, h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; color: #333; }
+a { color: #0066cc; text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>Maths-Tutor User Guide</h1>
+<p>Maths-Tutor is a free, open-source mathematics learning application designed for blind and visually impaired children. 
+Built entirely around keyboard and voice, it requires no mouse or screen to operate. Every question, result, and menu option is spoken aloud through a built-in text-to-speech engine, making independent learning possible for every child.</p>
+<h2>Table of Contents</h2>
+<ol>
+<li><a href="#quick-start">Quick Start</a></li>
+<li><a href="#installation-and-setup">Installation and Setup</a></li>
+<li><a href="#first-launch">First Launch</a></li>
+<li><a href="#choosing-a-mode">Choosing a Mode</a></li>
+<li><a href="#difficulty-levels">Difficulty Levels</a></li>
+<li><a href="#answering-questions">Answering Questions</a></li>
+<li><a href="#scoring-and-feedback">Scoring and Feedback</a></li>
+<li><a href="#keyboard-shortcuts">Keyboard Shortcuts</a></li>
+<li><a href="#settings">Settings</a></li>
+<li><a href="#loading-custom-questions">Loading Custom Questions</a></li>
+<li><a href="#accessibility-features">Accessibility Features</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+<li><a href="#about">About</a></li>
+</ol>
+<h2>Quick Start</h2>
+<ol>
+<li>Open Maths-Tutor on your computer.</li>
+<li>Listen for the language selection announcement and press <strong>Enter</strong> on your preferred language.</li>
+<li>Use the <strong>Tab</strong> key to move between the three game modes: <strong>Quickplay</strong>, <strong>Game Mode</strong>, and <strong>Learning Mode</strong>. Press <strong>Space Bar</strong> or <strong>Enter</strong> to select one.</li>
+<li>Listen as the app reads the first question to you. Type your answer using the number keys.</li>
+<li>Press <strong>Enter</strong> to submit your answer. (Note: Only the Enter key submits answers; the Space Bar does not). If you ever need to hear the question again, press <strong>Control and R</strong> at the same time.</li>
+</ol>
+<h2>Installation and Setup</h2>
+<p>[For Parents and Teachers]
+Setting up Maths-Tutor takes just a few steps:</p>
+<ol>
+<li>Run: pip install -r requirements.txt</li>
+<li>Install espeak-ng via your system software manager</li>
+<li>Run: python main.py</li>
+</ol>
+<h2>First Launch</h2>
+<p>When you start the application for the first time, a language selection window will appear. 
+*   Use the <strong>Arrow Keys</strong> to move through the list of languages. The narrator will announce: <strong>English</strong>, <strong>Hindi</strong> (हिंदी), <strong>Malayalam</strong> (മലയാളം), <strong>Tamil</strong> (தமிழ்), <strong>Arabic</strong> (عربي), and <strong>Sanskrit</strong> (संस्कृत).
+*   Press <strong>Tab</strong> once to reach the "Remember my selection" checkbox. Press the <strong>Space Bar</strong> to check/uncheck it.
+*   Press <strong>Tab</strong> again to reach the <strong>Continue</strong> button and press <strong>Space Bar</strong> or <strong>Enter</strong>. (Note: As <strong>Continue</strong> is the default button, you can also press <strong>Enter</strong> at any time while the dialog is open to confirm).
+You will then hear "Welcome to Maths Tutor!" followed by your selected language.</p>
+<h3>Main Menu and Audio Controls</h3>
+<p>On the main screen, you will hear sound effects as you navigate between different buttons using the <strong>Tab</strong> key. </p>
+<p><strong>Audio Mute</strong>
+You can reach the <strong>Audio</strong> toggle by pressing <strong>Tab</strong>. The screen reader will announce "Audio Unmuted" if the background music and sound effects are playing, or "Audio Muted" if they are silent. Press <strong>Space Bar</strong> or <strong>Enter</strong> to switch between the two.</p>
+<p><strong>Theme Toggle</strong>
+The application also features a theme toggle in the top-left section (reachable via Tab) that switches between Light and Dark themes. This is primarily for users with partial sight who benefit from different contrast levels.</p>
+<h2>Choosing a Mode</h2>
+<p>You can navigate the main menu by pressing the <strong>Tab</strong> key. Each time you press Tab, the application will announce the next available button. Press <strong>Space Bar</strong> or <strong>Enter</strong> to select the one you want. (Starting from the top, the order is: Theme Toggle, Quickplay, Game Mode, Learning Mode, Audio Toggle, Upload, and Settings).</p>
+<p><strong>Quickplay</strong>
+In this mode, you will hear a series of arithmetic questions. A timer runs in the background, and the app will provide spoken feedback based on how quickly you answer correctly.</p>
+<p><strong>Learning Mode</strong>
+This mode is untimed and designed for building confidence. After selecting it, press <strong>Tab</strong> to hear the topic options, then press <strong>Enter</strong> to choose one:
+*   <strong>Story</strong>: You will hear full-sentence word problems, such as: "Jake brought 27 candies to share with his classmates. He gave away 10. How many does Jake have now?"
+*   <strong>Time</strong>: Problems involving reading the clock and calculating time.
+*   <strong>Currency</strong>: Challenges involving money, shopping, and change.
+*   <strong>Distance</strong>: Measurements and length calculation problems.
+*   <strong>Bellring</strong>: An interactive activity where you listen to internal bell sounds and count how many times they ring.
+*   <strong>Operations</strong>: Standard practice for Addition, Subtraction, Multiplication, Division, and <strong>Percentage</strong>.</p>
+<p><strong>Game Mode</strong>
+Designed for the most confident students, this mode begins with a <strong>Warmup Match</strong>. 
+*   The app will announce "Warmup Match" and explain the process. 
+*   You will hear 14 questions, one from every question type. 
+*   The app tracks your speed and ranks your results to perfectly calibrate the main game difficulty. 
+*   Press <strong>Space Bar</strong> (as the button is focused automatically) or <strong>Enter</strong> on the <strong>Begin Warmup</strong> button to start. 
+The main game is competitive, announces a live score, and does not reveal answers if you miss.</p>
+<h2>Difficulty Levels</h2>
+<p>There are five levels of challenge: <strong>Simple</strong>, <strong>Easy</strong>, <strong>Medium</strong>, <strong>Hard</strong>, and <strong>Challenging</strong>. As the difficulty increases, the questions will feature numbers with more digits. You can change your difficulty level at any time in the <strong>Settings</strong> menu.</p>
+<h2>Answering Questions</h2>
+<ol>
+<li>When a session begins, the question is read aloud to you automatically.</li>
+<li>If you missed it or want to check your work, press <strong>Control + R</strong> to repeat the question.</li>
+<li>Type your answer using the number keys. For Story questions, listen carefully to the full sentence before typing.</li>
+<li>Press <strong>Enter</strong> to submit. (Note: Only <strong>Enter</strong> submits the answer; <strong>Space</strong> is not used for submission).</li>
+<li>After every outcome—whether you get the answer correct, make a wrong attempt, or the question is skipped—the application will automatically read the next question to you. You do not need to press anything to continue.</li>
+<li>You have <strong>3 attempts</strong> for every question. After each wrong attempt, the app will repeat the question and you can try again. </li>
+<li>After the third failure, the correct answer is read aloud (except in Game Mode), and then the application moves automatically to the next challenge.</li>
+</ol>
+<h2>Scoring and Feedback</h2>
+<p>Only Game Mode has a scoring system (the exact scoring logic requires confirmation from the code before documenting).</p>
+<p>There is no point system, score table, grade, or percentage calculation at the end of Quickplay or Learning Mode sessions.</p>
+<h2>Keyboard Shortcuts</h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Key</th>
+<th style="text-align: left;">What You Hear / What Happens</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>Enter</strong></td>
+<td style="text-align: left;">Submit your answer (during a session) or confirm a choice (default button).</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Space Bar</strong></td>
+<td style="text-align: left;">Activate a focused button or check/uncheck a checkbox.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control + R</strong></td>
+<td style="text-align: left;">The narrator repeats the current question aloud.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control + S</strong></td>
+<td style="text-align: left;">The narrator reads all the shortcuts.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control + ;</strong></td>
+<td style="text-align: left;">The narrator's voice slows down and re-reads the question.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Alt + ;</strong></td>
+<td style="text-align: left;">The narrator's voice speeds up.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Tab</strong></td>
+<td style="text-align: left;">Move forward through the buttons and options on the screen.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Arrow Keys</strong></td>
+<td style="text-align: left;">Navigate through dropdown lists, the language list, or the difficulty slider.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Escape</strong></td>
+<td style="text-align: left;">Cancel an action or close a menu dialog.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>Control + Q</strong></td>
+<td style="text-align: left;">Exit the app. You will hear: "Are you sure you want to exit?".</td>
+</tr>
+</tbody>
+</table>
+<h2>Settings</h2>
+<p>Use the <strong>Tab</strong> key to reach the <strong>Settings</strong> button in the main menu footer and press <strong>Space Bar</strong>. Inside Settings, the <strong>Tab order</strong> is: Difficulty Slider, Reset Language, Help, About, OK, and Cancel.
+*   <strong>Difficulty</strong>: Use the <strong>Left and Right Arrow Keys</strong> to change the level from Simple to Challenging.
+*   <strong>Language</strong>: Select the <strong>Reset Language</strong> button (via Tab and Space) to open the language choice window.
+*   <strong>OK / Cancel</strong>: Press <strong>Tab</strong> to reach these buttons and press <strong>Space Bar</strong> or <strong>Enter</strong> to confirm or discard your changes.</p>
+<h2>Loading Custom Questions</h2>
+<p>[For Teachers]
+You can create tailored lessons for your students by creating an Excel (.xlsx) file with a column titled <strong>operands</strong>. Use the following symbols to define your numbers:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">Syntax</th>
+<th style="text-align: left;">Meaning</th>
+<th style="text-align: left;">Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">*</td>
+<td style="text-align: left;">Any random number</td>
+<td style="text-align: left;">*</td>
+</tr>
+<tr>
+<td style="text-align: left;">,</td>
+<td style="text-align: left;">Picks one number from the provided list</td>
+<td style="text-align: left;">2,4,6,8</td>
+</tr>
+<tr>
+<td style="text-align: left;">:</td>
+<td style="text-align: left;">Random number between two values</td>
+<td style="text-align: left;">10:20</td>
+</tr>
+<tr>
+<td style="text-align: left;">;</td>
+<td style="text-align: left;">Multiplies a base by a random range</td>
+<td style="text-align: left;">2;10:20</td>
+</tr>
+</tbody>
+</table>
+<p>Downloadable templates are available at the GitHub lessons page: https://github.com/zendalona/maths-tutor/tree/main/lessons</p>
+<h2>Accessibility Features</h2>
+<p>Maths-Tutor is designed to be your primary educational companion, built to the highest accessibility standards:
+*   <strong>Always-On Speech</strong>: The built-in text-to-speech engine is natively integrated, meaning every action and result is telegraphed instantly.
+*   <strong>Screen Reader Compatible</strong>: The application uses standard interface components that work seamlessly with environmental screen readers.
+*   <strong>Digit-by-Digit Reading</strong>: For large or complex numbers, the app can read digits individually to ensure absolute clarity.
+*   <strong>High Contrast</strong>: The application inherits high-contrast themes directly from your operating system settings for those with partial sight.</p>
+<h2>Troubleshooting</h2>
+<p>Problem: I cannot hear any audio or speech.
+Likely Cause: The speech engine is not installed, or your system volume is muted.
+Fix: Install espeak-ng and ensure your primary audio hardware is turned up and unmuted.</p>
+<p>Problem: My custom lesson file will not load.
+Likely Cause: The file is not an Excel (.xlsx) file or is missing the operands column header.
+Fix: Save the file as .xlsx and double-check that the header is spelled correctly.</p>
+<p>Problem: I want to exit the application.
+Fix: Press <strong>Control + Q</strong>. The app will ask "Are you sure you want to exit?". Press <strong>Tab</strong> to reach <strong>Yes</strong> and then press <strong>Space Bar</strong> to confirm. (Note: Pressing <strong>Enter</strong> will activate <strong>No</strong> by default).</p>
+<p>Problem: The application acts incorrectly or doesn't start.
+Fix: Open your terminal and run the command <strong>pip install -r requirements.txt</strong> again to ensure all files are correct.</p>
+<h2>About</h2>
+<p>Maths-Tutor is a free and open-source project dedicated to inclusive education for all children.</p>
+<p>GitHub Repository: https://github.com/Devikavr24/Maths-Tutor-QT-V2</p>
+</body>
+</html>
