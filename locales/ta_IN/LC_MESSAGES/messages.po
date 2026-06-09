@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Maths Tutor 1.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-06 00:08+0530\n"
+"POT-Creation-Date: 2026-06-08 01:24+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ta_IN\n"
@@ -194,50 +194,50 @@ msgid ""
 msgstr ""
 
 #: pages/shared_ui.py:912 pages/shared_ui.py:917
-msgid "Help"
-msgstr "உதவி"
+msgid "User Guide"
+msgstr ""
 
-#: pages/shared_ui.py:913 pages/shared_ui.py:918
+#: pages/shared_ui.py:913 pages/shared_ui.py:919
 msgid "About"
 msgstr "பற்றி"
 
-#: pages/shared_ui.py:960
+#: pages/shared_ui.py:961
 msgid "Language Changed"
 msgstr ""
 
-#: pages/shared_ui.py:961
+#: pages/shared_ui.py:962
 #, python-brace-format
 msgid "Language changed to {new_lang}. The app will now reload."
 msgstr ""
 
-#: pages/shared_ui.py:1015 pages/warmup_ui.py:1190
+#: pages/shared_ui.py:1024 pages/warmup_ui.py:1188
 msgid "Session Complete!"
 msgstr ""
 
-#: pages/shared_ui.py:1045
+#: pages/shared_ui.py:1054
 #, fuzzy
 msgid "questions answered"
 msgstr "கேள்வி"
 
-#: pages/shared_ui.py:1046
+#: pages/shared_ui.py:1055
 msgid "Level"
 msgstr ""
 
-#: pages/shared_ui.py:1063 pages/shared_ui.py:1067
+#: pages/shared_ui.py:1072 pages/shared_ui.py:1076
 #, python-brace-format
 msgid "Next Level: {level}"
 msgstr ""
 
-#: pages/shared_ui.py:1071 pages/shared_ui.py:1075
+#: pages/shared_ui.py:1080 pages/shared_ui.py:1084
 #, python-brace-format
 msgid "Play {level} Again"
 msgstr ""
 
-#: pages/shared_ui.py:1088
+#: pages/shared_ui.py:1097
 msgid "Ready for the next level?"
 msgstr ""
 
-#: pages/shared_ui.py:1088
+#: pages/shared_ui.py:1097
 msgid "Play again?"
 msgstr ""
 
@@ -314,7 +314,7 @@ msgstr ""
 msgid "Wrong — moving on"
 msgstr ""
 
-#: pages/warmup_ui.py:570 pages/warmup_ui.py:1151
+#: pages/warmup_ui.py:570 pages/warmup_ui.py:1149
 msgid "Skipped"
 msgstr ""
 
@@ -384,40 +384,40 @@ msgstr "கேள்வி"
 msgid "Invalid"
 msgstr ""
 
-#: pages/warmup_ui.py:1131
+#: pages/warmup_ui.py:1130
 msgid "Wrong"
 msgstr ""
 
-#: pages/warmup_ui.py:1186
+#: pages/warmup_ui.py:1184
 msgid "Game Mode Results"
 msgstr ""
 
-#: pages/warmup_ui.py:1202
+#: pages/warmup_ui.py:1200
 #, fuzzy
 msgid "Questions"
 msgstr "கேள்வி"
 
-#: pages/warmup_ui.py:1202
+#: pages/warmup_ui.py:1200
 #, fuzzy
 msgid "Accuracy"
 msgstr "நாணயம்"
 
-#: pages/warmup_ui.py:1202
+#: pages/warmup_ui.py:1200
 msgid "Final Skill"
 msgstr ""
 
-#: pages/warmup_ui.py:1253 pages/warmup_ui.py:1254
+#: pages/warmup_ui.py:1251 pages/warmup_ui.py:1252
 msgid "Play Again"
 msgstr ""
 
-#: pages/warmup_ui.py:1274
+#: pages/warmup_ui.py:1272
 #, python-brace-format
 msgid ""
 "Congratulations, game mode completed! Your accuracy was {pct} percent and"
 " your top skill is {skill}."
 msgstr ""
 
-#: pages/warmup_ui.py:1276
+#: pages/warmup_ui.py:1274
 #, python-brace-format
 msgid "Congratulations, game mode completed! Your accuracy was {pct} percent."
 msgstr ""
@@ -627,4 +627,7 @@ msgstr ""
 
 #~ msgid "Start Game Mode"
 #~ msgstr ""
+
+#~ msgid "Help"
+#~ msgstr "உதவி"
 
