@@ -35,7 +35,7 @@ def load_pages(section_name, back_callback, difficulty_index,
         grid = QGridLayout()
         grid.setSpacing(20)
 
-        operations = ["Addition", "Subtraction", "Multiplication", "Division", "Remainder", "Percentage"]
+        operations = [("Addition"), ("Subtraction"), ("Multiplication"), ("Division"), ("Remainder"), ("Percentage")]
 
         for i, sub in enumerate(operations):
             translated=_(sub)

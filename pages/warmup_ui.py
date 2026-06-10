@@ -373,15 +373,16 @@ class WarmupQuestionWidget(QWidget):
         total    = self.session.total_steps()
 
         # Update progress UI
-        self.step_counter_lbl.setText(_("Question {n} / {total}").format(n=step_num, total=total))
+        self.step_counter_lbl.setText(lang_config.localize_numbers(_("Question {n} / {total}").format(n=step_num, total=total)))
         self.progress_bar.setValue(self.session.step_index)
         
         # Localize question type label dynamically
         lbl_text = step["label"]
         parts = lbl_text.split("_")
         if len(parts) == 2:
+            print(parts)
             digit, operation = parts[0], parts[1].capitalize()
-            translated_lbl = f"{digit} {_(operation)}"
+            translated_lbl = f"{_(operation)}"
         else:
             translated_lbl = _(lbl_text)
         self.type_lbl.setText(translated_lbl)
@@ -424,14 +425,18 @@ class WarmupQuestionWidget(QWidget):
         else:
             self.question_lbl.setStyleSheet("")
 
-        self.question_lbl.setText(question_text)
+        self.question_lbl.setText(lang_config.localize_numbers(question_text))
 
         # TTS + deferred timer start
         self._question_start_time = None
         audio_on = self.window and not self.window.is_muted
 
         if audio_on and self.tts:
-            tts_text = f"{question_text}. {_('Type your answer')}"
+            speak_q = question_text.replace("+", f" {_('plus')} ")
+            speak_q = speak_q.replace("-", f" {_('minus')} ")
+            speak_q = speak_q.replace("*", f" {_('times')} ")
+            speak_q = speak_q.replace("/", f" {_('divided by')} ")
+            tts_text = f"{speak_q}. {_('Type your answer')}"
             delay_ms = len(tts_text) * 70 + 1500
             self.tts.speak(tts_text)
             QTimer.singleShot(delay_ms, self._on_tts_done)
@@ -521,6 +526,7 @@ class WarmupQuestionWidget(QWidget):
 
         if is_correct:
             emoji, label = SCORE_INFO.get(score, ("✓", ""))
+            print(label)
             self.feedback_lbl.setText(
                 f'<span style="color:#27AE60; font-size:22pt;">{emoji} {_("Correct!")}  {_(label)}</span>'
             )
@@ -665,9 +671,9 @@ class WarmupRankingWidget(QWidget):
         reason   = self.session.completion_reason()
 
         if reason == "wrong" or reason == "skipped":
-            summary_text = _("Warmup completed early wrong").format(correct=correct, total=total)
+            summary_text = lang_config.localize_numbers(_("Warmup completed early wrong").format(correct=correct, total=total))
         else:
-            summary_text = _("Warmup completed success").format(correct=correct, total=total)
+            summary_text = lang_config.localize_numbers(_("Warmup completed success").format(correct=correct, total=total))
 
         summary = QLabel(summary_text)
         summary.setAlignment(Qt.AlignCenter)
@@ -711,7 +717,7 @@ class WarmupRankingWidget(QWidget):
             row = QHBoxLayout()
             row.setSpacing(12)
 
-            rank_lbl = QLabel(f"#{rank}")
+            rank_lbl = QLabel(lang_config.localize_numbers(f"#{rank}"))
             rank_lbl.setFixedWidth(36)
             rank_lbl.setFont(QFont("Arial", 13, QFont.Bold))
             rank_lbl.setAlignment(Qt.AlignCenter)
@@ -722,7 +728,7 @@ class WarmupRankingWidget(QWidget):
             type_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             row.addWidget(type_lbl)
 
-            pts_lbl = QLabel(f"{emoji}  {_(tier_name)}  ({score:.1f} pt{'s' if score != 1.0 else ''})")
+            pts_lbl = QLabel(lang_config.localize_numbers(f"{emoji}  {_(tier_name)}  ({score:.1f} pt{'s' if score != 1.0 else ''})"))
             pts_lbl.setFont(QFont("Arial", 13, QFont.Bold))
             pts_lbl.setAlignment(Qt.AlignRight)
             pts_lbl.setStyleSheet(f"color: {colour};")
@@ -881,8 +887,8 @@ class GameModeIntroWidget(QWidget):
 
     def _speak_intro(self):
         if self.window and not self.window.is_muted and self.tts:
-            pfx = f"Resuming game. " if self.saved_state else ""
-            msg = pfx + "Game Mode ready. Answer as many questions possible. Use Control plus 'S' to view all shortcuts. Press Start Game when you are ready."
+            pfx = _(f"Resuming game. ") if self.saved_state else ""
+            msg = pfx + _("Game Mode ready. Answer as many questions possible. Use Control plus 'S' to view all shortcuts. Press Start Game when you are ready.")
             
             QTimer.singleShot(400, lambda: self.tts.speak(msg))
 
@@ -1010,21 +1016,23 @@ class GameModeWidget(QWidget):
         
         self.level_lbl.setText(f"🎮 {translated_lvl_name}")
         self.phase_lbl.setText("")
-        self.qcount_lbl.setText(_("Question") + f" {self.session.question_count+1}")
+        self.qcount_lbl.setText(lang_config.localize_numbers(_("Question") + f" {self.session.question_count+1}"))
         
         # Localize question type label dynamically
         lbl_text = self._current_config["label"]
         parts = lbl_text.split("_")
         if len(parts) == 2:
             digit, operation = parts[0], parts[1].capitalize()
-            translated_lbl = f"{digit} {_(operation)}"
+            operation = operation.rstrip()
+            translated_lbl = _(operation)
+            print(f"{translated_lbl}")
         else:
             translated_lbl = _(lbl_text)
         self.type_lbl.setText(translated_lbl)
 
         ln = len(question_text)
         self.question_lbl.setStyleSheet("font-size:14pt;" if ln>120 else "font-size:18pt;" if ln>80 else "")
-        self.question_lbl.setText(question_text)
+        self.question_lbl.setText(lang_config.localize_numbers(question_text))
         self.feedback_lbl.setText(""); self.input_box.clear(); self.setFocus()
         self.input_box.setEnabled(True); self.submit_btn.setEnabled(True); self.skip_btn.setEnabled(True)
         self._question_start_time = None
@@ -1105,7 +1113,7 @@ class GameModeWidget(QWidget):
         current_lang = getattr(lang_config, 'selected_language', 'English')
         if is_correct:
             emoji, tier = SCORE_INFO.get(score, ("✓",""))
-            self.feedback_lbl.setText(f'<span style="color:#27AE60;">{emoji} {_(tier)}</span>')
+            self.feedback_lbl.setText(lang_config.localize_numbers(f'<span style="color:#27AE60;">{emoji} {_(tier)}</span>'))
             
             QApplication.processEvents()
 

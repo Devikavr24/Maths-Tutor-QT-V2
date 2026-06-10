@@ -60,45 +60,8 @@ class TTSWorker(QObject):
     def speak(self, text):
         current_lang = getattr(lang_config, 'selected_language', 'en')
         
-        # Malayalam support
-        if current_lang == "ml_IN":
-            # Pronounce math symbols correctly in Malayalam
-            replacements = {
-                '+': ' കൂട്ടണം ',
-                '-': ' കുറയ്ക്കണം ',
-                '*': ' ഗുണിക്കണം ',
-                'x': ' ഗുണിക്കണം ',
-                '/': ' ഹരിക്കണം ',
-                '÷': ' ഹരിക്കണം ',
-                '=': ' സമം ',
-                '?': ''
-            }
-            for sym, pron in replacements.items():
-                text = text.replace(sym, pron)
-
-            try:
-                import asyncio, edge_tts, os, uuid
-                # Unique cache file
-                cache_file = f"tts_cache_{uuid.uuid4().hex[:8]}.mp3"
-                cache_path = os.path.join("sounds", cache_file)
-
-                # Direct execution avoiding Subprocess interpreter latency
-                communicate = edge_tts.Communicate(text, "ml-IN-SobhanaNeural")
-                asyncio.run(communicate.save(cache_path))
-                
-                self.play_custom_sound.emit(cache_file)
-                return # Skip standard fallback logic
-            except Exception as e:
-                print("[Edge TTS Error] Fallback failed:", e)
-        
-        # ✅ FIX: Convert standard numbers to Hindi Devanagari numerals for correct pronunciation
-        if current_lang == "hi_IN":
-            hindi_numerals = {
-                '0': '०', '1': '१', '2': '२', '3': '३', '4': '४', 
-                '5': '५', '6': '६', '7': '७', '8': '८', '9': '९'
-            }
-            for eng_num, hin_num in hindi_numerals.items():
-                text = text.replace(eng_num, hin_num)
+        # Convert standard numbers to regional script numerals for correct native pronunciation
+        text = lang_config.localize_numbers(text)
 
         if self.system == "Windows":
             self._speak_windows(text, current_lang)
@@ -132,64 +95,102 @@ class TTSWorker(QObject):
     def _speak_windows(self, text, current_lang):
         self._stop_windows() # Stop any previous speech
 
-        # 1. ATTEMPT NATIVE VOICE (OneCore) OR FALLBACK TO ESPEAK-NG
-        if current_lang in ["hi_IN", "ml_IN"]:
+                # 1. ATTEMPT NATIVE VOICE (OneCore) OR FALLBACK TO ESPEAK-NG
+                # Expanded target validation container supporting your full array of regional locale requirements
+        target_languages = ["hi_IN", "ml_IN", "mr_IN", "ta_IN", "sa_IN", "ar_SA"]
+
+        if current_lang in target_languages:
             voice_found = False
-            lang_code = 'hi' if current_lang == "hi_IN" else 'ml'
-            search_name = "hindi" if current_lang == "hi_IN" else "malayalam"
+            
+            # 1. Define Language Engine Map Profiles (Language Code, Display Name, Native Token Targets)
+            lang_profiles = {
+                "hi_IN": {"code": "hi", "search": "hindi",      "tokens": ["kalpana", "hemant"]},
+                "ml_IN": {"code": "ml", "search": "malayalam",   "tokens": ["midhun", "sobhana"]},
+                "mr_IN": {"code": "mr", "search": "marathi",    "tokens": ["hemant", "kalpana"]}, # Shares phonetic base engines
+                "ta_IN": {"code": "ta", "search": "tamil",      "tokens": ["valluvar", "vani"]},
+                "sa_IN": {"code": "sa", "search": "sanskrit",   "tokens": ["hemant", "laxmi"]},
+                "ar_SA": {"code": "ar", "search": "arabic",     "tokens": ["naayf", "hoda"]}      # Universal Arabic standard profile
+            }
+            
+            # Extract structural profile config values based on current active runtime string
+            profile = lang_profiles[current_lang]
+            lang_code = profile["code"]
+            search_name = profile["search"]
+            target_tokens = profile["tokens"]
             
             try:
-                pythoncom.CoInitialize() # Required for COM in QThread
+                pythoncom.CoInitialize() # Required for COM bindings in explicit multi-threaded pipelines (QThread)
                 if not self.sapi:
                     self.sapi = win32com.client.Dispatch("SAPI.SpVoice")
                 
-                # Tell SAPI to look in the Modern OneCore registry path
+                # Point SAPI lookup context directly to the high-quality Modern Windows OneCore directory space
                 cat = win32com.client.Dispatch("SAPI.SpObjectTokenCategory")
                 cat.SetId(r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", False)
                 
                 target_voice = None
                 for token in cat.EnumerateTokens():
                     desc = token.GetDescription().lower()
-                    if search_name in desc or (current_lang == "hi_IN" and ("kalpana" in desc or "hemant" in desc)):
+                    
+                    # Match via primary display string configuration or fallback internal engine name profiles
+                    is_name_match = search_name in desc
+                    is_token_match = any(token_name in desc for token_name in target_tokens)
+
+                    if is_name_match or is_token_match:
                         target_voice = token
                         voice_found = True
                         break
-                
+
                 if voice_found and target_voice:
                     self.sapi.Voice = target_voice
-                    # Map WPM to SAPI's -10 to 10 scale
-                    # sapi_rate = int((self.speech_rate - 150) / 15)
-                    # self.sapi.Rate = max(-10, min(10, sapi_rate))
-                    
                     self.set_rate(self.speech_rate)
-                    self.sapi.Speak(text, 1) # 1 = Speak Asynchronously
-                    return  # Success! Skip the rest.
+                    self.sapi.Speak(text, 1) # Execution parameter 1 = Speak Asynchronously without locking UI
+                    return  # Exit tracking execution context on successful native playback route
+                    
             except Exception as e:
-                print(f"Native Windows {search_name} check failed:", e)
+                print(f"Native Windows OneCore {search_name} check failed:", e)
 
-            # 2. ESPEAK-NG FALLBACK (If Native fails or isn't installed)
+            # 2. SEAMLESS MULTI-FALLBACK CROSS-COMPATIBILITY PIPELINE (Triggered if native assets missing)
             if not voice_found:
-                print(f"Windows {current_lang} pack not found. Falling back to espeak-ng...")
+                print(f"Windows {current_lang} structural asset engine missing. Initializing fallback platform...")
                 try:
-                    import shutil, os
-                    espeak_exe = shutil.which('espeak-ng')
+                    import shutil, os, subprocess
+                    espeak_exe = shutil.which('espeak-ng') or shutil.which('espeak')
+                    
                     if not espeak_exe:
-                        fallback_path = r"C:\Program Files\eSpeak NG\espeak-ng.exe"
-                        if os.path.exists(fallback_path):
-                            espeak_exe = fallback_path
+                        # Array of standard path locations for classical x86 windows builds
+                        fallback_locations = [
+                            r"C:\Program Files (x86)\eSpeak\command_line\espeak.exe",
+                            r"C:\Program Files (x86)\eSpeak\espeak.exe",
+                            r"C:\Program Files\eSpeak NG\espeak-ng.exe"
+                        ]
+                        for path in fallback_locations:
+                            if os.path.exists(path):
+                                espeak_exe = path
+                                break
 
-                    # 0x08000000 = CREATE_NO_WINDOW (Hides terminal popup)
-                    flags = 0x08000000 
+                    if not espeak_exe:
+                        print(f"🚨 [TTS ERROR] Unable to locate local eSpeak tools for execution fallback pipeline setup.")
+                        return
+
+                    # Explicit execution window safety flags to intercept popping command prompt windows
+                    flags = 0x08000000 # CREATE_NO_WINDOW 
+                    
+                    # Deploy process argument profile mappings context
                     self.process = subprocess.Popen(
-                        [espeak_exe, '-v', lang_code + '+f3', '--stdin'], # 👈 Add variant +f3 for smoother node
+                        [espeak_exe, '-v', f"{lang_code}+f3", '--stdin'],
                         stdin=subprocess.PIPE,
                         creationflags=flags
                     )
-                    self.process.stdin.write(text.encode('utf-8'))
+                    
+                    # Append newline boundary token so the audio queue process synthesises chunks directly without buffer lockup
+                    formatted_text = text + "\n"
+                    self.process.stdin.write(formatted_text.encode('utf-8'))
+                    self.process.stdin.flush()
                     self.process.stdin.close()
                     return
+                    
                 except Exception as e:
-                    print(f"🚨 [TTS ERROR] Failed to run espeak-ng fallback: {e}")
+                    print(f"🚨 [TTS ERROR] Fatal failure during cross-platform fallback processing sequence: {e}")
                     return
 
         # 3. STANDARD ENGLISH / DEFAULT PYTTSX3 LOGIC

@@ -14,11 +14,20 @@ import random
 from tts.tts_worker import TextToSpeech
 from PyQt5.QtMultimedia import QSound
 
-# from language.language import tr
+import language.language as lang_config
 from PyQt5.QtGui import QMovie
 
 DIFFICULTY_LEVELS = ["Simple", "Easy", "Medium", "Hard", "Challenging"]
 
+def _dummy_for_translations():
+    # This function is never called. It ensures pybabel extracts these dynamic strings.
+    _("Simple")
+    _("Easy")
+    _("Medium")
+    _("Hard")
+    _("Challenging")
+    _("Extra Hard")
+    
 
 def create_entry_ui(main_window) -> QWidget:
     entry_widget = QWidget()
@@ -387,7 +396,12 @@ class QuestionWidget(QWidget):
 
         delay_ms = 0
         if app_tts_active and hasattr(self, 'tts'):
-            tts_text = f"{question_text}. {_('Type your answer')}"
+            speak_q = question_text.replace("+", f" {_('plus')} ")
+            speak_q = speak_q.replace("-", f" {_('minus')} ")
+            speak_q = speak_q.replace("*", f" {_('times')} ")
+            speak_q = speak_q.replace("/", f" {_('divided by')} ")
+            
+            tts_text = f"{speak_q}. {_('Type your answer')}"
             
             # Accessibility Timer Fix: Time is len(text) * 70ms + 500ms + 1000ms cognitive buffer
             delay_ms = len(tts_text) * 70 + 1500
@@ -408,7 +422,7 @@ class QuestionWidget(QWidget):
         elif text_len > 60:     self.label.setStyleSheet("font-size: 19pt;")
         else:                   self.label.setStyleSheet("")
 
-        self.label.setText(question_text)
+        self.label.setText(lang_config.localize_numbers(question_text))
 
         
         self.result_label.setText("")
@@ -507,7 +521,7 @@ class QuestionWidget(QWidget):
 
         if not result["valid"]:
             msg = _("Please enter a valid number.")
-            self.result_label.setText(msg)
+            self.result_label.setText(lang_config.localize_numbers(msg))
             self.result_label.setAccessibleName(msg)
             return
 
@@ -629,15 +643,19 @@ class QuestionWidget(QWidget):
         match = re.search(r'(\d+)\s*([+\-*/×xX])\s*(\d+)', question_text)
         if not match:
             if hasattr(self, 'tts') and self.tts:
-                self.tts.speak(question_text)
+                speak_q = question_text.replace("+", f" {_('plus')} ")
+                speak_q = speak_q.replace("-", f" {_('minus')} ")
+                speak_q = speak_q.replace("*", f" {_('times')} ")
+                speak_q = speak_q.replace("/", f" {_('divided by')} ")
+                self.tts.speak(speak_q)
             return
 
         num1 = int(match.group(1)); op_char = match.group(2); num2 = int(match.group(3))
         op_map = {
-            '+': "Addition",    '-': "Subtraction",
-            '*': "Multiplication", '×': "Multiplication",
-            'x': "Multiplication", 'X': "Multiplication",
-            '/': "Division",    '÷': "Division"
+            '+': _("Addition"),    '-': _("Subtraction"),
+            '*': _("Multiplication"), '×': _("Multiplication"),
+            'x': _("Multiplication"), 'X': _("Multiplication"),
+            '/': _("Division"),    '÷': _("Division")
         }
         self.seq_op_text = op_map.get(op_char, "Operation")
         self.seq_num2    = num2
@@ -736,13 +754,13 @@ class QuestionWidget(QWidget):
                     self.main_window._update_timer_bar()
 
             sound_index = random.randint(1, 3)
-            if elapsed < 5:   fb = "🌟 Excellent"
-            elif elapsed < 10: fb = "👏 Very Good"
-            elif elapsed < 15: fb = "👍 Good"
-            elif elapsed < 20: fb = "👌 Not Bad"
-            else:              fb = "🙂 Okay"
+            if elapsed < 5:   fb = f"🌟 {_('Excellent')}"
+            elif elapsed < 10: fb = f"👏 {_('Very Good')}"
+            elif elapsed < 15: fb = f"👍 {_('Good')}"
+            elif elapsed < 20: fb = f"👌 {_('Not Bad')}"
+            else:              fb = f"🙂 {_('Okay')}"
 
-            self.result_label.setText(f'<span style="font-size:16pt;">{fb}</span>')
+            self.result_label.setText(lang_config.localize_numbers(f'<span style="font-size:16pt;">{fb}</span>'))
             clean = fb.replace("🌟","").replace("👏","").replace("👍","").replace("👌","").replace("🙂","").strip()
             self.result_label.setAccessibleName(f"Correct! {clean}")
 
@@ -817,9 +835,7 @@ def create_dynamic_question_ui(section_name, difficulty_index, back_callback,
     layout.setAlignment(Qt.AlignTop)
     container.setLayout(layout)
 
-    if section_name.lower() == "bellring":
-        print(f"[BellRing] Overriding difficulty {difficulty_index} -> 1")
-        difficulty_index = 1
+
 
     processor = QuestionProcessor(section_name, difficulty_index)
     processor.process_file()
@@ -867,7 +883,8 @@ class SettingsDialog(QDialog):
         self.difficulty_slider.setValue(initial_difficulty)
         self.difficulty_slider.valueChanged.connect(self.update_difficulty_label)
 
-        self.difficulty_label = create_label(self.get_localized_difficulty(initial_difficulty), font_size=12)
+        print(DIFFICULTY_LEVELS[initial_difficulty])
+        self.difficulty_label = create_label(_(DIFFICULTY_LEVELS[initial_difficulty]), font_size=12)
         self.difficulty_label.setProperty("class", "difficulty-label")
         self.difficulty_label.setProperty("theme", parent.current_theme)
         self.difficulty_label.setAccessibleName(" ")
@@ -931,16 +948,16 @@ class SettingsDialog(QDialog):
         QWidget.setTabOrder(self.about_button, ok_btn)
         QWidget.setTabOrder(ok_btn, cancel_btn)
 
-    def get_localized_difficulty(self, index):
-        eng = DIFFICULTY_LEVELS[index]
-        if self.updated_language == "हिंदी":
-            return {"Simple":"सरल","Easy":"आसान","Medium":"मध्यम",
-                    "Hard":"कठिन","Challenging":"चुनौतीपूर्ण"}.get(eng, eng)
-        return eng
+    # def get_localized_difficulty(self, index):
+    #     eng = DIFFICULTY_LEVELS[index]
+    #     if self.updated_language == "हिंदी":
+    #         return {"Simple":"सरल","Easy":"आसान","Medium":"मध्यम",
+    #                 "Hard":"कठिन","Challenging":"चुनौतीपूर्ण"}.get(eng, eng)
+    #     return eng
 
     def update_difficulty_label(self, index):
-        level = self.get_localized_difficulty(index)
-        self.difficulty_label.setText(level)
+        level = DIFFICULTY_LEVELS[index]
+        self.difficulty_label.setText(_(level))
         self.difficulty_label.setAccessibleName(" ")
         # if self.main_window and hasattr(self.main_window, 'tts') and not self.main_window.is_muted:
         #     self.main_window.tts.stop()

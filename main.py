@@ -43,6 +43,7 @@ from PyQt5.QtCore import Qt
 
 languages = {"English" : "en", 
                 "हिंदी" : "hi_IN",
+                "मराठी" : "mr_IN",
                 "മലയാളം" : "ml_IN",
                 "தமிழ்" : "ta_IN", 
                 "عربي" : "ar_SA", 
@@ -1192,10 +1193,20 @@ class MainWindow(QMainWindow):
         button_grid.setContentsMargins(10, 10, 10, 10)
 
         sections = ["Story", "Time", "Currency", "Distance", "Bellring", "Operations"]
+        translated_sections = [
+            _("Story"), 
+            _("Time"), 
+            _("Currency"), 
+            _("Distance"), 
+            _("Bellring"), 
+            _("Operations")
+        ]
+
         self.menu_buttons = []
 
         for i, name in enumerate(sections):
             translated_name = _(name)
+            print(f"\n\n{translated_name}\n\n")
             button = QPushButton(translated_name)
             button.setMinimumSize(250, 65)
             button.setMaximumSize(300, 75)

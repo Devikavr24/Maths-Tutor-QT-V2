@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Maths Tutor 1.0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-06-08 01:24+0530\n"
+"POT-Creation-Date: 2026-06-10 19:34+0530\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ml_IN\n"
@@ -12,41 +12,41 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.18.0\n"
+"Generated-By: Babel 2.17.0\n"
 
-#: main.py:77
+#: main.py:78
 msgid "Welcome to Maths Tutor!"
 msgstr ""
 
-#: main.py:83
-#, fuzzy
-msgid "Select your preferred language:"
-msgstr "നിങ്ങളുടെ ഇഷ്ടപ്പെട്ട ഭാഷ തിരഞ്ഞെടുക്കുക:"
+#: main.py:84
 
-#: main.py:106
+msgid "Select your preferred language:"
+msgstr "നിങ്ങൾക്ക് ഇഷ്ടമുള്ള ഭാഷ തിരഞ്ഞെടുക്കുക:"
+
+#: main.py:107
 msgid "Remember my selection"
 msgstr ""
 
-#: main.py:118
-#, fuzzy
+#: main.py:119
+
 msgid "Continue"
 msgstr "തുടരുക"
 
-#: main.py:125 pages/shared_ui.py:888
-#, fuzzy
+#: language/language.py:1038 main.py:126 pages/shared_ui.py:898
 msgid "Cancel"
 msgstr "റദ്ദാക്കുക"
 
-#: main.py:302 main.py:524
+#: language/language.py:1156 main.py:303 main.py:525
 msgid "🎓 Learning Mode"
 msgstr "🎓 പഠന മോഡ്"
 
-#: main.py:364 main.py:563 main.py:630 main.py:699 main.py:733 main.py:818
-#: main.py:1026 main.py:1046 main.py:1315 pages/shared_ui.py:154
+#: language/language.py:1034 main.py:365 main.py:564 main.py:631 main.py:700
+#: main.py:734 main.py:819 main.py:1027 main.py:1047 main.py:1326
+#: pages/shared_ui.py:163
 msgid "Back to Menu"
 msgstr "മെനുവിലേക്ക് മടങ്ങുക"
 
-#: main.py:465
+#: main.py:466
 msgid ""
 "Following are the shortcuts essential for you: Control S to hear all "
 "shortcuts. Control R to repeat questions. Control semicolon to decrease "
@@ -54,201 +54,285 @@ msgid ""
 "the application."
 msgstr ""
 
-#: main.py:477
+#: language/language.py:1106 main.py:478 main.py:1197
 msgid "Story"
 msgstr "കഥ"
 
-#: main.py:491
+#: language/language.py:1150 main.py:492
 msgid "welcome"
 msgstr "മാത്‌സ് ട്യൂട്ടറിലേക്ക് സ്വാഗതം!"
 
-#: main.py:497
+#: language/language.py:1142 main.py:498
 msgid "ready"
-msgstr "{lang} ഭാഷയിൽ പഠിക്കാൻ തയ്യാറാണോ?"
+msgstr "{lang} ൽ പഠിക്കാൻ നിങ്ങൾ തയ്യാറാണോ?"
 
-#: main.py:522
+#: language/language.py:1155 main.py:523
 msgid "⚡Quickplay"
 msgstr "⚡ക്വിക്ക് പ്ലേ"
 
-#: main.py:523
+#: language/language.py:1157 main.py:524
 msgid "🎮 Game Mode"
 msgstr "🎮 ഗെയിം മോഡ്"
 
-#: main.py:586
+#: language/language.py:1087 main.py:587
 msgid "Resume Session"
 msgstr "സെഷൻ പുനരാരംഭിക്കുക"
 
-#: main.py:587
+#: language/language.py:1024 main.py:588
 msgid "A saved session was found. Do you want to resume?"
 msgstr "ഒരു സേവ് ചെയ്ത സെഷൻ കണ്ടെത്തി. നിങ്ങൾക്ക് ഇത് പുനരാരംഭിക്കണമെന്നുണ്ടോ?"
 
-#: main.py:588 pages/shared_ui.py:195
+#: language/language.py:1131 main.py:589 pages/shared_ui.py:204
 msgid "Yes"
-msgstr ""
+msgstr "അതെ"
 
-#: main.py:589 pages/shared_ui.py:196
+#: language/language.py:1069 main.py:590 pages/shared_ui.py:205
 msgid "No"
-msgstr ""
+msgstr "ഇല്ല"
 
-#: main.py:922
-#, fuzzy
+#: main.py:923
+
 msgid "Back to Difficulty"
-msgstr "കാഠിന്യം തിരഞ്ഞെടുക്കുക:"
+msgstr "ബുദ്ധിമുട്ട് തിരഞ്ഞെടുപ്പിലേക്ക് മടങ്ങുക"
 
-#: main.py:1029 main.py:1042 pages/shared_ui.py:155
+#: language/language.py:1118 main.py:1030 main.py:1043 pages/shared_ui.py:164
 msgid "Upload"
 msgstr "അപ്‌ലോഡ് ചെയ്യുക"
 
-#: main.py:1218 main.py:1230
+#: language/language.py:1110 main.py:1198
+msgid "Time"
+msgstr "സമയം"
+
+#: language/language.py:1044 main.py:1199
+msgid "Currency"
+msgstr "നാണയം"
+
+#: language/language.py:1045 main.py:1200
+msgid "Distance"
+msgstr "ദൂരം"
+
+#: language/language.py:1037 main.py:1201
+msgid "Bellring"
+msgstr "ബെൽ റിംഗ്"
+
+#: language/language.py:1074 main.py:1202
+msgid "Operations"
+msgstr "ഗണിത പ്രവർത്തനങ്ങൾ"
+
+#: language/language.py:1035 main.py:1229 main.py:1241
 msgid "Back to Operations"
 msgstr "ഓപ്പറേഷനുകളിലേക്ക് മടങ്ങുക"
 
-#: main.py:1219 main.py:1232
-#, fuzzy
-msgid "Back to Learn"
-msgstr "മെനുവിലേക്ക് മടങ്ങുക"
+#: main.py:1230 main.py:1243
 
-#: main.py:1220 main.py:1234
+msgid "Back to Learn"
+msgstr "പഠനത്തിലേക്ക് മടങ്ങുക"
+
+#: language/language.py:1033 main.py:1231 main.py:1245
 msgid "Back to Home"
 msgstr "തുടക്കത്തിലേക്ക് മടങ്ങുക"
 
-#: main.py:1221 main.py:1236 pages/shared_ui.py:156 pages/shared_ui.py:855
+#: language/language.py:1094 main.py:1232 main.py:1247 pages/shared_ui.py:165
+#: pages/shared_ui.py:864
 msgid "Settings"
 msgstr "ക്രമീകരണങ്ങൾ"
 
-#: pages/ques_functions.py:29 pages/ques_functions.py:33
+#: language/language.py:1040 pages/ques_functions.py:29
+#: pages/ques_functions.py:33
 msgid "Choose an Operation"
 msgstr "ഒരു ഗണിത പ്രവർത്തനം തിരഞ്ഞെടുക്കൂ"
 
-#: pages/shared_ui.py:169 pages/warmup_ui.py:272
+#: pages/shared_ui.py:24
+
+msgid "Simple"
+msgstr "ലളിതം"
+
+#: language/language.py:1047 pages/shared_ui.py:25
+msgid "Easy"
+msgstr "എളുപ്പം"
+
+#: language/language.py:1065 pages/shared_ui.py:26
+msgid "Medium"
+msgstr "ഇടത്തരം"
+
+#: language/language.py:1057 pages/shared_ui.py:27
+msgid "Hard"
+msgstr "കഠിനം"
+
+#: pages/shared_ui.py:28
+msgid "Challenging"
+msgstr ""
+
+#: language/language.py:1051 pages/shared_ui.py:29
+msgid "Extra Hard"
+msgstr "അതി കഠിനം"
+
+#: language/language.py:1048 pages/shared_ui.py:178 pages/warmup_ui.py:272
 msgid "Enter your answer"
 msgstr "നിങ്ങളുടെ ഉത്തരമിടുക"
 
-#: pages/shared_ui.py:193
+#: language/language.py:1050 pages/shared_ui.py:202
 msgid "Exit Application"
 msgstr "പുറത്ത് കടക്കുക"
 
-#: pages/shared_ui.py:194
+#: language/language.py:1031 pages/shared_ui.py:203
 msgid "Are you sure you want to exit?"
 msgstr "നിങ്ങൾ പുറത്തുകടക്കാൻ ഉറപ്പാണോ?"
 
-#: pages/shared_ui.py:390 pages/warmup_ui.py:434 pages/warmup_ui.py:1033
+#: language/language.py:1115 pages/shared_ui.py:399 pages/warmup_ui.py:435
+#: pages/warmup_ui.py:1036
 msgid "Type your answer"
 msgstr "നിങ്ങളുടെ ഉത്തരം ടൈപ്പ് ചെയ്യുക"
 
-#: pages/shared_ui.py:509
+#: language/language.py:1078 pages/shared_ui.py:518
 msgid "Please enter a valid number."
 msgstr "ദയവായി ഒരു സാധുവായ നമ്പർ നൽകുക."
 
-#: pages/shared_ui.py:554 pages/warmup_ui.py:525
-#, fuzzy
-msgid "Correct!"
-msgstr "കറൻസി"
+#: language/language.py:1043 pages/shared_ui.py:563 pages/warmup_ui.py:526
 
-#: pages/shared_ui.py:586 pages/shared_ui.py:781
+msgid "Correct!"
+msgstr "ശരിയാണ്!"
+
+#: pages/shared_ui.py:595 pages/shared_ui.py:790
 msgid "Let's try another one!"
 msgstr ""
 
-#: pages/shared_ui.py:593
-#, fuzzy
+#: language/language.py:1114 pages/shared_ui.py:602
 msgid "Try Again."
-msgstr "വീണ്ടും കളിക്കുക"
+msgstr "വീണ്ടും ശ്രമിക്കുക."
 
-#: pages/shared_ui.py:595
+#: pages/shared_ui.py:604
 msgid "Incorrect."
 msgstr ""
 
-#: pages/shared_ui.py:866
-#, fuzzy
-msgid "Difficulty"
-msgstr "കാഠിന്യം തിരഞ്ഞെടുക്കുക:"
+#: language/language.py:1027 pages/shared_ui.py:646
+msgid "Addition"
+msgstr "സങ്കലനം"
 
-#: pages/shared_ui.py:878 pages/shared_ui.py:881
+#: language/language.py:1109 pages/shared_ui.py:646
+msgid "Subtraction"
+msgstr "വ്യവകലനം"
+
+#: language/language.py:1067 pages/shared_ui.py:647 pages/shared_ui.py:648
+msgid "Multiplication"
+msgstr "പുറത്ത് കടക്കുക"
+
+#: language/language.py:1046 pages/shared_ui.py:649
+msgid "Division"
+msgstr "ഹരണം"
+
+#: language/language.py:1049 pages/shared_ui.py:748
+msgid "Excellent"
+msgstr "മികച്ചത്"
+
+#: language/language.py:1120 pages/shared_ui.py:749
+msgid "Very Good"
+msgstr "വളരെ നല്ലത്"
+
+#: language/language.py:1054 pages/shared_ui.py:750
+msgid "Good"
+msgstr "നല്ലത്"
+
+#: language/language.py:1070 pages/shared_ui.py:751
+msgid "Not Bad"
+msgstr "മോശമല്ല"
+
+#: language/language.py:1072 pages/shared_ui.py:752
+msgid "Okay"
+msgstr "ശരി"
+
+#: pages/shared_ui.py:875
+
+msgid "Difficulty"
+msgstr "ബുദ്ധിമുട്ട് നില"
+
+#: language/language.py:1086 pages/shared_ui.py:888 pages/shared_ui.py:891
 msgid "Reset Language"
 msgstr "ഭാഷ പുനഃസജ്ജമാക്കുക"
 
-#: pages/shared_ui.py:883
+#: pages/shared_ui.py:893
 msgid "Clear saved language preference and choose a new language"
 msgstr ""
 
-#: pages/shared_ui.py:887
+#: language/language.py:1071 pages/shared_ui.py:897
 msgid "OK"
-msgstr ""
+msgstr "ശരി"
 
-#: pages/shared_ui.py:891
+#: pages/shared_ui.py:901
 msgid "OK — Apply settings"
 msgstr ""
 
-#: pages/shared_ui.py:892
+#: pages/shared_ui.py:902
 msgid "Cancel — Discard changes"
 msgstr ""
 
-#: pages/shared_ui.py:898
+#: language/language.py:1090 pages/shared_ui.py:908
 msgid "Select Difficulty:"
 msgstr "കാഠിന്യം തിരഞ്ഞെടുക്കുക:"
 
-#: pages/shared_ui.py:902
+#: pages/shared_ui.py:912
 msgid ""
 "Select Difficulty. Use left or right arrow keys to select difficulty "
 "level."
 msgstr ""
 
-#: pages/shared_ui.py:912 pages/shared_ui.py:917
+#: pages/shared_ui.py:922 pages/shared_ui.py:927
 msgid "User Guide"
 msgstr ""
 
-#: pages/shared_ui.py:913 pages/shared_ui.py:919
+#: language/language.py:1025 pages/shared_ui.py:923 pages/shared_ui.py:929
 msgid "About"
 msgstr "വിവരങ്ങൾ"
 
-#: pages/shared_ui.py:961
+#: pages/shared_ui.py:971
 msgid "Language Changed"
 msgstr ""
 
-#: pages/shared_ui.py:962
+#: pages/shared_ui.py:972
 #, python-brace-format
 msgid "Language changed to {new_lang}. The app will now reload."
 msgstr ""
 
-#: pages/shared_ui.py:1024 pages/warmup_ui.py:1188
+#: language/language.py:1093 pages/shared_ui.py:1034 pages/warmup_ui.py:1191
 msgid "Session Complete!"
 msgstr "സെഷൻ പൂർത്തിയായി!"
 
-#: pages/shared_ui.py:1054
-#, fuzzy
-msgid "questions answered"
-msgstr "ചോദ്യം"
+#: pages/shared_ui.py:1064
 
-#: pages/shared_ui.py:1055
+msgid "questions answered"
+msgstr "ഉത്തരം നൽകിയ ചോദ്യങ്ങൾ"
+
+#: language/language.py:1063 pages/shared_ui.py:1065
 msgid "Level"
 msgstr "ലെവൽ"
 
-#: pages/shared_ui.py:1072 pages/shared_ui.py:1076
+#: pages/shared_ui.py:1082 pages/shared_ui.py:1086
 #, python-brace-format
 msgid "Next Level: {level}"
 msgstr ""
 
-#: pages/shared_ui.py:1080 pages/shared_ui.py:1084
-#, fuzzy, python-brace-format
+#: pages/shared_ui.py:1090 pages/shared_ui.py:1094
+#, python-brace-format
 msgid "Play {level} Again"
-msgstr "വീണ്ടും കളിക്കുക"
+msgstr "{level} വീണ്ടും കളിക്കുക"
 
-#: pages/shared_ui.py:1097
-#, fuzzy
+#: pages/shared_ui.py:1107
+
 msgid "Ready for the next level?"
-msgstr "ഒരു പുതിയ വെല്ലുവിളിക്ക് തയ്യാറാണ്!"
+msgstr "അടുത്ത നിലയ്ക്ക് തയ്യാറാണോ?"
 
-#: pages/shared_ui.py:1097
+#: language/language.py:1077 pages/shared_ui.py:1107
 msgid "Play again?"
 msgstr "വീണ്ടും കളിക്കണോ?"
 
-#: pages/warmup_ui.py:46
+#: language/language.py:1123 pages/warmup_ui.py:46
 msgid "Warmup Match Introduction"
-msgstr ""
+msgstr "വാംഅപ്പ് മത്സരം ആമുഖം"
 
-#: pages/warmup_ui.py:59 pages/warmup_ui.py:62 pages/warmup_ui.py:210
+#: language/language.py:1122 pages/warmup_ui.py:59 pages/warmup_ui.py:62
+#: pages/warmup_ui.py:210
 msgid "Warmup Match"
-msgstr ""
+msgstr "വാംഅപ്പ് മത്സരം"
 
 #: pages/warmup_ui.py:76
 msgid ""
@@ -257,22 +341,22 @@ msgid ""
 "The warmup ends early only if you miss or skip too many questions."
 msgstr ""
 
-#: pages/warmup_ui.py:96
+#: language/language.py:1100 pages/warmup_ui.py:96
 msgid "Speed matters"
-msgstr ""
+msgstr "വേഗത പ്രധാനമാണ്"
 
-#: pages/warmup_ui.py:96
-#, fuzzy
+#: language/language.py:1023 pages/warmup_ui.py:96
+
 msgid "14 question types"
-msgstr "ചോദ്യം"
+msgstr "14 ചോദ്യ തരങ്ങൾ"
 
-#: pages/warmup_ui.py:96
+#: language/language.py:1083 pages/warmup_ui.py:96
 msgid "Ranked results"
-msgstr ""
+msgstr "റാങ്ക് ചെയ്ത ഫലങ്ങൾ"
 
-#: pages/warmup_ui.py:115 pages/warmup_ui.py:118
+#: language/language.py:1036 pages/warmup_ui.py:115 pages/warmup_ui.py:118
 msgid "Begin Warmup"
-msgstr ""
+msgstr "വാംഅപ്പ് ആരംഭിക്കുക"
 
 #: pages/warmup_ui.py:152
 msgid ""
@@ -280,87 +364,94 @@ msgid ""
 " questions. Press Begin Warmup button when you are ready."
 msgstr ""
 
-#: pages/warmup_ui.py:257
+#: language/language.py:1032 pages/warmup_ui.py:257
 msgid "Auto-skip in %vs"
-msgstr ""
+msgstr "%vs-ൽ ഒഴിവാക്കും"
 
-#: pages/warmup_ui.py:282 pages/warmup_ui.py:947
+#: language/language.py:1107 pages/warmup_ui.py:282 pages/warmup_ui.py:948
 msgid "Submit"
-msgstr ""
+msgstr "സമർപ്പിക്കുക"
 
-#: pages/warmup_ui.py:285 pages/warmup_ui.py:948
-#, fuzzy
+#: language/language.py:1108 pages/warmup_ui.py:285 pages/warmup_ui.py:949
+
 msgid "Submit answer"
-msgstr "ഉത്തരം"
+msgstr "ഉത്തരം സമർപ്പിക്കുക"
 
-#: pages/warmup_ui.py:294 pages/warmup_ui.py:298 pages/warmup_ui.py:953
-#, fuzzy
+#: language/language.py:1097 pages/warmup_ui.py:294 pages/warmup_ui.py:298
+#: pages/warmup_ui.py:954
+
 msgid "Skip this question"
-msgstr "ചോദ്യം"
+msgstr "ഈ ചോദ്യം ഒഴിവാക്കുക"
 
-#: pages/warmup_ui.py:300
+#: language/language.py:1096 pages/warmup_ui.py:300
 msgid "Skip the current question. Skipped questions score zero."
 msgstr ""
+"നിലവിലെ ചോദ്യം ഒഴിവാക്കുക. ഒഴിവാക്കിയ ചോദ്യങ്ങൾക്ക് പൂജ്യം സ്കോർ "
+"ആയിരിക്കും ലഭിക്കുക."
 
-#: pages/warmup_ui.py:376
+#: language/language.py:1081 pages/warmup_ui.py:376
 #, python-brace-format
 msgid "Question {n} / {total}"
 msgstr ""
 
-#: pages/warmup_ui.py:507
+#: language/language.py:1059 pages/warmup_ui.py:508
 msgid "Invalid — try again"
-msgstr ""
+msgstr "അസാധു — വീണ്ടും ശ്രമിക്കുക"
 
-#: pages/warmup_ui.py:551
+#: language/language.py:1130 pages/warmup_ui.py:552
 msgid "Wrong — moving on"
-msgstr ""
+msgstr "തെറ്റ് — മുന്നോട്ട് പോകുന്നു"
 
-#: pages/warmup_ui.py:570 pages/warmup_ui.py:1149
+#: language/language.py:1098 pages/warmup_ui.py:571 pages/warmup_ui.py:1152
 msgid "Skipped"
-msgstr ""
+msgstr "ഒഴിവാക്കി"
 
-#: pages/warmup_ui.py:584
+#: language/language.py:1111 pages/warmup_ui.py:585
 msgid "Time out — auto-skipped"
-msgstr ""
+msgstr "സമയം കഴിഞ്ഞു — ഒഴിവാക്കി"
 
-#: pages/warmup_ui.py:644
+#: pages/warmup_ui.py:645
 msgid "Warmup Results"
 msgstr ""
 
-#: pages/warmup_ui.py:655 pages/warmup_ui.py:658
-#, fuzzy
-msgid "Warmup Complete!"
-msgstr "സെഷൻ പൂർത്തിയായി!"
+#: language/language.py:1121 pages/warmup_ui.py:656 pages/warmup_ui.py:659
 
-#: pages/warmup_ui.py:668
+msgid "Warmup Complete!"
+msgstr "വോം-അപ്പ് പൂർത്തിയായി!"
+
+#: language/language.py:1126 pages/warmup_ui.py:669
 msgid "Warmup completed early wrong"
 msgstr ""
+"നിങ്ങൾ {correct}/{total} ചോദ്യങ്ങൾക്ക് ശരിയായി ഉത്തരം നൽകി. വാംഅപ്പ് "
+"നേരത്തെ അവസാനിച്ചു — സാരമില്ല!"
 
-#: pages/warmup_ui.py:670
+#: language/language.py:1127 pages/warmup_ui.py:671
 msgid "Warmup completed success"
 msgstr ""
+"എല്ലാ {total} ചോദ്യങ്ങളും പൂർത്തിയാക്കിയതിൽ അഭിനന്ദനങ്ങൾ! നിങ്ങൾക്ക് "
+"{correct} ശരിയുത്തരങ്ങൾ ലഭിച്ചു."
 
-#: pages/warmup_ui.py:764 pages/warmup_ui.py:767
-#, fuzzy
+#: language/language.py:1042 pages/warmup_ui.py:765 pages/warmup_ui.py:768
+
 msgid "Continue to Game Mode"
-msgstr "🎮 ഗെയിം മോഡ്"
+msgstr "ഗെയിം മോഡിലേക്ക് തുടരുക"
 
-#: pages/warmup_ui.py:844
-#, fuzzy
+#: pages/warmup_ui.py:845
+
 msgid "Game Mode"
-msgstr "🎮 ഗെയിം മോഡ്"
+msgstr "ഗെയിം മോഡ്"
 
-#: pages/warmup_ui.py:856
+#: language/language.py:1088 pages/warmup_ui.py:857
 #, python-brace-format
 msgid "Resuming at {lbl_name}"
-msgstr ""
+msgstr "{lbl_name} എന്നതിൽ പുനരാരംഭിക്കുന്നു"
 
-#: pages/warmup_ui.py:859
-#, fuzzy
+#: language/language.py:1105 pages/warmup_ui.py:860
+
 msgid "Starting fresh"
-msgstr "ക്രമീകരണങ്ങൾ"
+msgstr "പുതുതായി ആരംഭിക്കുന്നു"
 
-#: pages/warmup_ui.py:864
+#: pages/warmup_ui.py:865
 msgid ""
 "How it works:\n"
 "• Reach correct threshold → promote to next skill\n"
@@ -368,233 +459,330 @@ msgid ""
 "• 90 seconds · correct answers add 3s · wrong cost 1s"
 msgstr ""
 
-#: pages/warmup_ui.py:873
-#, fuzzy
-msgid "Start Game"
-msgstr "ക്വിസ് ആരംഭിക്കുക"
+#: language/language.py:1101 pages/warmup_ui.py:874
 
-#: pages/warmup_ui.py:944
+msgid "Start Game"
+msgstr "ഗെയിം ആരംഭിക്കുക"
+
+#: pages/warmup_ui.py:885
+msgid "Resuming game. "
+msgstr ""
+
+#: pages/warmup_ui.py:886
+msgid ""
+"Game Mode ready. Answer as many questions possible. Use Control plus 'S' "
+"to view all shortcuts. Press Start Game when you are ready."
+msgstr ""
+
+#: language/language.py:1030 pages/warmup_ui.py:945
 msgid "Answer input"
 msgstr "ഉത്തര ഇൻപുട്ട്"
 
-#: pages/warmup_ui.py:951
+#: language/language.py:1095 pages/warmup_ui.py:952
 msgid "Skip"
-msgstr ""
+msgstr "ഒഴിവാക്കുക"
 
-#: pages/warmup_ui.py:1013
+#: language/language.py:1080 pages/warmup_ui.py:1014
 msgid "Question"
 msgstr "ചോദ്യം"
 
-#: pages/warmup_ui.py:1083
+#: pages/warmup_ui.py:1086
 msgid "Invalid"
 msgstr ""
 
-#: pages/warmup_ui.py:1130
+#: pages/warmup_ui.py:1133
 msgid "Wrong"
-msgstr ""
+msgstr "തെറ്റ്"
 
-#: pages/warmup_ui.py:1184
-#, fuzzy
+#: pages/warmup_ui.py:1187
+
 msgid "Game Mode Results"
-msgstr "ഗെയിം മോഡ്! നമുക്ക് പോകാം!"
+msgstr "ഗെയിം മോഡ് ഫലങ്ങൾ"
 
-#: pages/warmup_ui.py:1200
-#, fuzzy
+#: language/language.py:1082 pages/warmup_ui.py:1203
+
 msgid "Questions"
-msgstr "ചോദ്യം"
+msgstr "ചോദ്യങ്ങൾ"
 
-#: pages/warmup_ui.py:1200
-#, fuzzy
+#: language/language.py:1026 pages/warmup_ui.py:1203
+
 msgid "Accuracy"
-msgstr "കറൻസി"
+msgstr "കൃത്യത"
 
-#: pages/warmup_ui.py:1200
+#: language/language.py:1052 pages/warmup_ui.py:1203
 msgid "Final Skill"
-msgstr ""
+msgstr "അവസാന ഘട്ടം"
 
-#: pages/warmup_ui.py:1251 pages/warmup_ui.py:1252
+#: language/language.py:1076 pages/warmup_ui.py:1254 pages/warmup_ui.py:1255
 msgid "Play Again"
 msgstr "വീണ്ടും കളിക്കുക"
 
-#: pages/warmup_ui.py:1272
+#: pages/warmup_ui.py:1275
 #, python-brace-format
 msgid ""
 "Congratulations, game mode completed! Your accuracy was {pct} percent and"
 " your top skill is {skill}."
 msgstr ""
 
-#: pages/warmup_ui.py:1274
+#: pages/warmup_ui.py:1277
 #, python-brace-format
 msgid "Congratulations, game mode completed! Your accuracy was {pct} percent."
 msgstr ""
 
-#: question/loader.py:752
-#, fuzzy
+#: question/loader.py:754
+
 msgid "Session complete!"
 msgstr "സെഷൻ പൂർത്തിയായി!"
 
-#: question/loader.py:758
+#: question/loader.py:760
 msgid "Level Complete! Outstanding job!"
 msgstr ""
 
-#: question/loader.py:759
-#, fuzzy
+#: question/loader.py:761
 msgid "Great job!"
-msgstr "മികച്ച സെഷൻ!"
+msgstr "മികവുറ്റ ജോലി!"
 
-#: question/loader.py:760
-#, fuzzy
-msgid "Good effort!"
+#: question/loader.py:762
+msgid "നല്ല ശ്രമം!"
 msgstr "അതിശയകരമായ ശ്രമം"
 
-#: question/loader.py:761
-#, fuzzy
+#: question/loader.py:763
 msgid "Keep practicing!"
+msgstr "പരിശീലനം തുടരൂ!"
+
+#: language/language.py:1028
+msgid "Amazing effort"
+msgstr "അതിശയകരമായ ശ്രമം"
+
+#: language/language.py:1029
+msgid "Answer"
+msgstr "ഉത്തരം"
+
+#: language/language.py:1039
+msgid "Choose Mode"
+msgstr "മോഡ് തിരഞ്ഞെടുക്കുക"
+
+#: language/language.py:1041
+msgid "Click below to start the quiz"
+msgstr "ക്വിസ് ആരംഭിക്കാൻ താഴെ ക്ലിക്ക് ചെയ്യുക"
+
+#: language/language.py:1053
+msgid "Game mode! Let's go!"
+msgstr "ഗെയിം മോഡ്! നമുക്ക് പോകാം!"
+
+#: language/language.py:1055
+msgid "Great session!"
+msgstr "മികച്ച സെഷൻ!"
+
+#: language/language.py:1056
+#, python-brace-format
+msgid "Great session! You really know your {strength}. {weakness}"
+msgstr "മികച്ച സെഷൻ! നിങ്ങൾക്ക് {strength} ശരിക്കും അറിയാം. {weakness}"
+
+#: language/language.py:1058
+msgid "Help"
+msgstr "സഹായം"
+
+#: language/language.py:1060
+msgid "Keep exploring"
+msgstr "പര്യവേക്ഷണം തുടരുക"
+
+#: language/language.py:1061
+#, python-brace-format
+msgid "Keep exploring {skill}!"
+msgstr "{skill} പര്യവേക്ഷണം തുടരുക!"
+
+#: language/language.py:1062
+msgid "Keep going!"
 msgstr "തുടരുക!"
 
-#~ msgid "Addition"
-#~ msgstr "സങ്കലനം"
+#: language/language.py:1064
+#, python-brace-format
+msgid "Level: {level}"
+msgstr ""
 
-#~ msgid "Bellring"
-#~ msgstr "ബെൽ റിംഗ്"
+#: language/language.py:1066
+msgid "Missed"
+msgstr "നഷ്ടപ്പെട്ടു"
 
-#~ msgid "Choose Mode"
-#~ msgstr "മോഡ് തിരഞ്ഞെടുക്കുക"
+#: language/language.py:1068
+#, python-brace-format
+msgid "Next: {level}"
+msgstr ""
 
-#~ msgid "Click below to start the quiz"
-#~ msgstr "ക്വിസ് ആരംഭിക്കാൻ താഴെ ക്ലിക്ക് ചെയ്യുക"
+#: language/language.py:1073
+msgid "One more!"
+msgstr "ഒരെണ്ണം കൂടി!"
 
-#~ msgid "Distance"
-#~ msgstr "ദൂരം"
+#: language/language.py:1075
+msgid "Percentage"
+msgstr "ശതമാനം"
 
-#~ msgid "Division"
-#~ msgstr "ഹരണം"
+#: language/language.py:1079
+msgid "Proceed to the Game Mode difficulty selector."
+msgstr "ഗെയിം മോഡ് കാഠിന്യം തിരഞ്ഞെടുക്കുന്നതിലേക്ക് പോകുക."
 
-#~ msgid "Easy"
-#~ msgstr "എളുപ്പം"
+#: language/language.py:1084
+msgid "Ready for a new challenge!"
+msgstr "ഒരു പുതിയ വെല്ലുവിളിക്ക് തയ്യാറാണ്!"
 
-#~ msgid "Extra Hard"
-#~ msgstr "അതി കഠിനം"
+#: language/language.py:1085
+msgid "Remainder"
+msgstr "ശിഷ്ടം"
 
-#~ msgid "Great session! You really know your {strength}. {weakness}"
-#~ msgstr "മികച്ച സെഷൻ! നിങ്ങൾക്ക് {strength} ശരിക്കും അറിയാം. {weakness}"
+#: language/language.py:1089
+msgid "Same level again — you're getting closer!"
+msgstr "അതേ ലെവൽ വീണ്ടും — നിങ്ങൾ അടുത്തുന്നു!"
 
-#~ msgid "Hard"
-#~ msgstr "കഠിനം"
+#: language/language.py:1091
+msgid "Select Game Difficulty"
+msgstr "ഗെയിം കാഠിന്യം തിരഞ്ഞെടുക്കുക"
 
-#~ msgid "Keep exploring"
-#~ msgstr "പര്യവേക്ഷണം തുടരുക"
+#: language/language.py:1092
+msgid "Session Complete"
+msgstr "സெഷൻ പൂർത്തിയായി"
 
-#~ msgid "Keep exploring {skill}!"
-#~ msgstr "{skill} പര്യവേക്ഷണം തുടരുക!"
+#: language/language.py:1099
+msgid "Slow"
+msgstr "പതുക്കെ"
 
-#~ msgid "Level: {level}"
-#~ msgstr ""
+#: language/language.py:1102
+msgid "Start Game Mode"
+msgstr "🎮 ഗെയിം മോഡ്"
 
-#~ msgid "Medium"
-#~ msgstr "ഇടത്തരം"
+#: language/language.py:1103
+msgid "Start Quiz"
+msgstr "ക്വിസ് ആരംഭിക്കുക"
 
-#~ msgid "Multiplication"
-#~ msgstr "ഗുണനം"
+#: language/language.py:1104
+msgid "Start the warmup match. You will answer 13 questions."
+msgstr "വാംഅപ്പ് മത്സരം ആരംഭിക്കുക. നിങ്ങൾ 13 ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകും."
 
-#~ msgid "Next: {level}"
-#~ msgstr ""
+#: language/language.py:1112
+msgid "Time's up!"
+msgstr "സമയം കഴിഞ്ഞു!"
 
-#~ msgid "One more!"
-#~ msgstr "ഒരെണ്ണം കൂടി!"
+#: language/language.py:1113
+msgid "Time's up! Amazing effort."
+msgstr "സമയം കഴിഞ്ഞു! അതിശയകരമായ ശ്രമം."
 
-#~ msgid "Operations"
-#~ msgstr "ഗണിതക്രിയകൾ"
+#: language/language.py:1116
+msgid "Type your answer as a number and press Enter."
+msgstr "നിങ്ങളുടെ ഉത്തരം ഒരു നമ്പരായി ടൈപ്പ് ചെയ്ത് Enter അമർത്തുക."
 
-#~ msgid "Percentage"
-#~ msgstr "ശതമാനം"
+#: language/language.py:1117
+msgid "Unknown"
+msgstr "അജ്ഞാതം"
 
-#~ msgid "Remainder"
-#~ msgstr "ശിഷ്ടം"
+#: language/language.py:1119
+msgid "Very Fast"
+msgstr "വളരെ വേഗത്തിൽ"
 
-#~ msgid "Same level again — you're getting closer!"
-#~ msgstr "അതേ ലെവൽ വീണ്ടും — നിങ്ങൾ അടുത്തുന്നു!"
+#: language/language.py:1124
+msgid "Warmup Question"
+msgstr "വാംഅപ്പ് ചോദ്യം"
 
-#~ msgid "Select Game Difficulty"
-#~ msgstr "ഗെയിം കാഠിന്യം തിരഞ്ഞെടുക്കുക"
+#: language/language.py:1125
+msgid "Warmup completed early skipped"
+msgstr ""
+"നിങ്ങൾ {correct}/{total} ചോദ്യങ്ങൾക്ക് ഉത്തരം നൽകി. കൂടുതൽ ചോദ്യങ്ങൾ "
+"ഒഴിവാക്കിയതിനാൽ വാംഅപ്പ് അവസാനിച്ചു — സാരമില്ല!"
 
-#~ msgid "Session Complete"
-#~ msgstr "സெഷൻ പൂർത്തിയായി"
+#: language/language.py:1128
+msgid "Wow!"
+msgstr "കൊള്ളാം!"
 
-#~ msgid "Subtraction"
-#~ msgstr "വ്യവകലനം"
+#: language/language.py:1129
+#, python-brace-format
+msgid "Wow! {strength} is your superpower. {weakness}"
+msgstr "കൊള്ളാം! {strength} നിങ്ങളുടെ മഹാശക്തിയാണ്. {weakness}"
 
-#~ msgid "Time"
-#~ msgstr "സമയം"
+#: language/language.py:1132
+msgid "You are brilliant across everything!"
+msgstr "നിങ്ങൾ എല്ലാറ്റിലും മിടുക്കനാണ്!"
 
-#~ msgid "Time's up!"
-#~ msgstr "സമയം കഴിഞ്ഞു!"
+#: language/language.py:1133
+msgid "You really know your"
+msgstr "നിങ്ങൾക്ക് ശരിക്കും അറിയാം"
 
-#~ msgid "Time's up! Amazing effort."
-#~ msgstr "സമയം കഴിഞ്ഞു! അതിശയകരമായ ശ്രമം."
+#: language/language.py:1134
+msgid "You were amazing at"
+msgstr "നിങ്ങൾ മികച്ചതായിരുന്നു"
 
-#~ msgid "Type your answer as a number and press Enter."
-#~ msgstr "നിങ്ങളുടെ ഉത്തരം ഒരു നമ്പരായി ടൈപ്പ് ചെയ്ത് Enter അമർത്തുക."
+#: language/language.py:1135
+#, python-brace-format
+msgid "You were amazing at {strength} today! {weakness}"
+msgstr "നിങ്ങൾ ഇന്ന് {strength} ൽ മികച്ചവനായിരുന്നു! {weakness}"
 
-#~ msgid "Wow!"
-#~ msgstr "കൊള്ളാം!"
+#: language/language.py:1136
+msgid "and"
+msgstr "കൂടാതെ"
 
-#~ msgid "Wow! {strength} is your superpower. {weakness}"
-#~ msgstr "കൊള്ളാം! {strength} നിങ്ങളുടെ മഹാശക്തിയാണ്. {weakness}"
+#: language/language.py:1137
+msgid "cancel"
+msgstr "റദ്ദാക്കുക"
 
-#~ msgid "You are brilliant across everything!"
-#~ msgstr "നിങ്ങൾ എല്ലാറ്റിലും മിടുക്കനാണ്!"
+#: language/language.py:1138
+msgid "continue"
+msgstr "തുടരുക"
 
-#~ msgid "You really know your"
-#~ msgstr "നിങ്ങൾക്ക് ശരിക്കും അറിയാം"
+#: language/language.py:1139
+msgid "is your next adventure!"
+msgstr "നിങ്ങളുടെ അടുത്ത സാഹസികതയാണ്!"
 
-#~ msgid "You were amazing at"
-#~ msgstr "നിങ്ങൾ മികച്ചതായിരുന്നു"
+#: language/language.py:1140
+msgid "is your superpower."
+msgstr "നിങ്ങളുടെ മഹാശക്തിയാണ്."
 
-#~ msgid "You were amazing at {strength} today! {weakness}"
-#~ msgstr "നിങ്ങൾ ഇന്ന് {strength} ൽ മികച്ചവനായിരുന്നു! {weakness}"
+#: language/language.py:1141
+msgid "next adventure"
+msgstr "അടുത്ത സാഹസികത"
 
-#~ msgid "and"
-#~ msgstr "കൂടാതെ"
+#: language/language.py:1143
+msgid "remember"
+msgstr "എന്റെ തിരഞ്ഞെടുപ്പ് ഓർക്കുക"
 
-#~ msgid "is your next adventure!"
-#~ msgstr "നിങ്ങളുടെ അടുത്ത സാഹസികതയാണ്!"
+#: language/language.py:1144
+msgid "select_language"
+msgstr "നിങ്ങളുടെ ഇഷ്ടപ്പെട്ട ഭാഷ തിരഞ്ഞെടുക്കുക:"
 
-#~ msgid "is your superpower."
-#~ msgstr "നിങ്ങളുടെ മഹാശക്തിയാണ്."
+#: language/language.py:1145
+msgid "superpower"
+msgstr "മഹാശക്തി"
 
-#~ msgid "next adventure"
-#~ msgstr "അടുത്ത സാഹസികത"
+#: language/language.py:1146
+msgid "today!"
+msgstr "ഇന്ന്!"
 
-#~ msgid "remember"
-#~ msgstr "എന്റെ തിരഞ്ഞെടുപ്പ് ഓർക്കുക"
+#: language/language.py:1147
+msgid "trying hard"
+msgstr "കഠിനമായി ശ്രമിക്കുന്നു"
 
-#~ msgid "superpower"
-#~ msgstr "മഹാശക്തി"
+#: language/language.py:1148
+msgid "very strong"
+msgstr "വളരെ ശക്തമായ"
 
-#~ msgid "today!"
-#~ msgstr "ഇന്ന്!"
+#: language/language.py:1149
+msgid "wants more of your attention next time!"
+msgstr "അടുത്ത തവണ നിങ്ങളുടെ കൂടുതൽ ശ്രദ്ധ വേണം!"
 
-#~ msgid "trying hard"
-#~ msgstr "കഠിനമായി ശ്രമിക്കുന്നു"
+#: language/language.py:1151
+msgid "you is getting there!"
+msgstr "നിങ്ങൾ അവിടെയെത്തുന്നു!"
 
-#~ msgid "very strong"
-#~ msgstr "വളരെ ശക്തമായ"
+#: language/language.py:1152
+msgid "you're getting there"
+msgstr "നിങ്ങൾ അവിടെയെത്തുന്നു"
 
-#~ msgid "wants more of your attention next time!"
-#~ msgstr "അടുത്ത തവണ നിങ്ങളുടെ കൂടുതൽ ശ്രദ്ധ വേണം!"
+#: language/language.py:1153
+#, python-brace-format
+msgid "{skill} is your next adventure!"
+msgstr "{skill} നിങ്ങളുടെ അടുത്ത സാഹസികതയാണ്!"
 
-#~ msgid "you is getting there!"
-#~ msgstr "നിങ്ങൾ അവിടെയെത്തുന്നു!"
-
-#~ msgid "you're getting there"
-#~ msgstr "നിങ്ങൾ അവിടെയെത്തുന്നു"
-
-#~ msgid "{skill} is your next adventure!"
-#~ msgstr "{skill} നിങ്ങളുടെ അടുത്ത സാഹസികതയാണ്!"
-
-#~ msgid "{skill} wants more of your attention!"
-#~ msgstr "{skill} നിങ്ങളുടെ കൂടുതൽ ശ്രദ്ധ ആവശ്യപ്പെടുന്നു!"
+#: language/language.py:1154
+#, python-brace-format
+msgid "{skill} wants more of your attention!"
+msgstr "{skill} നിങ്ങളുടെ കൂടുതൽ ശ്രദ്ധ ആവശ്യപ്പെടുന്നു!"
 
 #~ msgid "Return to difficulty selection"
 #~ msgstr ""
@@ -611,15 +799,17 @@ msgstr "തുടരുക!"
 #~ " too many questions."
 #~ msgstr ""
 
-#~ msgid "Warmup completed early skipped"
-#~ msgstr ""
 
-#~ msgid "Proceed to the Game Mode difficulty selector."
-#~ msgstr ""
 
-#~ msgid "Start Game Mode"
-#~ msgstr "🎮 ഗെയിം മോഡ്"
+msgid "plus"
+msgstr "കൂട്ടണം"
 
-#~ msgid "Help"
-#~ msgstr "സഹായം"
+msgid "minus"
+msgstr "കുറയ്ക്കണം"
+
+msgid "times"
+msgstr "ഗുണിക്കണം"
+
+msgid "divided by"
+msgstr "ഹരിക്കണം"
 
