@@ -221,6 +221,8 @@ class QuestionProcessor:
             question_template = str(row["question_hi"])
         elif current_lang == "ml_IN" and "question_mal" in working_df.columns:
             question_template = str(row["question_mal"])
+        elif current_lang == "mr_IN" and "question_mr" in working_df.columns:
+            question_template = str(row["question_mr"])
         else:
             question_template = str(row.get("question", row.get("question_", "")))
 
