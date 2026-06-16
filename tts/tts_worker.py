@@ -34,7 +34,17 @@ class TTSWorker(QObject):
                     busy = self.engine.isBusy()
                 except Exception:
                     pass
-            # SAPI doesn't have a simple isBusy, but if sapi exists we assume it might be speaking
+                    
+            if self.process is not None and self.process.poll() is None:
+                busy = True
+                
+            if self.sapi:
+                try:
+                    if self.sapi.Status.RunningState == 2:
+                        busy = True
+                except Exception:
+                    pass
+                    
             return busy
         else:
             return self.process is not None and self.process.poll() is None
@@ -106,9 +116,9 @@ class TTSWorker(QObject):
             lang_profiles = {
                 "hi_IN": {"code": "hi", "search": "hindi",      "tokens": ["kalpana", "hemant"]},
                 "ml_IN": {"code": "ml", "search": "malayalam",   "tokens": ["midhun", "sobhana"]},
-                "mr_IN": {"code": "mr", "search": "marathi",    "tokens": ["hemant", "kalpana"]}, # Shares phonetic base engines
+                "mr_IN": {"code": "hi", "search": "marathi",    "tokens": ["hemant", "kalpana"]}, # Shares phonetic base engines
                 "ta_IN": {"code": "ta", "search": "tamil",      "tokens": ["valluvar", "vani"]},
-                "sa_IN": {"code": "sa", "search": "sanskrit",   "tokens": ["hemant", "laxmi"]},
+                "sa_IN": {"code": "hi", "search": "sanskrit",   "tokens": ["hemant", "laxmi"]},
                 "ar_SA": {"code": "ar", "search": "arabic",     "tokens": ["naayf", "hoda"]}      # Universal Arabic standard profile
             }
             
@@ -123,12 +133,10 @@ class TTSWorker(QObject):
                 if not self.sapi:
                     self.sapi = win32com.client.Dispatch("SAPI.SpVoice")
                 
-                # Point SAPI lookup context directly to the high-quality Modern Windows OneCore directory space
-                cat = win32com.client.Dispatch("SAPI.SpObjectTokenCategory")
-                cat.SetId(r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Speech_OneCore\Voices", False)
-                
+                # Fix: Avoid SpObjectTokenCategory with OneCore HKLM registry which crashes under MSIX AppContainer isolation (0xC0000409)
+                # Instead, we directly use standard SpVoice token enumeration.
                 target_voice = None
-                for token in cat.EnumerateTokens():
+                for token in self.sapi.GetVoices():
                     desc = token.GetDescription().lower()
                     
                     # Match via primary display string configuration or fallback internal engine name profiles

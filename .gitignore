@@ -26,6 +26,18 @@ env/
 build/
 dist/
 *.egg-info/
+packaging/msi/HarvestedFiles.wxs
+# WiX Toolset build artifacts
+*.wixobj
+*.wixpdb
+
+# Other common WiX/installer ignores
+*.msi
+*.msm
+*.msp
+*.wixout
+bin/
+obj/
 
 # Backup & swap files
 *.bak

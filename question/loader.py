@@ -277,6 +277,13 @@ class QuestionProcessor:
                 current += c
         if current:
             operands.append(int(self.extractType(current)))
+            
+        if getattr(self, "questionType", "").lower() == "bellring" and len(operands) >= 2:
+            if operands[0] < operands[1]:
+                operands[0], operands[1] = operands[1], operands[0]
+            if operands[0] == operands[1]:
+                operands[0] += 1
+                
         return operands
 
     def extractType(self, inputRange: str):
