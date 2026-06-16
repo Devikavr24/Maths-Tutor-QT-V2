@@ -5,9 +5,10 @@ import gettext
 
 selected_language = "en"
 
-
-
-CONFIG_FILE = "selected_lang.txt"
+def _get_config_file_path():
+    app_data_dir = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "MathsTutor")
+    os.makedirs(app_data_dir, exist_ok=True)
+    return os.path.join(app_data_dir, "selected_lang.txt")
 
 def update_language():
     global _
@@ -21,12 +22,13 @@ def update_language():
 
 def save_selected_language_to_file(lang):
     print("save to file function called")
-    with open(CONFIG_FILE, "w", encoding="utf-8") as f:
+    with open(_get_config_file_path(), "w", encoding="utf-8") as f:
         f.write(lang)
 
 def get_saved_language():
-    if os.path.exists(CONFIG_FILE):
-        with open(CONFIG_FILE, "r", encoding="utf-8") as f:
+    config_file = _get_config_file_path()
+    if os.path.exists(config_file):
+        with open(config_file, "r", encoding="utf-8") as f:
             return f.read().strip()
     return None
 
@@ -36,8 +38,9 @@ def set_language(lang):
     update_language()
 
 def clear_remember_language():
-    if os.path.exists(CONFIG_FILE):
-        os.remove(CONFIG_FILE)
+    config_file = _get_config_file_path()
+    if os.path.exists(config_file):
+        os.remove(config_file)
 
 def localize_numbers(text):
     if not isinstance(text, str):
@@ -88,6 +91,7 @@ def _dummy_for_translations_all():
     _("Click below to start the quiz")
     _("Continue to Game Mode")
     _("Correct!")
+    _("Correct answer is")
     _("Currency")
     _("Distance")
     _("Division")

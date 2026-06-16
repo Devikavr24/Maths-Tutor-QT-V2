@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import ( QWidget, QLabel, QHBoxLayout, QPushButton,
                               QSpacerItem, QLineEdit, QMessageBox, QApplication, QShortcut,
                               QFrame )
 
-from PyQt5.QtCore import Qt, QSize, QPoint, QTimer, QRegExp
+from PyQt5.QtCore import Qt, QSize, QPoint, QTimer, QRegExp, QEventLoop
 from PyQt5.QtGui import QFont, QPalette, QColor, QKeySequence, QIcon, QRegExpValidator
 from PyQt5.QtCore import QPropertyAnimation, QSequentialAnimationGroup
 from question.loader import QuestionProcessor
@@ -36,7 +36,7 @@ def create_entry_ui(main_window) -> QWidget:
     layout.setAlignment(Qt.AlignCenter)
 
     label = QLabel("Click below to start the quiz")
-    label.setFont(QFont("Arial", 24))
+    label.setFont(QFont("Segoe UI", 24))
     label.setAlignment(Qt.AlignCenter)
     label.setAccessibleName("Click below to start the quiz")
 
@@ -92,7 +92,7 @@ def create_label(text: str, font_size=16, bold=True) -> QLabel:
     label = QLabel(text)
     label.setWordWrap(True)
     label.setAlignment(Qt.AlignCenter)
-    font = QFont("Arial", font_size)
+    font = QFont("Segoe UI", font_size)
     font.setBold(bold)
     label.setFont(font)
     label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
@@ -142,7 +142,7 @@ def create_footer_buttons(names, callbacks=None) -> QWidget:
         btn.setObjectName(name.lower().replace(" ", "_"))
         btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
         btn.adjustSize()
-        btn.setFont(QFont("Arial", 14))
+        btn.setFont(QFont("Segoe UI", 14))
         btn.setProperty("class", "footer-button")
         btn.setAccessibleName(name)
         if callbacks and name in callbacks:
@@ -176,7 +176,7 @@ def create_answer_input(width=300, height=40, font_size=14) -> QLineEdit:
     input_box.setMinimumSize(width, height)
     input_box.setAlignment(Qt.AlignCenter)
     input_box.setPlaceholderText(_("Enter your answer"))
-    input_box.setFont(QFont("Arial", font_size))
+    input_box.setFont(QFont("Segoe UI", font_size))
     input_box.setProperty("class", "answer-input")
     input_box.setAccessibleName(" ")
     input_box.setAccessibleDescription(" ")
@@ -197,6 +197,11 @@ def wrap_center(widget):
 
 def setup_exit_handling(window, require_confirmation=False):
     def check_and_close(event=None):
+        def cleanup_tts():
+            if hasattr(window, "tts"):
+                try: window.tts.cleanup()
+                except Exception: pass
+        
         if require_confirmation:
             msg_box = QMessageBox(window)
             msg_box.setWindowTitle(_("Exit Application"))
@@ -206,11 +211,13 @@ def setup_exit_handling(window, require_confirmation=False):
             msg_box.setDefaultButton(no_btn)
             msg_box.exec_()
             if msg_box.clickedButton() == yes_btn:
+                cleanup_tts()
                 if event: event.accept()
                 else:     QApplication.quit()
             else:
                 if event: event.ignore()
         else:
+            cleanup_tts()
             if event: event.accept()
             else:     QApplication.quit()
 
@@ -253,7 +260,9 @@ class QuestionWidget(QWidget):
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setProperty("class", "question-label")
         self.label.setWordWrap(True)
-        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.label.setMinimumWidth(50)
+        self.label.setMargin(10)
+        self.label.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         if self.is_bell_mode:
             self.input_box    = None
@@ -273,12 +282,13 @@ class QuestionWidget(QWidget):
             self.bell_button      = None
             self.bell_pause_timer = None
             self.input_box        = create_answer_input()
+            self.input_box.setMaximumWidth(320)
             self.input_box.setPlaceholderText("")
             self.input_box.returnPressed.connect(self.check_answer)
 
         self.result_label = QLabel("")
         self.result_label.setAlignment(Qt.AlignCenter)
-        self.result_label.setFont(QFont("Arial", 46))
+        self.result_label.setFont(QFont("Segoe UI", 46))
 
         self.top_spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.layout.addSpacerItem(self.top_spacer)
@@ -380,6 +390,7 @@ class QuestionWidget(QWidget):
 
         question_text, self.answer = self.processor.get_questions()
         self._active    = True
+        self._is_processing = False
         
         self.start_time = None
         self.replay_count = 0
@@ -391,6 +402,7 @@ class QuestionWidget(QWidget):
         )
 
         if self.input_box:
+            self.input_box.setEnabled(True)
             self.input_box.clear()
             # self.setFocus()
 
@@ -417,9 +429,10 @@ class QuestionWidget(QWidget):
             self._init_start_time()
 
         text_len = len(question_text)
-        if text_len > 140:      self.label.setStyleSheet("font-size: 14pt;")
-        elif text_len > 100:    self.label.setStyleSheet("font-size: 16pt;")
-        elif text_len > 60:     self.label.setStyleSheet("font-size: 19pt;")
+        if text_len > 250:      self.label.setStyleSheet("font-size: 20px;")
+        elif text_len > 180:    self.label.setStyleSheet("font-size: 22px;")
+        elif text_len > 120:    self.label.setStyleSheet("font-size: 24px;")
+        elif text_len > 80:     self.label.setStyleSheet("font-size: 26px;")
         else:                   self.label.setStyleSheet("")
 
         self.label.setText(lang_config.localize_numbers(question_text))
@@ -456,13 +469,16 @@ class QuestionWidget(QWidget):
             event.ignore() 
             return
         # If the user starts typing, instantly shift focus to the input box
-        if not self.input_box.hasFocus():
-            self.input_box.setFocus()
-            
-            # Forward the exact key they just pressed so it isn't lost
-            self.input_box.keyPressEvent(event)
+        if self.input_box:
+            if not self.input_box.hasFocus():
+                self.input_box.setFocus()
+                
+                # Forward the exact key they just pressed so it isn't lost
+                self.input_box.keyPressEvent(event)
+            else:
+                # Normal behavior
+                super().keyPressEvent(event)
         else:
-            # Normal behavior
             super().keyPressEvent(event)
 
     def play_bell_sounds(self, count):
@@ -504,14 +520,21 @@ class QuestionWidget(QWidget):
     # ── Answer checking ──────────────────────────────────────────────────
 
     def check_answer(self):
+        if getattr(self, '_is_processing', False):
+            return
+        self._is_processing = True
+
         # from language.language import tr
         self.stop_all_activity()
         self._active = True
 
         if not self.input_box:
+            self._is_processing = False
             return
 
         user_input = self.input_box.text().strip()
+        self.setFocus()
+        self.input_box.setEnabled(False)
         elapsed    = time() - self.start_time if getattr(self, 'start_time', None) else 0
         
         try:
@@ -523,6 +546,9 @@ class QuestionWidget(QWidget):
             msg = _("Please enter a valid number.")
             self.result_label.setText(lang_config.localize_numbers(msg))
             self.result_label.setAccessibleName(msg)
+            self.input_box.setEnabled(True)
+            self.input_box.setFocus()
+            self._is_processing = False
             return
 
         correct = result["correct"]
@@ -569,10 +595,9 @@ class QuestionWidget(QWidget):
 
             if audio_on and self.main_window:
                 self.show_feedback_gif(sound_file)
+                if hasattr(self, 'tts') and self.tts:
+                    self.tts.speak(clean_feedback)
                 self.main_window.play_sound(sound_file, True)
-                
-                # if hasattr(self, 'tts'):
-                #     QTimer.singleShot(10, lambda t=clean_feedback: self.tts.speak(t))
 
             self.processor.retry_count = 0
             QTimer.singleShot(2000, self.call_next_question)
@@ -590,18 +615,40 @@ class QuestionWidget(QWidget):
                         if hasattr(self.main_window, '_update_timer_bar'):
                             self.main_window._update_timer_bar()
                 if audio_on and self.main_window:
+                    if hasattr(self, 'tts') and self.tts:
+                        self.tts.speak(_("Let's try again!"))
                     self.main_window.play_sound("wrong-anwser-1.mp3")
                 if hasattr(self.main_window, '_update_timer_bar'):
                     self.main_window._update_timer_bar()
                 QTimer.singleShot(300, self.call_next_question)
                 return
             else:
-                if self.processor.retry_count >= 2:
+                if self.processor.retry_count >= 3:
+                    ans_text = lang_config.localize_numbers(str(self.answer))
                     msg = _("Let's try another one!")
+                    correct_msg = _("Correct answer is") + f" {ans_text}"
+                    combined_msg = f"{correct_msg}, {msg}"
+                    
                     self.result_label.setText(
-                        f'<span style="font-size:16pt;">{msg}</span>'
+                        f'<span style="font-size:16pt;">{combined_msg}</span>'
                     )
-                    QTimer.singleShot(2000, self.call_next_question)
+                    
+                    if audio_on and self.main_window:
+                        if hasattr(self, 'tts') and self.tts:
+                            self.tts.speak(combined_msg)
+                            
+                        si = random.randint(1, 2)
+                        sf = f"wrong-anwser-repeted-{si}.mp3"
+                        self.show_feedback_gif(sf)
+                        self.main_window.play_sound(sf, True)
+                        
+                    self._wait_timer = QTimer(self)
+                    def _wait_tts_quickplay():
+                        if not getattr(self, "tts", None) or not self.tts.is_speaking:
+                            self._wait_timer.stop()
+                            self.call_next_question()
+                    self._wait_timer.timeout.connect(_wait_tts_quickplay)
+                    self._wait_timer.start(100)
                     return
 
             try_again = _("Try Again.")
@@ -615,11 +662,14 @@ class QuestionWidget(QWidget):
                     if self.processor.retry_count == 1
                     else f"wrong-anwser-repeted-{si}.mp3"
                 )
+                if hasattr(self, 'tts') and self.tts:
+                    self.tts.speak(try_again)
+                    
                 self.show_feedback_gif(sf)
                 self.main_window.play_sound(sf, True)
-                # if hasattr(self, 'tts'):
-                #     QTimer.singleShot(300, lambda t=try_again: self.tts.speak(t))
 
+            self.input_box.setEnabled(True)
+            self._is_processing = False
             if not self.input_box.hasFocus():
                 self.input_box.setFocus()
 
@@ -771,6 +821,8 @@ class QuestionWidget(QWidget):
                 elif elapsed < 20: sf = f"not-bad-{sound_index}.mp3"
                 else:              sf = f"okay-{sound_index}.mp3"
                 self.show_feedback_gif(sf)
+                if hasattr(self, 'tts') and self.tts:
+                    self.tts.speak(clean)
                 self.main_window.play_sound(sf, True)
                 # if hasattr(self, 'tts'):
                 #     QTimer.singleShot(300, lambda t=clean: self.tts.speak(t))
@@ -791,6 +843,8 @@ class QuestionWidget(QWidget):
                         if hasattr(self.main_window, '_update_timer_bar'):
                             self.main_window._update_timer_bar()
                 if audio_on and self.main_window:
+                    if hasattr(self, 'tts') and self.tts:
+                        self.tts.speak(_("Skipped"))
                     self.main_window.play_sound("wrong-anwser-1.mp3")
                 self.call_next_question()
                 return

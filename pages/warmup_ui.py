@@ -98,7 +98,7 @@ class WarmupIntroWidget(QWidget):
             col.setAlignment(Qt.AlignCenter)
             ico = QLabel(icon)
             ico.setAlignment(Qt.AlignCenter)
-            ico.setFont(QFont("Arial", 22))
+            ico.setFont(QFont("Segoe UI", 22))
             ico.setAccessibleName("")
             lbl = QLabel(label_text)
             lbl.setAlignment(Qt.AlignCenter)
@@ -242,8 +242,10 @@ class WarmupQuestionWidget(QWidget):
         self.question_lbl = QLabel("")
         self.question_lbl.setAlignment(Qt.AlignCenter)
         self.question_lbl.setWordWrap(True)
+        self.question_lbl.setMinimumWidth(50)
+        self.question_lbl.setMargin(10)
         self.question_lbl.setProperty("class", "question-label")
-        self.question_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.question_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
         root.addWidget(self.question_lbl)
 
         root.addStretch(1)
@@ -270,7 +272,7 @@ class WarmupQuestionWidget(QWidget):
         self.input_box.setMaximumWidth(320)
         self.input_box.setAlignment(Qt.AlignCenter)
         self.input_box.setPlaceholderText(_("Enter your answer"))
-        self.input_box.setFont(QFont("Arial", 16))
+        self.input_box.setFont(QFont("Segoe UI", 16))
         self.input_box.setProperty("class", "answer-input")
         self.input_box.setAccessibleName(" ")
         self.input_box.setAccessibleDescription(" ")
@@ -294,7 +296,7 @@ class WarmupQuestionWidget(QWidget):
         self.skip_btn = QPushButton("⏭  " + _("Skip this question"))
         self.skip_btn.setMinimumSize(200, 48)
         self.skip_btn.setProperty("class", "footer-button")
-        self.skip_btn.setFont(QFont("Arial", 13))
+        self.skip_btn.setFont(QFont("Segoe UI", 13))
         self.skip_btn.setAccessibleName(_("Skip this question"))
         self.skip_btn.setAccessibleDescription(
             _("Skip the current question. Skipped questions score zero.")
@@ -305,7 +307,7 @@ class WarmupQuestionWidget(QWidget):
         # Feedback label
         self.feedback_lbl = QLabel("")
         self.feedback_lbl.setAlignment(Qt.AlignCenter)
-        self.feedback_lbl.setFont(QFont("Arial", 22, QFont.Bold))
+        self.feedback_lbl.setFont(QFont("Segoe UI", 22, QFont.Bold))
         self.feedback_lbl.setFixedHeight(50)
         self.feedback_lbl.setFocusPolicy(Qt.StrongFocus)
         self.feedback_lbl.setAccessibleName(" ")
@@ -418,10 +420,14 @@ class WarmupQuestionWidget(QWidget):
 
         # Adjust font size by length
         length = len(question_text)
-        if length > 120:
-            self.question_lbl.setStyleSheet("font-size: 14pt;")
+        if length > 250:
+            self.question_lbl.setStyleSheet("font-size: 20px;")
+        elif length > 180:
+            self.question_lbl.setStyleSheet("font-size: 22px;")
+        elif length > 120:
+            self.question_lbl.setStyleSheet("font-size: 24px;")
         elif length > 80:
-            self.question_lbl.setStyleSheet("font-size: 18pt;")
+            self.question_lbl.setStyleSheet("font-size: 26px;")
         else:
             self.question_lbl.setStyleSheet("")
 
@@ -487,17 +493,14 @@ class WarmupQuestionWidget(QWidget):
             return
         self._is_processing = True
 
+        self.setFocus()
         self.input_box.setEnabled(False)
         
         if not self._active:
             self._is_processing = False
             return
             
-        self._stop_timers()
-
         user_text = self.input_box.text().strip()
-        
-        # 2. THE LOCKOUT FIX: Always re-enable the box if we cancel early!
         if not user_text:
             self.input_box.setEnabled(True)
             self.input_box.setFocus()
@@ -514,6 +517,8 @@ class WarmupQuestionWidget(QWidget):
             self.input_box.setFocus()
             self._is_processing = False
             return
+
+        self._stop_timers()
 
         elapsed = (time() - self._question_start_time) if self._question_start_time else 0.0
         score   = self.session.submit_answer(is_correct, elapsed)
@@ -546,6 +551,8 @@ class WarmupQuestionWidget(QWidget):
                 else:
                     sound_file = f"okay-{sound_index}.mp3"
                     
+                if self.tts:
+                    self.tts.speak(_(label))
                 # Plays sound and waits
                 self.window.play_sound(sound_file, True)
                 
@@ -561,9 +568,18 @@ class WarmupQuestionWidget(QWidget):
             
             if self.window and not self.window.is_muted:
                 import random
-                self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3")
+                correct_val_formatted = lang_config.localize_numbers(str(self._current_answer))
+                if self.tts:
+                    self.tts.speak(_("Wrong — moving on") + ". " + _("Correct answer is") + f" {correct_val_formatted}")
+                self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3", True)
 
-            QTimer.singleShot(1200, self._advance)
+            self._wait_timer = QTimer(self)
+            def _wait_tts_warmup():
+                if not getattr(self, "tts", None) or not self.tts.is_speaking:
+                    self._wait_timer.stop()
+                    self._advance()
+            self._wait_timer.timeout.connect(_wait_tts_warmup)
+            self._wait_timer.start(100)
 
     def _on_skip(self):
         if not self._active:
@@ -574,6 +590,8 @@ class WarmupQuestionWidget(QWidget):
         self.submit_btn.setEnabled(False)
         self.skip_btn.setEnabled(False)
         self.feedback_lbl.setText(f'<span style="color:#95A5A6; font-size:18pt;">⏭ {_("Skipped")}</span>')
+        if self.tts:
+            self.tts.speak(_("Skipped"))
         if self.window and not self.window.is_muted:
             self.window.play_sound("wrong-anwser-1.mp3")
         QTimer.singleShot(800, self._advance)
@@ -588,6 +606,8 @@ class WarmupQuestionWidget(QWidget):
         self.submit_btn.setEnabled(False)
         self.skip_btn.setEnabled(False)
         self.feedback_lbl.setText(f'<span style="color:#95A5A6; font-size:18pt;">⏱ {_("Time out — auto-skipped")}</span>')
+        if self.tts:
+            self.tts.speak(_("Time out — auto-skipped"))
         if self.window and not self.window.is_muted:
             self.window.play_sound("wrong-anwser-1.mp3")
         QTimer.singleShot(1000, self._advance)
@@ -719,17 +739,17 @@ class WarmupRankingWidget(QWidget):
 
             rank_lbl = QLabel(lang_config.localize_numbers(f"#{rank}"))
             rank_lbl.setFixedWidth(36)
-            rank_lbl.setFont(QFont("Arial", 13, QFont.Bold))
+            rank_lbl.setFont(QFont("Segoe UI", 13, QFont.Bold))
             rank_lbl.setAlignment(Qt.AlignCenter)
             row.addWidget(rank_lbl)
 
             type_lbl = QLabel(translated_label_text)
-            type_lbl.setFont(QFont("Arial", 13))
+            type_lbl.setFont(QFont("Segoe UI", 13))
             type_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
             row.addWidget(type_lbl)
 
             pts_lbl = QLabel(lang_config.localize_numbers(f"{emoji}  {_(tier_name)}  ({score:.1f} pt{'s' if score != 1.0 else ''})"))
-            pts_lbl.setFont(QFont("Arial", 13, QFont.Bold))
+            pts_lbl.setFont(QFont("Segoe UI", 13, QFont.Bold))
             pts_lbl.setAlignment(Qt.AlignRight)
             pts_lbl.setStyleSheet(f"color: {colour};")
             row.addWidget(pts_lbl)
@@ -926,7 +946,7 @@ class GameModeWidget(QWidget):
         root = QVBoxLayout(); root.setContentsMargins(20,8,20,8); root.setSpacing(6); self.setLayout(root)
         top = QHBoxLayout()
         self.level_lbl = QLabel(""); self.level_lbl.setProperty("class","subtitle")
-        self.level_lbl.setFont(QFont("Arial",13,QFont.Bold)); top.addWidget(self.level_lbl, alignment=Qt.AlignLeft)
+        self.level_lbl.setFont(QFont("Segoe UI",13,QFont.Bold)); top.addWidget(self.level_lbl, alignment=Qt.AlignLeft)
         self.phase_lbl = QLabel(""); self.phase_lbl.setProperty("class","subtitle")
         self.phase_lbl.setAlignment(Qt.AlignCenter); top.addWidget(self.phase_lbl)
         self.qcount_lbl = QLabel(""); self.qcount_lbl.setProperty("class","subtitle")
@@ -942,11 +962,13 @@ class GameModeWidget(QWidget):
         root.addStretch(1)
         self.question_lbl = QLabel(""); self.question_lbl.setAlignment(Qt.AlignCenter)
         self.question_lbl.setWordWrap(True); self.question_lbl.setProperty("class","question-label")
-        self.question_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred); root.addWidget(self.question_lbl)
+        self.question_lbl.setMinimumWidth(50)
+        self.question_lbl.setMargin(10)
+        self.question_lbl.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum); root.addWidget(self.question_lbl)
         root.addStretch(1)
         input_row = QHBoxLayout(); input_row.setSpacing(10); input_row.setAlignment(Qt.AlignCenter)
         self.input_box = QLineEdit(); self.input_box.setMinimumSize(220,55); self.input_box.setMaximumWidth(320)
-        self.input_box.setAlignment(Qt.AlignCenter); self.input_box.setFont(QFont("Arial",16))
+        self.input_box.setAlignment(Qt.AlignCenter); self.input_box.setFont(QFont("Segoe UI",16))
         self.input_box.setProperty("class","answer-input"); self.input_box.setAccessibleName(_("Answer input"))
         self.input_box.setValidator(QRegExpValidator(QRegExp(r"-?\d*\.?\d*")))
         self.input_box.returnPressed.connect(self._check_answer); input_row.addWidget(self.input_box)
@@ -955,11 +977,11 @@ class GameModeWidget(QWidget):
         self.submit_btn.clicked.connect(self._check_answer); input_row.addWidget(self.submit_btn)
         root.addLayout(input_row); root.addSpacing(8)
         self.skip_btn = QPushButton("⏭  " + _("Skip")); self.skip_btn.setMinimumSize(160,44)
-        self.skip_btn.setProperty("class","footer-button"); self.skip_btn.setFont(QFont("Arial",13))
+        self.skip_btn.setProperty("class","footer-button"); self.skip_btn.setFont(QFont("Segoe UI",13))
         self.skip_btn.setAccessibleName(_("Skip this question")); self.skip_btn.clicked.connect(self._on_skip)
         root.addWidget(self.skip_btn, alignment=Qt.AlignCenter)
         self.feedback_lbl = QLabel(""); self.feedback_lbl.setAlignment(Qt.AlignCenter)
-        self.feedback_lbl.setFont(QFont("Arial",20,QFont.Bold)); self.feedback_lbl.setFixedHeight(46)
+        self.feedback_lbl.setFont(QFont("Segoe UI",20,QFont.Bold)); self.feedback_lbl.setFixedHeight(46)
         self.feedback_lbl.setFocusPolicy(Qt.StrongFocus)
         self.feedback_lbl.setAccessibleName(" ")
         self.feedback_lbl.setFocus()
@@ -1128,6 +1150,8 @@ class GameModeWidget(QWidget):
                     sound_file = f"not-bad-{sound_index}.mp3"
                 else:
                     sound_file = f"okay-{sound_index}.mp3"
+                if self.tts:
+                    self.tts.speak(_(tier))
                 self.window.play_sound(sound_file, True)
 
             if self.window and hasattr(self.window, "game_timer") and not self.window.game_timer.isActive():
@@ -1140,6 +1164,8 @@ class GameModeWidget(QWidget):
 
             if self.window and not self.window.is_muted:
                 import random
+                if self.tts:
+                    self.tts.speak(_("Wrong"))
                 self.window.play_sound(f"wrong-anwser-{random.randint(1, 3)}.mp3", True)
 
             if self.window and hasattr(self.window, "game_timer") and not self.window.game_timer.isActive():
@@ -1156,6 +1182,8 @@ class GameModeWidget(QWidget):
         self.update_timer(self.window.time_remaining)
         self.feedback_lbl.setText(f'<span style="color:#95A5A6;">⏭ {_("Skipped")}</span>')
         self.input_box.setEnabled(False); self.submit_btn.setEnabled(False); self.skip_btn.setEnabled(False)
+        if self.tts:
+            self.tts.speak(_("Skipped"))
         if self.window and not self.window.is_muted:
             self.window.play_sound("wrong-anwser-1.mp3", True)
             
@@ -1227,10 +1255,10 @@ class GameModeReportWidget(QWidget):
                 translated_lbl = _(lbl)
 
             row = QHBoxLayout(); row.setSpacing(10)
-            rl = QLabel(f"#{rank}"); rl.setFixedWidth(32); rl.setFont(QFont("Arial",12,QFont.Bold)); rl.setAlignment(Qt.AlignCenter)
-            tl = QLabel(translated_lbl); tl.setFont(QFont("Arial",12)); tl.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Preferred)
-            gl = QLabel(gained_txt); gl.setFont(QFont("Arial",12,QFont.Bold)); gl.setStyleSheet(f"color:{colour};"); gl.setFixedWidth(44); gl.setAlignment(Qt.AlignRight)
-            sl = QLabel(f"{score:.1f}pt"); sl.setFont(QFont("Arial",12)); sl.setFixedWidth(48); sl.setAlignment(Qt.AlignRight)
+            rl = QLabel(f"#{rank}"); rl.setFixedWidth(32); rl.setFont(QFont("Segoe UI",12,QFont.Bold)); rl.setAlignment(Qt.AlignCenter)
+            tl = QLabel(translated_lbl); tl.setFont(QFont("Segoe UI",12)); tl.setSizePolicy(QSizePolicy.Expanding,QSizePolicy.Preferred)
+            gl = QLabel(gained_txt); gl.setFont(QFont("Segoe UI",12,QFont.Bold)); gl.setStyleSheet(f"color:{colour};"); gl.setFixedWidth(44); gl.setAlignment(Qt.AlignRight)
+            sl = QLabel(f"{score:.1f}pt"); sl.setFont(QFont("Segoe UI",12)); sl.setFixedWidth(48); sl.setAlignment(Qt.AlignRight)
             for w in (rl,tl,gl,sl): row.addWidget(w)
             
             # --- THE ACCESSIBILITY MODIFICATIONS START HERE ---

@@ -1,11 +1,18 @@
 import sys, os, subprocess
 from PyQt5 import sip
 
+# --- Fix for MSIX / Shortcut Working Directory ---
+if getattr(sys, 'frozen', False):
+    os.chdir(getattr(sys, '_MEIPASS', os.path.dirname(sys.executable)))
+else:
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+# -------------------------------------------------
+
 # ── Accessibility: Enable the Qt5 ↔ AT-SPI bridge for Linux screen readers ──
-os.environ["QT_LINUX_ACCESSIBILITY_ALWAYS_ON"] = "1"
-os.environ["QT_ACCESSIBILITY"] = "1"
 
 if sys.platform.startswith("linux"):
+    os.environ["QT_LINUX_ACCESSIBILITY_ALWAYS_ON"] = "1"
+    os.environ["QT_ACCESSIBILITY"] = "1"
     os.environ.setdefault("QT_QPA_PLATFORM", "xcb")
     try:
         subprocess.run(
@@ -28,7 +35,7 @@ from PyQt5.QtWidgets import (
     QWidget, QGridLayout, QStackedWidget, QSizePolicy, QShortcut,
     QBoxLayout
 )
-from PyQt5.QtCore import Qt, QUrl, QSize, QTimer, QEventLoop
+from PyQt5.QtCore import Qt, QUrl, QSize, QTimer, QEventLoop, QEvent, QObject
 from question.loader import QuestionProcessor
 from pages.shared_ui import create_footer_buttons, apply_theme, SettingsDialog, create_main_footer_buttons, QuestionWidget, setup_exit_handling
 from pages.ques_functions import load_pages, upload_excel
@@ -59,6 +66,16 @@ def clear_layout(layout):
             # widget.setParent(None)
             widget.deleteLater()
 
+class EnterKeyFilter(QObject):
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.KeyPress and event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            if event.isAutoRepeat():
+                return True
+            widget = QApplication.focusWidget()
+            if isinstance(widget, QPushButton):
+                widget.click()
+                return True
+        return super().eventFilter(obj, event)
 
 class RootWindow(QDialog):
     def __init__(self, minimal=False):
@@ -183,8 +200,8 @@ class MainWindow(QMainWindow):
         set_language(languages.get(self.language))
 
         self.setWindowTitle(_(f"Maths Tutor - {self.language}"))
-        self.resize(900, 600)
-        self.setMinimumSize(800, 550)
+        self.resize(1000, 700)
+        self.setMinimumSize(900, 650)
         self.current_difficulty = 1
         self.section_pages = {}
         self.is_muted = False
@@ -925,7 +942,7 @@ class MainWindow(QMainWindow):
             back_to_diff_btn.setProperty("class", "footer-button")
             back_to_diff_btn.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed)
             back_to_diff_btn.adjustSize()
-            back_to_diff_btn.setFont(QFont("Arial", 14))
+            back_to_diff_btn.setFont(QFont("Segoe UI", 14))
             back_to_diff_btn.setAccessibleName("Back to Difficulty")
             back_to_diff_btn.setAccessibleDescription("Return to difficulty selection")
             back_to_diff_btn.clicked.connect(self._back_to_difficulty)
@@ -1480,6 +1497,10 @@ class MainWindow(QMainWindow):
 if __name__ == "__main__":
 
     app = QApplication(sys.argv)
+    
+    enter_filter = EnterKeyFilter()
+    app.installEventFilter(enter_filter)
+    
     style_file = os.path.join("styles", "app.qss")
     if os.path.exists(style_file):
         with open(style_file, "r") as f:

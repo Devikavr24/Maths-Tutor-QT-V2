@@ -2,10 +2,22 @@ import pandas as pd
 import os
 import openpyxl
 import json
+import shutil
 
+def _get_logic_file_path():
+    app_data_dir = os.path.join(os.environ.get("LOCALAPPDATA", os.path.expanduser("~")), "MathsTutor")
+    os.makedirs(app_data_dir, exist_ok=True)
+    user_file = os.path.join(app_data_dir, "gamemode_logic.xlsx")
+    sys_file = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    if not os.path.exists(user_file) and os.path.exists(sys_file):
+        try:
+            shutil.copyfile(sys_file, user_file)
+        except Exception:
+            pass
+    return user_file if os.path.exists(user_file) else sys_file
 
 def get_saved_game_session():
-    fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    fp = _get_logic_file_path()
     df = pd.read_excel(fp)
     if len(df) == 0:
         return None
@@ -26,7 +38,7 @@ SCORE_COLOURS = {10.0: "#27AE60", 5.0: "#D4AC0D",
 
 def _load_logic_df() -> pd.DataFrame:
     """Load and normalise gamemode_logic.xlsx."""
-    fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    fp = _get_logic_file_path()
     df = pd.read_excel(fp)
     if len(df) == 0:
         return df
@@ -74,7 +86,7 @@ def _load_game_df() -> pd.DataFrame:
     return df
 
 def _clear_logic_df():
-    fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+    fp = _get_logic_file_path()
     if os.path.exists(fp):
         try:
             # Load the workbook and select the active sheet
@@ -195,7 +207,7 @@ def generate_logic_from_warmup(ranked_results):
             })
             
         df = pd.DataFrame(logic_rows)
-        fp = os.path.join(os.getcwd(), "question", "gamemode_logic.xlsx")
+        fp = _get_logic_file_path()
         df.to_excel(fp, index=False)
         print(f"[DEBUG] Generated dynamic logic to {fp} with {len(ladder)} steps.")
     except Exception as e:
